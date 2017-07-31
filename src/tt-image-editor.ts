@@ -1,32 +1,60 @@
 import * as Util from "./util";
-import { Toolbar } from "./toolbar";
+import * as Events from "./event";
+import { Toolbar, Tools } from "./toolbar";
 
 export class TTImageEditor {
     private toolbar: Toolbar;
     private canvas: HTMLCanvasElement;
-    private container: HTMLElement;
+    private editor: HTMLElement;
+    private fragment: DocumentFragment;
+    private DEF_EDITOR_ID: string = "tt-image-editor";
     private DEF_CANVAS_HEIGHT: number = 100;
     private DEF_CANVAS_WIDTH: number = 100;
 
-    init(): void {
-        this.container = document.getElementById("editor-container");
-        this.render();
-        this.bindEvents();
-        // Initialize the UI controls
+    // TODO init returning doc frag seems unintuitive
+    init(): DocumentFragment {
         this.toolbar = new Toolbar();
-        this.toolbar.init();
+        this.render();
+        this.addListeners();
+
+        return this.fragment;
     }
 
     private render() {
-        const element: HTMLElement = document.createElement("div");
-        const html: string = `<canvas id="editor" height="${this.DEF_CANVAS_HEIGHT}", width="${this.DEF_CANVAS_WIDTH}"></canvas>`;
-        element.innerHTML = html;
-        this.container.appendChild(element);
-        this.canvas = document.getElementById("editor") as HTMLCanvasElement;
+        this.fragment = document.createDocumentFragment();
+        this.editor = document.createElement("div");
+        this.editor.id = this.DEF_EDITOR_ID;
+        const html: string =
+            `<canvas
+                id="tt-image-editor-canvas"
+                height="${this.DEF_CANVAS_HEIGHT}",
+                width="${this.DEF_CANVAS_WIDTH}">
+            </canvas>`;
+        this.editor.innerHTML = html;
+        // Initialize the UI controls
+        this.editor.appendChild(this.toolbar.init());
+        this.fragment.appendChild(this.editor);
+        this.canvas = this.fragment.querySelector("#tt-image-editor-canvas") as HTMLCanvasElement;
     }
 
-    private bindEvents() {
-        this.container.addEventListener("paste", (evt) => this.handlePaste(evt as ClipboardEvent));
+    private addListeners() {
+        this.editor.addEventListener("paste", (evt) => this.handlePaste(evt as ClipboardEvent));
+        this.toolbar.onCropToolActive.addListener( (evt) => this.handleCropToolActive(evt));
+        this.toolbar.onPngSaved.addListener( (evt) => this.handlePngSaved(evt))
+        this.toolbar.onJpegSaved.addListener( (evt) => this.handleJpegSaved(evt))
+    }
+
+    private handleCropToolActive(evt) {
+        console.log(evt.data);
+        this.canvas.style.cursor = "crosshair";
+    }
+
+    private handlePngSaved(evt) {
+        console.log(evt.data);
+    }
+
+    private handleJpegSaved(evt) {
+        console.log(evt.data);
     }
 
     private handlePaste(evt) {
