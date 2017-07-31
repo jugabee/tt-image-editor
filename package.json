@@ -1,0 +1,23 @@
+{
+    "name": "ttimg",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "prepublish": "typings install",
+        "watch": "webpack --watch",
+        "start": "webpack-dev-server --hot --inline --no-info"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "ts-loader": "^2.3.2",
+        "typescript": "^2.4.2",
+        "typings": "^2.1.1",
+        "webpack": "^3.4.1"
+    },
+    "dependencies": {
+        "webpack-dev-server": "^2.6.1"
+    }
+}
