@@ -1,4 +1,4 @@
-import { TTImageEditor } from "./tt-image-editor";
+import { TTImageEditor } from "./editor";
 
 function ready(): void {
     const container: HTMLElement = document.getElementById("container");

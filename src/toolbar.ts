@@ -1,11 +1,11 @@
 import * as Events from "./event";
 
-export enum Tools {
+export enum ToolType {
     Crop
 }
 
 interface ToolbarState {
-    activeTool: Tools | null;
+    activeTool: ToolType | null;
 }
 
 export class Toolbar {
@@ -19,7 +19,7 @@ export class Toolbar {
     }
     onJpegSaved: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
     onPngSaved: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
-    onActiveToolChange: Events.Dispatcher<Tools | null> = Events.Dispatcher.createEventDispatcher();
+    onActiveToolChange: Events.Dispatcher<ToolType | null> = Events.Dispatcher.createEventDispatcher();
 
     constructor(container: DocumentFragment) {
         this.container = container;
@@ -52,9 +52,9 @@ export class Toolbar {
     }
 
     private handleCropBtn(evt): void {
-        this.state.activeTool = Tools.Crop;
+        this.state.activeTool = ToolType.Crop;
         this.cropBtn.classList.add("active");
-        this.onActiveToolChange.emit({ data: Tools.Crop });
+        this.onActiveToolChange.emit({ data: ToolType.Crop });
     }
 
     private handleSavePngBtn(evt): void {
