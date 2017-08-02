@@ -4,34 +4,41 @@ export enum Tools {
     Crop
 }
 
+interface ToolbarState {
+    activeTool: Tools | null;
+}
+
 export class Toolbar {
-    private fragment: DocumentFragment;
+    private toolbar: DocumentFragment = document.createDocumentFragment();
     private savePngBtn: HTMLElement;
     private saveJpegBtn: HTMLElement;
     private cropBtn: HTMLElement;
-    activeTool: Tools | null = null;
+    private container: DocumentFragment;
+    state: ToolbarState = {
+        activeTool: null
+    }
     onJpegSaved: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
     onPngSaved: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
-    onCropToolActive: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
+    onActiveToolChange: Events.Dispatcher<Tools | null> = Events.Dispatcher.createEventDispatcher();
 
-    init(): DocumentFragment {
+    constructor(container: DocumentFragment) {
+        this.container = container;
         this.render();
-        this.savePngBtn = this.fragment.querySelector("#save-png-btn") as HTMLElement;
-        this.saveJpegBtn = this.fragment.querySelector("#save-jpeg-btn") as HTMLElement;
-        this.cropBtn = this.fragment.querySelector("#crop-btn") as HTMLElement;
         this.addListeners();
-
-        return this.fragment;
+        this.attach();
     }
 
     private render(): void {
         const element: HTMLElement = document.createElement("div");
-        this.fragment = document.createDocumentFragment();
+        this.toolbar = document.createDocumentFragment();
         element.id = "tt-image-editor-toolbar";
         element.innerHTML = `<button id="crop-btn">Crop</button>
                              <button id="save-png-btn">Save png</button>
                              <button id="save-jpeg-btn">Save jpeg</button>`;
-        this.fragment.appendChild(element);
+        this.toolbar.appendChild(element);
+        this.savePngBtn = this.toolbar.querySelector("#save-png-btn") as HTMLElement;
+        this.saveJpegBtn = this.toolbar.querySelector("#save-jpeg-btn") as HTMLElement;
+        this.cropBtn = this.toolbar.querySelector("#crop-btn") as HTMLElement;
     }
 
     private addListeners(): void {
@@ -40,10 +47,14 @@ export class Toolbar {
         this.cropBtn.addEventListener("click", (evt) => this.handleCropBtn(evt));
     }
 
+    private attach(): void {
+        this.container.appendChild(this.toolbar);
+    }
+
     private handleCropBtn(evt): void {
-        this.activeTool = Tools.Crop;
+        this.state.activeTool = Tools.Crop;
         this.cropBtn.classList.add("active");
-        this.onCropToolActive.emit({ data: true });
+        this.onActiveToolChange.emit({ data: Tools.Crop });
     }
 
     private handleSavePngBtn(evt): void {

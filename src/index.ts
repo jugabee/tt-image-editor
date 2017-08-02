@@ -1,9 +1,12 @@
 import { TTImageEditor } from "./tt-image-editor";
 
 function ready(): void {
-    const editor: DocumentFragment = new TTImageEditor().init();
     const container: HTMLElement = document.getElementById("container");
-    container.appendChild(editor);
+    const img = new Image();
+    img.addEventListener("load", (evt) => {
+        const editor = new TTImageEditor(container, img);
+    });
+    img.src = "../images/dwarf.png";
 }
 
 if (document.readyState !== "loading") {
