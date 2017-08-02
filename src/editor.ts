@@ -4,8 +4,6 @@ import { CropTool } from "./crop-tool";
 import { Tool } from "./tool";
 
 interface CanvasState {
-    isDown: boolean;
-    isDragging: boolean;
     activeTool: Tool | null;
 }
 
@@ -23,8 +21,6 @@ export class TTImageEditor {
     private readonly UI_COLOR = 0x1B83DE;
     private debug: boolean = false;
     private state: CanvasState = {
-        isDown: false,
-        isDragging: false,
         activeTool: null
     }
 
@@ -107,23 +103,18 @@ export class TTImageEditor {
     }
 
     private handleMousedown(evt): void {
-        this.setState({ isDown: true });
         if (this.state.activeTool !== null) {
             this.state.activeTool.handleMousedown(evt);
         }
     }
 
     private handleMousemove(evt): void {
-        if (this.state.isDown) {
-            this.setState({ isDragging: true });
-            if (this.state.activeTool !== null) {
-                this.state.activeTool.handleMousemove(evt);
-            }
+        if (this.state.activeTool !== null) {
+            this.state.activeTool.handleMousemove(evt);
         }
     }
 
     private handleMouseup(evt): void {
-        this.setState({ isDown: false, isDragging: false });
         if (this.state.activeTool !== null) {
             this.state.activeTool.handleMouseup(evt);
         }
