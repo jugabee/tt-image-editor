@@ -52,9 +52,15 @@ export class Toolbar {
     }
 
     private handleCropBtn(evt): void {
-        this.state.activeTool = ToolType.Crop;
-        this.cropBtn.classList.add("active");
-        this.onActiveToolChange.emit({ data: ToolType.Crop });
+        if (this.state.activeTool !== ToolType.Crop) {
+            this.state.activeTool = ToolType.Crop;
+            this.cropBtn.classList.add("active");
+            this.onActiveToolChange.emit({ data: ToolType.Crop });
+        } else {
+            this.state.activeTool = null;
+            this.cropBtn.classList.remove("active");
+            this.onActiveToolChange.emit({ data: null });
+        }
     }
 
     private handleSavePngBtn(evt): void {

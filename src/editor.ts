@@ -14,11 +14,12 @@ export class TTImageEditor {
     private imageCanvas: HTMLCanvasElement;
     private imageCtx: CanvasRenderingContext2D;
     private toolCanvas: HTMLCanvasElement;
+    private toolCtx: CanvasRenderingContext2D;
     private editor: DocumentFragment = document.createDocumentFragment();
     private readonly DEF_EDITOR_ID: string = "tt-image-editor";
+    private readonly DEF_CLEAR_COLOR = "white";
     private readonly DEF_CANVAS_HEIGHT: number = 100;
     private readonly DEF_CANVAS_WIDTH: number = 100;
-    private readonly UI_COLOR = 0x1B83DE;
     private debug: boolean = false;
     private state: CanvasState = {
         activeTool: null
@@ -56,8 +57,9 @@ export class TTImageEditor {
     }
 
     private init(img: HTMLImageElement): void {
-        if (this.imageCanvas.getContext) {
+        if (this.imageCanvas.getContext && this.toolCanvas.getContext) {
             this.setCanvasSize(img.naturalWidth, img.naturalHeight);
+            this.toolCtx = this.toolCanvas.getContext("2d");
             this.imageCtx = this.imageCanvas.getContext("2d");
             this.imageCtx.clearRect(0, 0, this.imageCanvas.width, this.imageCanvas.height);
             this.imageCtx.drawImage(img, 0, 0);
@@ -71,7 +73,7 @@ export class TTImageEditor {
 
     	this.toolCanvas.addEventListener("mousedown", (evt) => this.handleMousedown(evt), false);
     	this.toolCanvas.addEventListener("mousemove", (evt) => this.handleMousemove(evt), false);
-    	this.toolCanvas.addEventListener("mouseup",	 (evt) => this.handleMouseup(evt), false);
+    	this.toolCanvas.addEventListener("mouseup", (evt) => this.handleMouseup(evt), false);
     }
 
     private attach() {
@@ -125,12 +127,19 @@ export class TTImageEditor {
         switch (tool) {
             case ToolType.Crop:
                 this.setState({ activeTool: this.cropTool });
-                // TODO set css class to active and cursor property
-                this.toolCanvas.style.cursor = "crosshair";
+                // draw the current state to canvas for activeTool
+                this.state.activeTool.draw();
                 break;
             default:
+                this.clearToolCanvas();
+                this.toolCanvas.style.cursor = "default";
                 this.setState({ activeTool: null });
         }
+    }
+
+    private clearToolCanvas(): void {
+        this.toolCtx.fillStyle = this.DEF_CLEAR_COLOR;
+        this.toolCtx.clearRect(0, 0, this.toolCanvas.width, this.toolCanvas.height);
     }
 
     private handlePngSaved(evt): void {
@@ -141,7 +150,11 @@ export class TTImageEditor {
         console.log(evt.data);
     }
 
-    /* Simultaneously set canvas size for tool and image layers; they should always be the same*/
+    /**
+    * Simultaneously set canvas size for tool and image layers;
+    * they should always be the same because the tool layer overlays the
+    * image layer
+    */
     private setCanvasSize(w: number, h: number) {
         this.imageCanvas.width = w;
         this.imageCanvas.height = h;
