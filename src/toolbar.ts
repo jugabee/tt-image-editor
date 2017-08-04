@@ -14,7 +14,7 @@ export class Toolbar {
     private saveJpegBtn: HTMLElement;
     private cropBtn: HTMLElement;
     private container: DocumentFragment;
-    state: ToolbarState = {
+    private state: ToolbarState = {
         activeTool: null
     }
     onJpegSaved: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
@@ -33,8 +33,8 @@ export class Toolbar {
         this.toolbar = document.createDocumentFragment();
         element.id = "tt-image-editor-toolbar";
         element.innerHTML = `<button id="crop-btn">Crop</button>
-                             <button id="apply-btn">Apply</button>
-                             <button id="save-jpeg-btn">Save jpeg</button>`;
+                             <button id="apply-btn" style="display:none">Apply</button>
+                             <button id="save-jpeg-btn" style="display:none">Save jpeg</button>`;
         this.toolbar.appendChild(element);
         this.applyBtn = this.toolbar.querySelector("#apply-btn") as HTMLElement;
         this.saveJpegBtn = this.toolbar.querySelector("#save-jpeg-btn") as HTMLElement;
@@ -52,17 +52,27 @@ export class Toolbar {
         this.container.insertBefore(this.toolbar, this.container.firstChild);
     }
 
+    showCropApplyBtn(): void {
+        this.applyBtn.style.display = "";
+    }
+
+    hideCropApplyBtn(): void {
+        this.applyBtn.style.display = "none";
+    }
+
     private handleCropBtn(evt): void {
         if (this.state.activeTool !== ToolType.Crop) {
             this.cropBtn.classList.add("active");
             this.onActiveToolChange.emit({ data: ToolType.Crop });
         } else {
+            this.hideCropApplyBtn();
             this.cropBtn.classList.remove("active");
             this.onActiveToolChange.emit({ data: null });
         }
     }
 
     private handleApplyBtn(evt): void {
+        this.hideCropApplyBtn();
         this.onCropApply.emit({ data: true });
         this.onActiveToolChange.emit({ data: null });
     }

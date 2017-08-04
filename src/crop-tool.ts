@@ -1,3 +1,4 @@
+import * as Events from "./event";
 import { Tool } from "./tool";
 
 interface CropToolState {
@@ -62,6 +63,7 @@ export class CropTool extends Tool{
         w: 0,
         h: 0
     }
+    onCropRectVisibility: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
 
     constructor(canvas: HTMLCanvasElement) {
         super();
@@ -165,6 +167,11 @@ export class CropTool extends Tool{
     }
 
     handleMouseup(evt): void {
+        if (this.state.isVisible) {
+            this.onCropRectVisibility.emit({ data: true });
+        } else {
+            this.onCropRectVisibility.emit({ data: false });
+        }
         this.setState({ isMousedown: false, isMousedrag: false });
     }
 
@@ -227,6 +234,7 @@ export class CropTool extends Tool{
     draw(): void {
         this.resetCanvas();
         if (this.state.isVisible) {
+            this.onCropRectVisibility.emit({ data: true });
             // clear a rectangular section in the transparent black fill for a crop effect
             this.ctx.clearRect(
                 this.state.x,

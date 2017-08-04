@@ -9,7 +9,6 @@ interface CanvasState {
     imgY: number;
     imgW: number;
     imgH: number;
-    ratio: number;
 }
 
 export class TTImageEditor {
@@ -32,8 +31,7 @@ export class TTImageEditor {
         imgX: 0,
         imgY: 0,
         imgW: 0,
-        imgH: 0,
-        ratio: 1
+        imgH: 0
     }
 
     constructor(container: HTMLElement, img: HTMLImageElement) {
@@ -79,6 +77,8 @@ export class TTImageEditor {
         this.toolbar.onCropApply.addListener( (evt) => this.handleCropApply(evt));
         this.toolbar.onJpegSaved.addListener( (evt) => this.handleJpegSaved(evt));
 
+        this.cropTool.onCropRectVisibility.addListener( (evt) => this.handleCropRectVisibility(evt));
+
     	this.toolCanvas.addEventListener("mousedown", (evt) => this.handleMousedown(evt), false);
     	this.toolCanvas.addEventListener("mousemove", (evt) => this.handleMousemove(evt), false);
     	this.toolCanvas.addEventListener("mouseup", (evt) => this.handleMouseup(evt), false);
@@ -89,7 +89,7 @@ export class TTImageEditor {
     }
 
     /* *
-    * All CanvasState is updated by shallow merge in the setState method.
+    * State is set by shallow merge in the setState method.
     * setState takes an object parameter with valid state and merges it with
     * the existing state object.
     */
@@ -111,6 +111,10 @@ export class TTImageEditor {
             console.log("AFTER", JSON.stringify(this.state));
         }
     }
+
+    /**
+    * Handle mouse events with abstract activeTool
+    */
 
     private handleMousedown(evt): void {
         if (this.state.activeTool !== null) {
@@ -145,6 +149,14 @@ export class TTImageEditor {
         }
     }
 
+    private handleCropRectVisibility(evt): void {
+        if (evt.data === true) {
+            this.toolbar.showCropApplyBtn();
+        } else {
+            this.toolbar.hideCropApplyBtn();
+        }
+    }
+
     private clearToolCanvas(): void {
         this.toolCtx.clearRect(0, 0, this.toolCanvas.width, this.toolCanvas.height);
     }
@@ -153,6 +165,10 @@ export class TTImageEditor {
         this.imageCtx.clearRect(0, 0, this.imageCanvas.width, this.imageCanvas.height);
     }
 
+    /**
+    * Draw a portion of the source image to the imageCanvas based on
+    * CropTool's coordinates and size
+    */
     private handleCropApply(evt): void {
         let { x, y, w, h } = this.cropTool.getCropRect();
         /**
