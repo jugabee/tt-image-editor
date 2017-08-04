@@ -231,6 +231,10 @@ export class CropTool extends Tool{
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
+    activate(): void {
+        this.draw();
+    }
+
     draw(): void {
         this.resetCanvas();
         if (this.state.isVisible) {

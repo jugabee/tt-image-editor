@@ -1,7 +1,8 @@
 import * as Events from "./event";
 
 export enum ToolType {
-    Crop
+    Crop,
+    Pencil
 }
 
 interface ToolbarState {
@@ -13,6 +14,7 @@ export class Toolbar {
     private applyBtn: HTMLElement;
     private saveBtn: HTMLElement;
     private cropBtn: HTMLElement;
+    private pencilBtn: HTMLElement;
     private container: DocumentFragment;
     private state: ToolbarState = {
         activeTool: null
@@ -32,19 +34,23 @@ export class Toolbar {
         const element: HTMLElement = document.createElement("div");
         this.toolbar = document.createDocumentFragment();
         element.id = "tt-image-editor-toolbar";
-        element.innerHTML = `<button id="crop-btn">Crop</button>
+        element.style.userSelect = "none";
+        element.innerHTML = `<button id="pencil-btn">Pencil</button>
+                             <button id="crop-btn">Crop</button>
                              <button id="apply-btn" style="display:none">Apply</button>
                              <button id="save-btn">Save</button>`;
         this.toolbar.appendChild(element);
         this.applyBtn = this.toolbar.querySelector("#apply-btn") as HTMLElement;
         this.saveBtn = this.toolbar.querySelector("#save-btn") as HTMLElement;
         this.cropBtn = this.toolbar.querySelector("#crop-btn") as HTMLElement;
+        this.pencilBtn = this.toolbar.querySelector("#pencil-btn") as HTMLElement;
     }
 
     private addListeners(): void {
         this.applyBtn.addEventListener("click", (evt) => this.handleApplyBtn(evt));
         this.saveBtn.addEventListener("click", (evt) => this.handleSaveBtn(evt));
         this.cropBtn.addEventListener("click", (evt) => this.handleCropBtn(evt));
+        this.pencilBtn.addEventListener("click", (evt) => this.handlePencilBtn(evt));
         this.onActiveToolChange.addListener((evt) => this.handleActiveToolChange(evt));
     }
 
@@ -66,6 +72,16 @@ export class Toolbar {
             this.onActiveToolChange.emit({ data: ToolType.Crop });
         } else {
             this.hideCropApplyBtn();
+            this.cropBtn.classList.remove("active");
+            this.onActiveToolChange.emit({ data: null });
+        }
+    }
+
+    private handlePencilBtn(evt): void {
+        if (this.state.activeTool !== ToolType.Pencil) {
+            this.pencilBtn.classList.add("active");
+            this.onActiveToolChange.emit({ data: ToolType.Pencil });
+        } else {
             this.cropBtn.classList.remove("active");
             this.onActiveToolChange.emit({ data: null });
         }

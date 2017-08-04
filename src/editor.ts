@@ -1,6 +1,7 @@
 import * as Events from "./event";
 import { Toolbar, ToolType } from "./toolbar";
 import { CropTool, Rect } from "./crop-tool";
+import { PencilTool } from "./pencil-tool";
 import { Tool } from "./tool";
 
 interface CanvasState {
@@ -16,16 +17,16 @@ export class TTImageEditor {
     private img: HTMLImageElement;
     private toolbar: Toolbar;
     private cropTool: CropTool;
+    private pencilTool: PencilTool;
     private imageCanvas: HTMLCanvasElement;
     private imageCtx: CanvasRenderingContext2D;
     private toolCanvas: HTMLCanvasElement;
     private toolCtx: CanvasRenderingContext2D;
     private editor: DocumentFragment = document.createDocumentFragment();
     private readonly DEF_EDITOR_ID: string = "tt-image-editor";
-    private readonly DEF_CLEAR_COLOR = "black";
     private readonly DEF_CANVAS_WIDTH: number = 800;
     private readonly DEF_CANVAS_HEIGHT: number = 436;
-    private debug: boolean = true;
+    private debug: boolean = false;
     private state: CanvasState = {
         activeTool: null,
         imgX: 0,
@@ -38,8 +39,10 @@ export class TTImageEditor {
         this.container = container;
         this.img = img;
         this.render();
+        this.initCanvases();
         this.toolbar = new Toolbar(this.editor);
         this.cropTool = new CropTool(this.toolCanvas);
+        this.pencilTool = new PencilTool(this.toolCanvas);
         this.addListeners();
         this.attach();
     }
@@ -51,25 +54,27 @@ export class TTImageEditor {
                 id="tt-image-editor-canvas-tools"
                 height="${this.DEF_CANVAS_HEIGHT}",
                 width="${this.DEF_CANVAS_WIDTH}"
-                style="position: absolute">
+                style="position: absolute; user-select: none;">
             </canvas>
             <canvas
                 id="tt-image-editor-canvas-image"
                 height="${this.DEF_CANVAS_HEIGHT}",
-                width="${this.DEF_CANVAS_WIDTH}">
+                width="${this.DEF_CANVAS_WIDTH}"
+                style="user-select: none;">
             </canvas>`;
         element.innerHTML = html;
         element.id = this.DEF_EDITOR_ID;
         this.editor.appendChild(element);
+    }
+
+    private initCanvases(): void {
         this.imageCanvas = this.editor.querySelector("#tt-image-editor-canvas-image") as HTMLCanvasElement;
         this.toolCanvas = this.editor.querySelector("#tt-image-editor-canvas-tools") as HTMLCanvasElement;
         this.setCanvasSize(this.img.naturalWidth, this.img.naturalHeight);
-        if (this.imageCanvas.getContext && this.toolCanvas.getContext) {
-            this.toolCtx = this.toolCanvas.getContext("2d");
-            this.imageCtx = this.imageCanvas.getContext("2d");
-            this.setState({ imgW: this.img.naturalWidth, imgH: this.img.naturalHeight });
-            this.draw();
-        }
+        this.toolCtx = this.toolCanvas.getContext("2d");
+        this.imageCtx = this.imageCanvas.getContext("2d");
+        this.setState({ imgW: this.img.naturalWidth, imgH: this.img.naturalHeight });
+        this.draw();
     }
 
     private addListeners(): void {
@@ -78,6 +83,7 @@ export class TTImageEditor {
         this.toolbar.onSaveImage.addListener( (evt) => this.handleSaveImage(evt));
 
         this.cropTool.onCropRectVisibility.addListener( (evt) => this.handleCropRectVisibility(evt));
+        this.pencilTool.onPencilDrawingFinished.addListener( (evt) => this.handlePencilDrawingFinished(evt));
 
     	this.toolCanvas.addEventListener("mousedown", (evt) => this.handleMousedown(evt), false);
     	this.toolCanvas.addEventListener("mousemove", (evt) => this.handleMousemove(evt), false);
@@ -117,6 +123,7 @@ export class TTImageEditor {
     */
 
     private handleMousedown(evt): void {
+        evt.preventDefault();
         if (this.state.activeTool !== null) {
             this.state.activeTool.handleMousedown(evt);
         }
@@ -137,16 +144,25 @@ export class TTImageEditor {
     private handleActiveToolChange(evt: Events.Event<ToolType | null>): void {
         let tool: ToolType | null = evt.data;
         switch (tool) {
+            case ToolType.Pencil:
+                this.setState({ activeTool: this.pencilTool });
+                this.state.activeTool.activate();
+                break;
             case ToolType.Crop:
                 this.setState({ activeTool: this.cropTool });
-                // draw the current state to canvas for activeTool
-                this.state.activeTool.draw();
+                // draw the current state to canvas
+                this.state.activeTool.activate();
                 break;
             default:
                 this.clearToolCanvas();
                 this.toolCanvas.style.cursor = "default";
                 this.setState({ activeTool: null });
         }
+    }
+
+    // TODO cropping source image overwrites pencil drawing .. maybe need a third canvas for drawing only?
+    private handlePencilDrawingFinished(evt): void {
+        this.imageCtx.drawImage(this.toolCanvas, 0, 0);
     }
 
     private handleCropRectVisibility(evt): void {
