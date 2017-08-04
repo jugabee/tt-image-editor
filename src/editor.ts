@@ -75,7 +75,7 @@ export class TTImageEditor {
     private addListeners(): void {
         this.toolbar.onActiveToolChange.addListener( (evt) => this.handleActiveToolChange(evt));
         this.toolbar.onCropApply.addListener( (evt) => this.handleCropApply(evt));
-        this.toolbar.onJpegSaved.addListener( (evt) => this.handleJpegSaved(evt));
+        this.toolbar.onSaveImage.addListener( (evt) => this.handleSaveImage(evt));
 
         this.cropTool.onCropRectVisibility.addListener( (evt) => this.handleCropRectVisibility(evt));
 
@@ -187,8 +187,13 @@ export class TTImageEditor {
         this.draw();
     }
 
-    private handleJpegSaved(evt): void {
-        console.log(evt.data);
+    private handleSaveImage(evt): void {
+        let img: HTMLImageElement = new Image();
+        img.onload = () => {
+            this.container.innerHTML = "";
+            this.container.appendChild(img);
+        }
+        img.src = this.imageCanvas.toDataURL();
     }
 
     private draw(): void {

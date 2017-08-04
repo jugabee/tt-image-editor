@@ -11,13 +11,13 @@ interface ToolbarState {
 export class Toolbar {
     private toolbar: DocumentFragment = document.createDocumentFragment();
     private applyBtn: HTMLElement;
-    private saveJpegBtn: HTMLElement;
+    private saveBtn: HTMLElement;
     private cropBtn: HTMLElement;
     private container: DocumentFragment;
     private state: ToolbarState = {
         activeTool: null
     }
-    onJpegSaved: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
+    onSaveImage: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
     onCropApply: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
     onActiveToolChange: Events.Dispatcher<ToolType | null> = Events.Dispatcher.createEventDispatcher();
 
@@ -34,16 +34,16 @@ export class Toolbar {
         element.id = "tt-image-editor-toolbar";
         element.innerHTML = `<button id="crop-btn">Crop</button>
                              <button id="apply-btn" style="display:none">Apply</button>
-                             <button id="save-jpeg-btn" style="display:none">Save jpeg</button>`;
+                             <button id="save-btn">Save</button>`;
         this.toolbar.appendChild(element);
         this.applyBtn = this.toolbar.querySelector("#apply-btn") as HTMLElement;
-        this.saveJpegBtn = this.toolbar.querySelector("#save-jpeg-btn") as HTMLElement;
+        this.saveBtn = this.toolbar.querySelector("#save-btn") as HTMLElement;
         this.cropBtn = this.toolbar.querySelector("#crop-btn") as HTMLElement;
     }
 
     private addListeners(): void {
         this.applyBtn.addEventListener("click", (evt) => this.handleApplyBtn(evt));
-        this.saveJpegBtn.addEventListener("click", (evt) => this.handleSaveJpegBtn(evt));
+        this.saveBtn.addEventListener("click", (evt) => this.handleSaveBtn(evt));
         this.cropBtn.addEventListener("click", (evt) => this.handleCropBtn(evt));
         this.onActiveToolChange.addListener((evt) => this.handleActiveToolChange(evt));
     }
@@ -77,9 +77,8 @@ export class Toolbar {
         this.onActiveToolChange.emit({ data: null });
     }
 
-    private handleSaveJpegBtn(evt): void {
-        // this.canvas.toDataURL("image/jpeg", 1.0)
-        this.onJpegSaved.emit({ data: true });
+    private handleSaveBtn(evt): void {
+        this.onSaveImage.emit({ data: true });
     }
 
     private handleActiveToolChange(evt) {
