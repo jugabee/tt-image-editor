@@ -22,6 +22,8 @@ export class TTImageEditor {
     private imageCtx: CanvasRenderingContext2D;
     private toolCanvas: HTMLCanvasElement;
     private toolCtx: CanvasRenderingContext2D;
+    private bufferCanvas: HTMLCanvasElement = document.createElement("canvas");
+    private bufferCtx: CanvasRenderingContext2D;
     private editor: DocumentFragment = document.createDocumentFragment();
     private readonly DEF_EDITOR_ID: string = "tt-image-editor";
     private readonly DEF_CANVAS_WIDTH: number = 800;
@@ -73,8 +75,16 @@ export class TTImageEditor {
         this.setCanvasSize(this.img.naturalWidth, this.img.naturalHeight);
         this.toolCtx = this.toolCanvas.getContext("2d");
         this.imageCtx = this.imageCanvas.getContext("2d");
+        this.bufferCtx = this.bufferCanvas.getContext("2d");
         this.setState({ imgW: this.img.naturalWidth, imgH: this.img.naturalHeight });
-        this.draw();
+        // draw initial imageCanvas from source image TODO place in method
+        this.imageCtx.drawImage(
+            this.img,
+            this.state.imgX, this.state.imgY,
+            this.state.imgW, this.state.imgH,
+            0, 0,
+            this.state.imgW, this.state.imgH
+        );
     }
 
     private addListeners(): void {
@@ -121,7 +131,6 @@ export class TTImageEditor {
     /**
     * Handle mouse events with abstract activeTool
     */
-
     private handleMousedown(evt): void {
         evt.preventDefault();
         if (this.state.activeTool !== null) {
@@ -160,7 +169,7 @@ export class TTImageEditor {
         }
     }
 
-    // TODO cropping source image overwrites pencil drawing .. maybe need a third canvas for drawing only?
+    // TODO could store state of each pencil drawing here for undo history
     private handlePencilDrawingFinished(evt): void {
         this.imageCtx.drawImage(this.toolCanvas, 0, 0);
     }
@@ -187,16 +196,8 @@ export class TTImageEditor {
     */
     private handleCropApply(evt): void {
         let { x, y, w, h } = this.cropTool.getCropRect();
-        /**
-        * imgX and imgY are added to, not re-assigned. Initially the dimensions
-        * of the canvas match that of the source image, but on subsequent crops
-        * the canvas size changes. We need to keep track of the offset to
-        * determine what piece of the image to draw to the canvas based on
-        * the crop tools x,y canvas position.
-        */
         this.setState({
-            imgX: this.state.imgX += x,
-            imgY: this.state.imgY += y,
+            imgX: x, imgY: y,
             imgW: w, imgH: h
         });
         this.cropTool.resetState();
@@ -213,15 +214,22 @@ export class TTImageEditor {
     }
 
     private draw(): void {
-        this.clearImageCanvas();
-        this.setCanvasSize(this.state.imgW, this.state.imgH);
-        this.imageCtx.drawImage(
-            this.img,
+        /**
+        * Because canvas is cleared when resized, use a buffer canvas to
+        * transfer the cropped image to, then resize image canvas to desired
+        * size and finally transfer the image from the buffer to image canvas.
+        */
+        this.bufferCanvas.width = this.state.imgW;
+        this.bufferCanvas.height = this.state.imgH;
+        this.bufferCtx.drawImage(
+            this.imageCanvas,
             this.state.imgX, this.state.imgY,
             this.state.imgW, this.state.imgH,
             0, 0,
             this.state.imgW, this.state.imgH
         );
+        this.setCanvasSize(this.state.imgW, this.state.imgH);
+        this.imageCtx.drawImage(this.bufferCanvas, 0, 0);
     }
 
     /**
