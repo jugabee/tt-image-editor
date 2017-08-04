@@ -1,14 +1,20 @@
 import * as Events from "./event";
 import { Toolbar, ToolType } from "./toolbar";
-import { CropTool } from "./crop-tool";
+import { CropTool, Rect } from "./crop-tool";
 import { Tool } from "./tool";
 
 interface CanvasState {
     activeTool: Tool | null;
+    imgX: number;
+    imgY: number;
+    imgW: number;
+    imgH: number;
+    ratio: number;
 }
 
 export class TTImageEditor {
     private container: HTMLElement;
+    private img: HTMLImageElement;
     private toolbar: Toolbar;
     private cropTool: CropTool;
     private imageCanvas: HTMLCanvasElement;
@@ -17,18 +23,23 @@ export class TTImageEditor {
     private toolCtx: CanvasRenderingContext2D;
     private editor: DocumentFragment = document.createDocumentFragment();
     private readonly DEF_EDITOR_ID: string = "tt-image-editor";
-    private readonly DEF_CLEAR_COLOR = "white";
-    private readonly DEF_CANVAS_HEIGHT: number = 100;
-    private readonly DEF_CANVAS_WIDTH: number = 100;
-    private debug: boolean = false;
+    private readonly DEF_CLEAR_COLOR = "black";
+    private readonly DEF_CANVAS_WIDTH: number = 800;
+    private readonly DEF_CANVAS_HEIGHT: number = 436;
+    private debug: boolean = true;
     private state: CanvasState = {
-        activeTool: null
+        activeTool: null,
+        imgX: 0,
+        imgY: 0,
+        imgW: 0,
+        imgH: 0,
+        ratio: 1
     }
 
     constructor(container: HTMLElement, img: HTMLImageElement) {
         this.container = container;
+        this.img = img;
         this.render();
-        this.init(img);
         this.toolbar = new Toolbar(this.editor);
         this.cropTool = new CropTool(this.toolCanvas);
         this.addListeners();
@@ -54,21 +65,18 @@ export class TTImageEditor {
         this.editor.appendChild(element);
         this.imageCanvas = this.editor.querySelector("#tt-image-editor-canvas-image") as HTMLCanvasElement;
         this.toolCanvas = this.editor.querySelector("#tt-image-editor-canvas-tools") as HTMLCanvasElement;
-    }
-
-    private init(img: HTMLImageElement): void {
+        this.setCanvasSize(this.img.naturalWidth, this.img.naturalHeight);
         if (this.imageCanvas.getContext && this.toolCanvas.getContext) {
-            this.setCanvasSize(img.naturalWidth, img.naturalHeight);
             this.toolCtx = this.toolCanvas.getContext("2d");
             this.imageCtx = this.imageCanvas.getContext("2d");
-            this.imageCtx.clearRect(0, 0, this.imageCanvas.width, this.imageCanvas.height);
-            this.imageCtx.drawImage(img, 0, 0);
+            this.setState({ imgW: this.img.naturalWidth, imgH: this.img.naturalHeight });
+            this.draw();
         }
     }
 
     private addListeners(): void {
         this.toolbar.onActiveToolChange.addListener( (evt) => this.handleActiveToolChange(evt));
-        this.toolbar.onPngSaved.addListener( (evt) => this.handlePngSaved(evt));
+        this.toolbar.onCropApply.addListener( (evt) => this.handleCropApply(evt));
         this.toolbar.onJpegSaved.addListener( (evt) => this.handleJpegSaved(evt));
 
     	this.toolCanvas.addEventListener("mousedown", (evt) => this.handleMousedown(evt), false);
@@ -138,16 +146,45 @@ export class TTImageEditor {
     }
 
     private clearToolCanvas(): void {
-        this.toolCtx.fillStyle = this.DEF_CLEAR_COLOR;
         this.toolCtx.clearRect(0, 0, this.toolCanvas.width, this.toolCanvas.height);
     }
 
-    private handlePngSaved(evt): void {
-        console.log(evt.data);
+    private clearImageCanvas(): void {
+        this.imageCtx.clearRect(0, 0, this.imageCanvas.width, this.imageCanvas.height);
+    }
+
+    private handleCropApply(evt): void {
+        let { x, y, w, h } = this.cropTool.getCropRect();
+        /**
+        * imgX and imgY are added to, not re-assigned. Initially the dimensions
+        * of the canvas match that of the source image, but on subsequent crops
+        * the canvas size changes. We need to keep track of the offset to
+        * determine what piece of the image to draw to the canvas based on
+        * the crop tools x,y canvas position.
+        */
+        this.setState({
+            imgX: this.state.imgX += x,
+            imgY: this.state.imgY += y,
+            imgW: w, imgH: h
+        });
+        this.cropTool.resetState();
+        this.draw();
     }
 
     private handleJpegSaved(evt): void {
         console.log(evt.data);
+    }
+
+    private draw(): void {
+        this.clearImageCanvas();
+        this.setCanvasSize(this.state.imgW, this.state.imgH);
+        this.imageCtx.drawImage(
+            this.img,
+            this.state.imgX, this.state.imgY,
+            this.state.imgW, this.state.imgH,
+            0, 0,
+            this.state.imgW, this.state.imgH
+        );
     }
 
     /**
@@ -160,5 +197,18 @@ export class TTImageEditor {
         this.imageCanvas.height = h;
         this.toolCanvas.width = w;
         this.toolCanvas.height = h;
+    }
+
+    /**
+    * Conserve aspect ratio of the orignal region. Useful when shrinking/enlarging
+    * images to fit into a certain area.
+    */
+    private calculateAspectRatio(
+        srcWidth: number, srcHeight: number,
+        maxWidth: number, maxHeight: number): { width: number, height: number, ratio: number} {
+
+        let ratio = Math.min(maxWidth / srcWidth, maxHeight / srcHeight);
+
+        return { width: srcWidth * ratio, height: srcHeight * ratio, ratio: ratio };
     }
 }

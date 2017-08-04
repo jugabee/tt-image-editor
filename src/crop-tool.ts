@@ -20,6 +20,13 @@ interface Point {
     y: number
 };
 
+export interface Rect {
+    x: number,
+    y: number,
+    w: number,
+    h: number
+};
+
 enum Knob {
     TL,
     TR,
@@ -30,12 +37,17 @@ enum Knob {
 export class CropTool extends Tool{
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
-    private readonly DEF_STROKE_COLOR = "blue";
-    private readonly DEF_RESET_COLOR = "rgba(0, 0, 0, 0.4)";
-    private readonly DEF_KNOB_FILL_COLOR = "rgb(255, 255, 255)";
+    private readonly DEF_TEXT_FILL = "white";
+    private readonly DEF_STROKE = "blue";
+    private readonly DEF_RESET_FILL = "rgba(0, 0, 0, 0.4)";
+    private readonly DEF_KNOB_FILL = "rgb(255, 255, 255)";
     private readonly DEF_KNOB_RADIUS = 5;
-    private readonly DEF_STROKE_WIDTH = 1;
-    private debug: boolean = true;
+    private readonly DEF_LINE_W = 1;
+    // rounded rectangle at center of crop tool that displays dimensions
+    private readonly DEF_RRECT_W = 72;
+    private readonly DEF_RRECT_H = 18;
+    private readonly DEF_RRECT_R = 5;
+    private debug: boolean = false;
     state: CropToolState = {
         isVisible: false,
         isMousedown: false,
@@ -57,8 +69,9 @@ export class CropTool extends Tool{
         this.ctx = canvas.getContext("2d");
     }
 
-    private resetState(): void {
+    resetState(): void {
         this.setState({
+            isVisible: false,
             isMousedown: false,
             isMousedrag: false,
             isMovable: false,
@@ -205,7 +218,7 @@ export class CropTool extends Tool{
     }
 
     private resetCanvas(): void {
-        this.ctx.fillStyle = this.DEF_RESET_COLOR;
+        this.ctx.fillStyle = this.DEF_RESET_FILL;
         // clear the toolCanvas and refill with default transparent black
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -221,9 +234,11 @@ export class CropTool extends Tool{
                 this.state.w,
                 this.state.h
             );
+            // draw text dimensions of crop rect in center of rectangle
+            this.drawDimensions();
             // stroke the cleared rect area
-            this.ctx.lineWidth = this.DEF_STROKE_WIDTH;
-            this.ctx.strokeStyle = this.DEF_STROKE_COLOR;
+            this.ctx.lineWidth = this.DEF_LINE_W;
+            this.ctx.strokeStyle = this.DEF_STROKE;
             this.ctx.strokeRect(
                 this.state.x,
                 this.state.y,
@@ -231,6 +246,27 @@ export class CropTool extends Tool{
                 this.state.h
             );
             this.drawKnobs();
+        }
+    }
+
+    private drawDimensions() {
+        // don't draw until crop rectangle is large enough to contain dimensions
+        if (Math.abs(this.state.w) >= this.DEF_RRECT_W && Math.abs(this.state.h) >= this.DEF_RRECT_H) {
+            let { x, y } = this.getLeftTopValues();
+            this.drawRoundedRect(
+                x + Math.abs(this.state.w / 2) - (this.DEF_RRECT_W / 2),
+                y + Math.abs(this.state.h / 2) - (this.DEF_RRECT_H / 2),
+                this.DEF_RRECT_W, this.DEF_RRECT_H, this.DEF_RRECT_R
+            );
+            this.ctx.font = "12px sans-serif";
+            this.ctx.textBaseline = "middle";
+            this.ctx.fillStyle = this.DEF_TEXT_FILL;
+            let text = this.ctx.measureText(Math.abs(this.state.w) + ", " + Math.abs(this.state.h));
+            this.ctx.fillText(
+                Math.abs(this.state.w) + ", " + Math.abs(this.state.h),
+                x + Math.abs(this.state.w / 2) - (text.width / 2),
+                y + Math.abs(this.state.h / 2)
+            );
         }
     }
 
@@ -262,29 +298,36 @@ export class CropTool extends Tool{
     }
 
     private drawCircle(x, y, radius) {
-        this.ctx.fillStyle = this.DEF_KNOB_FILL_COLOR;
-        this.ctx.strokeStyle = this.DEF_STROKE_COLOR;
+        this.ctx.fillStyle = this.DEF_KNOB_FILL;
+        this.ctx.strokeStyle = this.DEF_STROKE;
         this.ctx.beginPath();
         this.ctx.arc(x, y, radius, 0, 2 * Math.PI);
         this.ctx.fill();
         this.ctx.stroke();
     }
 
+    private drawRoundedRect(x: number, y: number, w: number, h: number, r: number){
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + r, y);
+        this.ctx.lineTo(x + w - r, y);
+        this.ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        this.ctx.lineTo(x + w, y + h - r);
+        this.ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        this.ctx.lineTo(x + r, y + h);
+        this.ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        this.ctx.lineTo(x, y + r);
+        this.ctx.quadraticCurveTo(x, y, x + r, y);
+        this.ctx.fill();
+    }
+
     private isMouseoverRect(evt): boolean {
         let mouse = this.getMousePosition(evt);
-        /**
-        * If the rectangular crop was drawn from right to left, or bottom to top,
-        * the width or height of the rectangle will be negative.
-        * In such cases, add negative width, height to x, y to find the left
-        * and top values of the rectangle.
-        */
-        let left = (this.state.w < 0) ? this.state.x + this.state.w : this.state.x;
-        let top = (this.state.h < 0) ? this.state.y + this.state.h : this.state.y;
+        let { x, y } = this.getLeftTopValues();
         if(
-            mouse.x > left &&
-            mouse.y > top &&
-            mouse.x < (left + Math.abs(this.state.w)) &&
-            mouse.y < (top + Math.abs(this.state.h))) {
+            mouse.x > x &&
+            mouse.y > y &&
+            mouse.x < (x + Math.abs(this.state.w)) &&
+            mouse.y < (y + Math.abs(this.state.h))) {
             return true;
         } else {
             return false;
@@ -322,11 +365,29 @@ export class CropTool extends Tool{
         }
     }
 
+    // used by editor to crop from a source image
+    getCropRect(): Rect {
+        let { x, y } = this.getLeftTopValues();
+        return { x: x, y: y, w: Math.abs(this.state.w), h: Math.abs(this.state.h) };
+    }
+
     private getMousePosition(evt): Point {
         let rect = this.canvas.getBoundingClientRect();
         let offsetX = evt.clientX - rect.left;
         let offsetY = evt.clientY - rect.top;
         return { x: offsetX, y: offsetY };
+    }
+
+    /**
+    * If the rectangular crop was drawn from right to left, or bottom to top,
+    * the width or height of the rectangle will be negative. Add negative
+    * width, height to x, y to find the left and top values of the rectangle.
+    */
+    private getLeftTopValues(): Point {
+        let left = (this.state.w < 0) ? this.state.x + this.state.w : this.state.x;
+        let top = (this.state.h < 0) ? this.state.y + this.state.h : this.state.y;
+        let position: Point = { x: left, y: top };
+        return position;
     }
 
     private dist(p1: Point, p2: Point) {
