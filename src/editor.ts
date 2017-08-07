@@ -1,44 +1,36 @@
 import * as Events from "./event";
 import { Toolbar, ToolType } from "./toolbar";
-import { CropTool, Rect } from "./crop-tool";
-import { PencilTool } from "./pencil-tool";
-import { ZoomTool } from "./zoom-tool";
-import { Tool } from "./tool";
 
 interface CanvasState {
-    activeTool: Tool | null;
     imgX: number;
     imgY: number;
     imgW: number;
     imgH: number;
-    imgZoom: number;
+    imgZoomFactor: number;
 }
 
 export class TTImageEditor {
     private container: HTMLElement;
     private img: HTMLImageElement;
     private toolbar: Toolbar;
-    private cropTool: CropTool;
-    private pencilTool: PencilTool;
-    private zoomTool: ZoomTool;
     private imageCanvas: HTMLCanvasElement;
     private imageCtx: CanvasRenderingContext2D;
     private toolCanvas: HTMLCanvasElement;
-    private toolCtx: CanvasRenderingContext2D;
     private inMemoryCanvas: HTMLCanvasElement = document.createElement("canvas");
     private inMemoryCtx: CanvasRenderingContext2D;
     private editor: DocumentFragment = document.createDocumentFragment();
     private readonly DEF_EDITOR_ID: string = "tt-image-editor";
     private readonly DEF_CANVAS_WIDTH: number = 800;
     private readonly DEF_CANVAS_HEIGHT: number = 436;
+    private readonly DEF_Z_IN_FACTOR: number = 1.25;
+    private readonly DEF_Z_OUT_FACTOR: number = .8;
     private debug: boolean = false;
     private state: CanvasState = {
-        activeTool: null,
         imgX: 0,
         imgY: 0,
         imgW: 0,
         imgH: 0,
-        imgZoom: 1
+        imgZoomFactor: 1
     }
 
     constructor(container: HTMLElement, img: HTMLImageElement) {
@@ -47,9 +39,6 @@ export class TTImageEditor {
         this.render();
         this.initCanvases();
         this.toolbar = new Toolbar(this.editor);
-        this.cropTool = new CropTool(this.toolCanvas);
-        this.pencilTool = new PencilTool(this.toolCanvas);
-        this.zoomTool = new ZoomTool(this.toolCanvas);
         this.addListeners();
         this.attach();
     }
@@ -78,11 +67,8 @@ export class TTImageEditor {
         this.imageCanvas = this.editor.querySelector("#tt-image-editor-canvas-image") as HTMLCanvasElement;
         this.toolCanvas = this.editor.querySelector("#tt-image-editor-canvas-tools") as HTMLCanvasElement;
         this.setCanvasSize(this.img.naturalWidth, this.img.naturalHeight);
-        this.toolCtx = this.toolCanvas.getContext("2d");
         this.imageCtx = this.imageCanvas.getContext("2d");
         this.inMemoryCtx = this.inMemoryCanvas.getContext("2d");
-        this.toolCanvas.style.width = this.img.naturalWidth.toString() + "px";
-        this.imageCanvas.style.width = this.img.naturalWidth.toString() + "px";
         this.setState({ imgW: this.img.naturalWidth, imgH: this.img.naturalHeight });
         // draw initial imageCanvas from source image
         this.imageCtx.drawImage(
@@ -95,13 +81,11 @@ export class TTImageEditor {
     }
 
     private addListeners(): void {
-        this.toolbar.onActiveToolChange.addListener( (evt) => this.handleActiveToolChange(evt));
         this.toolbar.onCropApply.addListener( (evt) => this.handleCropApply(evt));
         this.toolbar.onSaveImage.addListener( (evt) => this.handleSaveImage(evt));
 
-        this.cropTool.onCropRectVisibility.addListener( (evt) => this.handleCropRectVisibility(evt));
-        this.pencilTool.onPencilDrawingFinished.addListener( (evt) => this.handlePencilDrawingFinished(evt));
-        this.zoomTool.onZoom.addListener( (evt) => this.handleZoomTool(evt));
+        this.toolbar.pencil.onPencilDrawingFinished.addListener( (evt) => this.handlePencilDrawingFinished(evt));
+        this.toolbar.zoom.onZoom.addListener( (evt) => this.handleZoomTool(evt));
 
     	this.toolCanvas.addEventListener("mousedown", (evt) => this.handleMousedown(evt), false);
     	this.toolCanvas.addEventListener("mousemove", (evt) => this.handleMousemove(evt), false);
@@ -140,45 +124,24 @@ export class TTImageEditor {
     * Handle mouse events with abstract activeTool
     */
     private handleMousedown(evt): void {
+        let activeTool = this.toolbar.getActiveTool();
         // TODO need this? evt.preventDefault();
-        if (this.state.activeTool !== null) {
-            this.state.activeTool.handleMousedown(evt);
+        if (activeTool !== null) {
+            activeTool.handleMousedown(evt);
         }
     }
 
     private handleMousemove(evt): void {
-        if (this.state.activeTool !== null) {
-            this.state.activeTool.handleMousemove(evt);
+        let activeTool = this.toolbar.getActiveTool();
+        if (activeTool !== null) {
+            activeTool.handleMousemove(evt);
         }
     }
 
     private handleMouseup(evt): void {
-        if (this.state.activeTool !== null) {
-            this.state.activeTool.handleMouseup(evt);
-        }
-    }
-
-    private handleActiveToolChange(evt: Events.Event<ToolType | null>): void {
-        let tool: ToolType | null = evt.data;
-        switch (tool) {
-            case ToolType.Zoom:
-                this.setState({ activeTool: this.zoomTool });
-                // TODO activate doesn't make sense as a name
-                this.state.activeTool.activate();
-                break;
-            case ToolType.Pencil:
-                this.setState({ activeTool: this.pencilTool });
-                this.state.activeTool.activate();
-                break;
-            case ToolType.Crop:
-                this.setState({ activeTool: this.cropTool });
-                // draw the current state to canvas
-                this.state.activeTool.activate();
-                break;
-            default:
-                this.clearToolCanvas();
-                this.toolCanvas.style.cursor = "default";
-                this.setState({ activeTool: null });
+        let activeTool = this.toolbar.getActiveTool();
+        if (activeTool !== null) {
+            activeTool.handleMouseup(evt);
         }
     }
 
@@ -189,22 +152,16 @@ export class TTImageEditor {
 
     private handleZoomTool(evt): void {
         if (evt.data.ctrlKey) {
-            this.scaleCanvasCss(.8);
+            this.setState( {
+                imgZoomFactor: this.state.imgZoomFactor * this.DEF_Z_OUT_FACTOR,
+            });
+            this.scaleCanvasStyle(this.DEF_Z_OUT_FACTOR);
         } else {
-            this.scaleCanvasCss(1.25);
+            this.setState( {
+                imgZoomFactor: this.state.imgZoomFactor * this.DEF_Z_IN_FACTOR,
+            });
+            this.scaleCanvasStyle(this.DEF_Z_IN_FACTOR);
         }
-    }
-
-    private handleCropRectVisibility(evt): void {
-        if (evt.data === true) {
-            this.toolbar.showCropApplyBtn();
-        } else {
-            this.toolbar.hideCropApplyBtn();
-        }
-    }
-
-    private clearToolCanvas(): void {
-        this.toolCtx.clearRect(0, 0, this.toolCanvas.width, this.toolCanvas.height);
     }
 
     private clearImageCanvas(): void {
@@ -212,15 +169,15 @@ export class TTImageEditor {
     }
 
     /**
-    * Redraw the imageCanvas based on a cropTool's rect
+    * Redraw the imageCanvas based on a crop tool's rect
     */
     private handleCropApply(evt): void {
-        let { x, y, w, h } = this.cropTool.getCropRect();
+        let { x, y, w, h } = this.toolbar.crop.getCropRect();
         this.setState({
             imgX: x, imgY: y,
             imgW: w, imgH: h
         });
-        this.cropTool.resetState();
+        this.toolbar.crop.resetState();
         this.draw();
     }
 
@@ -233,7 +190,7 @@ export class TTImageEditor {
         img.src = this.imageCanvas.toDataURL();
     }
 
-    private draw(zoomFactor?: number): void {
+    private draw(): void {
         /**
         * Because canvas is cleared when resized, use a inMemory canvas to
         * transfer the cropped image to, then resize image canvas to desired
@@ -263,12 +220,13 @@ export class TTImageEditor {
         this.imageCanvas.height = h;
         this.toolCanvas.width = w;
         this.toolCanvas.height = h;
+        this.imageCanvas.style.width = w.toString() + "px";
+        this.toolCanvas.style.width = w.toString() + "px";
     }
 
-    private scaleCanvasCss(zoomFactor: number) {
-        let w1: number = parseInt(this.imageCanvas.style.width, 10);
-        let w2: number = parseInt(this.toolCanvas.style.width, 10);
+    private scaleCanvasStyle(zoomFactor: number) {
+        let w1: number = this.imageCanvas.getBoundingClientRect().width;
         this.imageCanvas.style.width = (zoomFactor * w1).toString() + "px";
-        this.toolCanvas.style.width = (zoomFactor * w2).toString() + "px";
+        this.toolCanvas.style.width = (zoomFactor * w1).toString() + "px";
     }
 }

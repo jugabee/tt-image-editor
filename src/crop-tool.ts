@@ -385,9 +385,14 @@ export class CropTool extends Tool{
 
     private getMousePosition(evt): Point {
         let rect = this.canvas.getBoundingClientRect();
-        let offsetX = evt.clientX - rect.left;
-        let offsetY = evt.clientY - rect.top;
-        return { x: offsetX, y: offsetY };
+        let x = evt.clientX - rect.left;
+        let y = evt.clientY - rect.top;
+
+        // adjust for any scaling of the canvas element done by css
+        let sx = this.canvas.width / rect.width;
+        let sy = this.canvas.height / rect.height;
+
+        return { x: Math.round(x * sx), y: Math.round(y * sy) };
     }
 
     /**

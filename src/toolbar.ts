@@ -1,4 +1,8 @@
 import * as Events from "./event";
+import { CropTool, Rect } from "./crop-tool";
+import { PencilTool } from "./pencil-tool";
+import { ZoomTool } from "./zoom-tool";
+import { Tool } from "./tool";
 
 export enum ToolType {
     Crop,
@@ -11,6 +15,11 @@ interface ToolbarState {
 }
 
 export class Toolbar {
+    private toolCanvas: HTMLCanvasElement;
+    private toolCtx: CanvasRenderingContext2D;
+    crop: CropTool;
+    pencil: PencilTool;
+    zoom: ZoomTool;
     private toolbar: DocumentFragment = document.createDocumentFragment();
     private applyBtn: HTMLElement;
     private saveBtn: HTMLElement;
@@ -27,6 +36,11 @@ export class Toolbar {
 
     constructor(container: DocumentFragment) {
         this.container = container.querySelector("#tt-image-editor") as HTMLElement;
+        this.toolCanvas = container.querySelector("#tt-image-editor-canvas-tools") as HTMLCanvasElement;
+        this.toolCtx = this.toolCanvas.getContext("2d");
+        this.crop = new CropTool(this.toolCanvas);
+        this.pencil = new PencilTool(this.toolCanvas);
+        this.zoom = new ZoomTool(this.toolCanvas);
         this.render();
         this.addListeners();
         this.attach();
@@ -57,6 +71,7 @@ export class Toolbar {
         this.zoomBtn.addEventListener("click", (evt) => this.handleZoomBtn(evt));
         this.pencilBtn.addEventListener("click", (evt) => this.handlePencilBtn(evt));
         this.onActiveToolChange.addListener((evt) => this.handleActiveToolChange(evt));
+        this.crop.onCropRectVisibility.addListener((evt) => this.handleCropRectVisibility(evt));
     }
 
     private attach(): void {
@@ -113,7 +128,38 @@ export class Toolbar {
         this.onSaveImage.emit({ data: true });
     }
 
+    private handleCropRectVisibility(evt): void {
+        if (evt.data === true) {
+            this.showCropApplyBtn();
+        } else {
+            this.hideCropApplyBtn();
+        }
+    }
+
     private handleActiveToolChange(evt) {
         this.state.activeTool = evt.data;
+        if (evt.data !== null) {
+            this.getActiveTool().activate();
+        } else {
+            this.clearToolCanvas();
+            this.toolCanvas.style.cursor = "default";
+        }
+    }
+
+    getActiveTool(): Tool {
+        switch(this.state.activeTool) {
+            case ToolType.Crop:
+                return this.crop;
+            case ToolType.Zoom:
+                return this.zoom;
+            case ToolType.Pencil:
+                return this.pencil;
+            default:
+                return null;
+        }
+    }
+
+    private clearToolCanvas(): void {
+        this.toolCtx.clearRect(0, 0, this.toolCanvas.width, this.toolCanvas.height);
     }
 }
