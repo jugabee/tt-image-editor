@@ -2,7 +2,8 @@ import * as Events from "./event";
 
 export enum ToolType {
     Crop,
-    Pencil
+    Pencil,
+    Zoom
 }
 
 interface ToolbarState {
@@ -15,7 +16,8 @@ export class Toolbar {
     private saveBtn: HTMLElement;
     private cropBtn: HTMLElement;
     private pencilBtn: HTMLElement;
-    private container: DocumentFragment;
+    private zoomBtn: HTMLElement;
+    private container: HTMLElement;
     private state: ToolbarState = {
         activeTool: null
     }
@@ -24,7 +26,7 @@ export class Toolbar {
     onActiveToolChange: Events.Dispatcher<ToolType | null> = Events.Dispatcher.createEventDispatcher();
 
     constructor(container: DocumentFragment) {
-        this.container = container;
+        this.container = container.querySelector("#tt-image-editor") as HTMLElement;
         this.render();
         this.addListeners();
         this.attach();
@@ -35,7 +37,8 @@ export class Toolbar {
         this.toolbar = document.createDocumentFragment();
         element.id = "tt-image-editor-toolbar";
         element.style.userSelect = "none";
-        element.innerHTML = `<button id="pencil-btn">Pencil</button>
+        element.innerHTML = `<button id="zoom-btn">Zoom</button>
+                             <button id="pencil-btn">Pencil</button>
                              <button id="crop-btn">Crop</button>
                              <button id="apply-btn" style="display:none">Apply</button>
                              <button id="save-btn">Save</button>`;
@@ -44,12 +47,14 @@ export class Toolbar {
         this.saveBtn = this.toolbar.querySelector("#save-btn") as HTMLElement;
         this.cropBtn = this.toolbar.querySelector("#crop-btn") as HTMLElement;
         this.pencilBtn = this.toolbar.querySelector("#pencil-btn") as HTMLElement;
+        this.zoomBtn = this.toolbar.querySelector("#zoom-btn") as HTMLElement;
     }
 
     private addListeners(): void {
         this.applyBtn.addEventListener("click", (evt) => this.handleApplyBtn(evt));
         this.saveBtn.addEventListener("click", (evt) => this.handleSaveBtn(evt));
         this.cropBtn.addEventListener("click", (evt) => this.handleCropBtn(evt));
+        this.zoomBtn.addEventListener("click", (evt) => this.handleZoomBtn(evt));
         this.pencilBtn.addEventListener("click", (evt) => this.handlePencilBtn(evt));
         this.onActiveToolChange.addListener((evt) => this.handleActiveToolChange(evt));
     }
@@ -64,6 +69,17 @@ export class Toolbar {
 
     hideCropApplyBtn(): void {
         this.applyBtn.style.display = "none";
+    }
+
+    private handleZoomBtn(evt): void {
+        if (this.state.activeTool !== ToolType.Zoom) {
+            this.zoomBtn.classList.add("active");
+            this.onActiveToolChange.emit({ data: ToolType.Zoom });
+        } else {
+            this.hideCropApplyBtn();
+            this.zoomBtn.classList.remove("active");
+            this.onActiveToolChange.emit({ data: null });
+        }
     }
 
     private handleCropBtn(evt): void {
