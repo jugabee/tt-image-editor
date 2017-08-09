@@ -2,22 +2,30 @@ import * as Events from "./event";
 import { Tool } from "./tool";
 import * as Util from "./util";
 
-interface PencilToolState {
+interface PanToolState {
     isMousedown: boolean;
     isMousedrag: boolean;
- }
+    x: number;
+    y: number;
+    offsetX: number;
+    offsetY: number;
+}
 
-export class PencilTool extends Tool{
+export class PanTool extends Tool{
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
-    private readonly DEF_STROKE = "black";
-    private readonly DEF_RESET_FILL = "white";
     private debug: boolean = false;
-    state: PencilToolState = {
+    state: PanToolState = {
         isMousedown: false,
-        isMousedrag: false
+        isMousedrag: false,
+        x: 0,
+        y: 0,
+        offsetX: 0,
+        offsetY: 0
     }
-    onPencilDrawingFinished: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
+
+    onPanning: Events.Dispatcher<Util.Point> = Events.Dispatcher.createEventDispatcher();
+    onPanningFinished: Events.Dispatcher<Util.Point> = Events.Dispatcher.createEventDispatcher();
 
     constructor(canvas: HTMLCanvasElement) {
         super();
@@ -25,11 +33,6 @@ export class PencilTool extends Tool{
         this.ctx = canvas.getContext("2d");
     }
 
-    /* *
-    * State is updated by shallow merge in the setState method.
-    * setState takes an object parameter with valid state and merges it with
-    * the existing state object.
-    */
     private setState(obj): void {
         if (this.debug) {
             console.log("MERGE WITH", obj);
@@ -50,37 +53,31 @@ export class PencilTool extends Tool{
     }
 
     handleMousedown(evt): void {
-        let mouse = Util.getMousePosition(this.canvas, evt);
-        this.setState({ isMousedown: true });
-        this.ctx.beginPath();
-		this.ctx.moveTo(mouse.x, mouse.y);
+        let mouse: Util.Point = Util.getMousePosition(this.canvas, evt);
+        this.setState({ isMousedown: true, x: mouse.x, y: mouse.y });
     }
 
     handleMousemove(evt): void {
         if (this.state.isMousedown) {
-            let mouse = Util.getMousePosition(this.canvas, evt);
-            this.setState({ isMousedrag: true });
-            this.ctx.lineTo(mouse.x, mouse.y);
-			this.ctx.stroke();
+            let mouse: Util.Point = Util.getMousePosition(this.canvas, evt);
+            this.setState({
+                isMousedrag: true,
+                offsetX: mouse.x - this.state.x,
+                offsetY: mouse.y - this.state.y
+            });
+            this.onPanning.emit({ data: { x: this.state.offsetX, y: this.state.offsetY } });
         }
     }
 
     handleMouseup(evt): void {
         this.setState({ isMousedown: false, isMousedrag: false });
-        this.onPencilDrawingFinished.emit({ data: true });
+        this.onPanningFinished.emit({ data: { x: this.state.offsetX, y: this.state.offsetY } });
     }
 
     draw(): void { }
 
     activate(): void {
-        this.canvas.style.cursor = "default";
-        this.resetCanvas();
-    }
-
-    private resetCanvas(): void {
-        this.ctx.fillStyle = this.DEF_RESET_FILL;
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.ctx.strokeStyle = this.DEF_STROKE;
+        this.canvas.style.cursor = "grab";
     }
 
 }

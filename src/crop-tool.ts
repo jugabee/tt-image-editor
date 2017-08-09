@@ -1,5 +1,6 @@
 import * as Events from "./event";
 import { Tool } from "./tool";
+import * as Util from "./util";
 
 interface CropToolState {
     isVisible: boolean;
@@ -15,11 +16,6 @@ interface CropToolState {
     w: number;
     h: number;
 }
-
-interface Point {
-    x: number,
-    y: number
-};
 
 export interface Rect {
     x: number,
@@ -114,7 +110,7 @@ export class CropTool extends Tool{
 
     handleMousedown(evt): void {
         this.setState({ isMousedown: true });
-        let mouse = this.getMousePosition(evt);
+        let mouse = Util.getMousePosition(this.canvas, evt);
         if (this.state.isResizable) {
             return;
         } else if (this.state.isMovable) {
@@ -132,7 +128,7 @@ export class CropTool extends Tool{
 
     handleMousemove(evt): void {
         if (this.state.isMousedown) {
-            let mouse = this.getMousePosition(evt);
+            let mouse = Util.getMousePosition(this.canvas, evt);
             this.setState({ isMousedrag: true });
             // set state for resizing the rectangle
             if (this.state.isResizable) {
@@ -175,7 +171,7 @@ export class CropTool extends Tool{
         this.setState({ isMousedown: false, isMousedrag: false });
     }
 
-    handleNewRect(mouse: Point): void {
+    handleNewRect(mouse: Util.Point): void {
         this.setState({
             isVisible: true,
             w: mouse.x - this.state.x,
@@ -183,7 +179,7 @@ export class CropTool extends Tool{
         });
     }
 
-    handleMove(mouse: Point): void {
+    handleMove(mouse: Util.Point): void {
         // set the x and y state to the offset mouse position; w and h are constant
         this.setState({
             x: (mouse.x - this.state.moveOffsetX),
@@ -191,7 +187,7 @@ export class CropTool extends Tool{
         });
     }
 
-    handleResize(mouse: Point): void {
+    handleResize(mouse: Util.Point): void {
         switch (this.state.activeKnob) {
             case Knob.TL:
                 this.setState({
@@ -333,7 +329,7 @@ export class CropTool extends Tool{
     }
 
     private isMouseoverRect(evt): boolean {
-        let mouse = this.getMousePosition(evt);
+        let mouse = Util.getMousePosition(this.canvas, evt);
         let { x, y } = this.getLeftTopValues();
         if(
             mouse.x > x &&
@@ -347,28 +343,28 @@ export class CropTool extends Tool{
     }
 
     private isMouseoverKnob(evt): boolean {
-        let mouse = this.getMousePosition(evt);
-        let pTL: Point = { x: this.state.x, y: this.state.y };
-        let pTR: Point = { x: this.state.x + this.state.w, y: this.state.y };
-        let pBL: Point = { x: this.state.x, y: this.state.y + this.state.h };
-        let pBR: Point = { x: this.state.x + this.state.w, y: this.state.y + this.state.h };
+        let mouse = Util.getMousePosition(this.canvas, evt);
+        let pTL: Util.Point = { x: this.state.x, y: this.state.y };
+        let pTR: Util.Point = { x: this.state.x + this.state.w, y: this.state.y };
+        let pBL: Util.Point = { x: this.state.x, y: this.state.y + this.state.h };
+        let pBR: Util.Point = { x: this.state.x + this.state.w, y: this.state.y + this.state.h };
         // top left knob
-        if (this.dist(mouse, pTL) <= this.DEF_KNOB_RADIUS) {
+        if (Util.dist(mouse, pTL) <= this.DEF_KNOB_RADIUS) {
             this.setState({ activeKnob: Knob.TL });
             return true;
         }
         // top right knob
-        else if (this.dist(mouse, pTR) <= this.DEF_KNOB_RADIUS) {
+        else if (Util.dist(mouse, pTR) <= this.DEF_KNOB_RADIUS) {
             this.setState({ activeKnob: Knob.TR });
             return true;
         }
         // bottom left knob
-        else if (this.dist(mouse, pBL) <= this.DEF_KNOB_RADIUS) {
+        else if (Util.dist(mouse, pBL) <= this.DEF_KNOB_RADIUS) {
             this.setState({ activeKnob: Knob.BL });
             return true;
         }
         // bottom right knob
-        else if (this.dist(mouse, pBR) <= this.DEF_KNOB_RADIUS) {
+        else if (Util.dist(mouse, pBR) <= this.DEF_KNOB_RADIUS) {
             this.setState({ activeKnob: Knob.BR });
             return true;
         }
@@ -383,34 +379,16 @@ export class CropTool extends Tool{
         return { x: x, y: y, w: Math.abs(this.state.w), h: Math.abs(this.state.h) };
     }
 
-    private getMousePosition(evt): Point {
-        let rect = this.canvas.getBoundingClientRect();
-        let x = evt.clientX - rect.left;
-        let y = evt.clientY - rect.top;
-
-        // adjust for any scaling of the canvas element done by css
-        let sx = this.canvas.width / rect.width;
-        let sy = this.canvas.height / rect.height;
-
-        return { x: Math.round(x * sx), y: Math.round(y * sy) };
-    }
-
     /**
     * If the rectangular crop was drawn from right to left, or bottom to top,
     * the width or height of the rectangle will be negative. Add negative
     * width, height to x, y to find the left and top values of the rectangle.
     */
-    private getLeftTopValues(): Point {
+    private getLeftTopValues(): Util.Point {
         let left = (this.state.w < 0) ? this.state.x + this.state.w : this.state.x;
         let top = (this.state.h < 0) ? this.state.y + this.state.h : this.state.y;
-        let position: Point = { x: left, y: top };
+        let position: Util.Point = { x: left, y: top };
         return position;
     }
 
-    private dist(p1: Point, p2: Point) {
-        return Math.sqrt(
-            (p2.x - p1.x) * (p2.x - p1.x) +
-            (p2.y - p1.y) * (p2.y - p1.y)
-        );
-    }
 }

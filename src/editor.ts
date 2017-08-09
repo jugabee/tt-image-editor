@@ -1,12 +1,16 @@
 import * as Events from "./event";
 import { Toolbar, ToolType } from "./toolbar";
+import * as Util from "./util";
 
 interface CanvasState {
     imgX: number;
     imgY: number;
     imgW: number;
     imgH: number;
-    imgZoomFactor: number;
+    panX: number;
+    panY: number;
+    translateX: number;
+    translateY: number;
 }
 
 export class TTImageEditor {
@@ -24,13 +28,16 @@ export class TTImageEditor {
     private readonly DEF_CANVAS_HEIGHT: number = 436;
     private readonly DEF_Z_IN_FACTOR: number = 1.25;
     private readonly DEF_Z_OUT_FACTOR: number = .8;
-    private debug: boolean = false;
+    private debug: boolean = true;
     private state: CanvasState = {
         imgX: 0,
         imgY: 0,
         imgW: 0,
         imgH: 0,
-        imgZoomFactor: 1
+        panX: 0,
+        panY: 0,
+        translateX: 0,
+        translateY: 0
     }
 
     constructor(container: HTMLElement, img: HTMLImageElement) {
@@ -66,14 +73,15 @@ export class TTImageEditor {
     private initCanvases(): void {
         this.imageCanvas = this.editor.querySelector("#tt-image-editor-canvas-image") as HTMLCanvasElement;
         this.toolCanvas = this.editor.querySelector("#tt-image-editor-canvas-tools") as HTMLCanvasElement;
-        this.setCanvasSize(this.img.naturalWidth, this.img.naturalHeight);
+        //this.setCanvasSize(this.img.naturalWidth, this.img.naturalHeight);
         this.imageCtx = this.imageCanvas.getContext("2d");
         this.inMemoryCtx = this.inMemoryCanvas.getContext("2d");
         this.setState({ imgW: this.img.naturalWidth, imgH: this.img.naturalHeight });
         // draw initial imageCanvas from source image
+        let { x, y } = Util.getCenteredImagePoint(this.imageCanvas, this.img);
         this.imageCtx.drawImage(
             this.img,
-            this.state.imgX, this.state.imgY,
+            0, 0,
             this.state.imgW, this.state.imgH,
             0, 0,
             this.state.imgW, this.state.imgH
@@ -85,7 +93,8 @@ export class TTImageEditor {
         this.toolbar.onSaveImage.addListener( (evt) => this.handleSaveImage(evt));
 
         this.toolbar.pencil.onPencilDrawingFinished.addListener( (evt) => this.handlePencilDrawingFinished(evt));
-        this.toolbar.zoom.onZoom.addListener( (evt) => this.handleZoomTool(evt));
+        this.toolbar.pan.onPanning.addListener( (evt) => this.handlePanning(evt));
+        this.toolbar.pan.onPanningFinished.addListener( (evt) => this.handlePanningFinished(evt));
 
     	this.toolCanvas.addEventListener("mousedown", (evt) => this.handleMousedown(evt), false);
     	this.toolCanvas.addEventListener("mousemove", (evt) => this.handleMousemove(evt), false);
@@ -145,23 +154,27 @@ export class TTImageEditor {
         }
     }
 
+    private handlePanning(evt): void {
+        this.setState({
+            panX: evt.data.x + this.state.translateX,
+            panY: evt.data.y + this.state.translateY,
+        });
+        this.imageCtx.setTransform(1, 0, 0, 1, 0, 0);
+        this.clearImageCanvas();
+    	this.imageCtx.translate(this.state.panX, this.state.panY);
+    	this.draw();
+    }
+
+    private handlePanningFinished(evt): void {
+        this.setState({
+            translateX: this.state.panX,
+            translateY: this.state.panY
+        });
+    }
+
     // TODO could store state of each pencil drawing here for undo history
     private handlePencilDrawingFinished(evt): void {
         this.imageCtx.drawImage(this.toolCanvas, 0, 0);
-    }
-
-    private handleZoomTool(evt): void {
-        if (evt.data.ctrlKey) {
-            this.setState( {
-                imgZoomFactor: this.state.imgZoomFactor * this.DEF_Z_OUT_FACTOR,
-            });
-            this.scaleCanvasStyle(this.DEF_Z_OUT_FACTOR);
-        } else {
-            this.setState( {
-                imgZoomFactor: this.state.imgZoomFactor * this.DEF_Z_IN_FACTOR,
-            });
-            this.scaleCanvasStyle(this.DEF_Z_IN_FACTOR);
-        }
     }
 
     private clearImageCanvas(): void {
@@ -175,7 +188,7 @@ export class TTImageEditor {
         let { x, y, w, h } = this.toolbar.crop.getCropRect();
         this.setState({
             imgX: x, imgY: y,
-            imgW: w, imgH: h
+            imgW: w, imgH: h,
         });
         this.toolbar.crop.resetState();
         this.draw();
@@ -196,18 +209,15 @@ export class TTImageEditor {
         * transfer the cropped image to, then resize image canvas to desired
         * size and finally transfer the image from the inMemory to image canvas.
         */
-        this.inMemoryCanvas.width = this.state.imgW;
-        this.inMemoryCanvas.height = this.state.imgH;
-        this.inMemoryCtx.drawImage(
-            this.imageCanvas,
-            this.state.imgX, this.state.imgY,
-            this.state.imgW, this.state.imgH,
-            0, 0,
-            this.state.imgW,
-            this.state.imgH
+        // this.inMemoryCanvas.width = this.imageCanvas.width;
+        // this.inMemoryCanvas.height = this.imageCanvas.height;
+        // this.inMemoryCtx.drawImage(
+        //     this.imageCanvas, 0, 0
+        // );
+        this.imageCtx.drawImage(
+            this.img,
+            0, 0
         );
-        this.setCanvasSize(this.state.imgW, this.state.imgH);
-        this.imageCtx.drawImage(this.inMemoryCanvas, 0, 0);
     }
 
     /**
@@ -220,13 +230,5 @@ export class TTImageEditor {
         this.imageCanvas.height = h;
         this.toolCanvas.width = w;
         this.toolCanvas.height = h;
-        this.imageCanvas.style.width = w.toString() + "px";
-        this.toolCanvas.style.width = w.toString() + "px";
-    }
-
-    private scaleCanvasStyle(zoomFactor: number) {
-        let w1: number = this.imageCanvas.getBoundingClientRect().width;
-        this.imageCanvas.style.width = (zoomFactor * w1).toString() + "px";
-        this.toolCanvas.style.width = (zoomFactor * w1).toString() + "px";
     }
 }

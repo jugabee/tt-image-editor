@@ -1,7 +1,7 @@
 import * as Events from "./event";
 import { CropTool, Rect } from "./crop-tool";
 import { PencilTool } from "./pencil-tool";
-import { ZoomTool } from "./zoom-tool";
+import { PanTool } from "./pan-tool";
 import { Tool } from "./tool";
 
 export enum ToolType {
@@ -19,13 +19,13 @@ export class Toolbar {
     private toolCtx: CanvasRenderingContext2D;
     crop: CropTool;
     pencil: PencilTool;
-    zoom: ZoomTool;
+    pan: PanTool;
     private toolbar: DocumentFragment = document.createDocumentFragment();
     private applyBtn: HTMLElement;
     private saveBtn: HTMLElement;
     private cropBtn: HTMLElement;
     private pencilBtn: HTMLElement;
-    private zoomBtn: HTMLElement;
+    private panBtn: HTMLElement;
     private container: HTMLElement;
     private state: ToolbarState = {
         activeTool: null
@@ -40,7 +40,7 @@ export class Toolbar {
         this.toolCtx = this.toolCanvas.getContext("2d");
         this.crop = new CropTool(this.toolCanvas);
         this.pencil = new PencilTool(this.toolCanvas);
-        this.zoom = new ZoomTool(this.toolCanvas);
+        this.pan = new PanTool(this.toolCanvas);
         this.render();
         this.addListeners();
         this.attach();
@@ -51,7 +51,7 @@ export class Toolbar {
         this.toolbar = document.createDocumentFragment();
         element.id = "tt-image-editor-toolbar";
         element.style.userSelect = "none";
-        element.innerHTML = `<button id="zoom-btn">Zoom</button>
+        element.innerHTML = `<button id="pan-btn">Pan</button>
                              <button id="pencil-btn">Pencil</button>
                              <button id="crop-btn">Crop</button>
                              <button id="apply-btn" style="display:none">Apply</button>
@@ -61,14 +61,14 @@ export class Toolbar {
         this.saveBtn = this.toolbar.querySelector("#save-btn") as HTMLElement;
         this.cropBtn = this.toolbar.querySelector("#crop-btn") as HTMLElement;
         this.pencilBtn = this.toolbar.querySelector("#pencil-btn") as HTMLElement;
-        this.zoomBtn = this.toolbar.querySelector("#zoom-btn") as HTMLElement;
+        this.panBtn = this.toolbar.querySelector("#pan-btn") as HTMLElement;
     }
 
     private addListeners(): void {
         this.applyBtn.addEventListener("click", (evt) => this.handleApplyBtn(evt));
         this.saveBtn.addEventListener("click", (evt) => this.handleSaveBtn(evt));
         this.cropBtn.addEventListener("click", (evt) => this.handleCropBtn(evt));
-        this.zoomBtn.addEventListener("click", (evt) => this.handleZoomBtn(evt));
+        this.panBtn.addEventListener("click", (evt) => this.handlePanBtn(evt));
         this.pencilBtn.addEventListener("click", (evt) => this.handlePencilBtn(evt));
         this.onActiveToolChange.addListener((evt) => this.handleActiveToolChange(evt));
         this.crop.onCropRectVisibility.addListener((evt) => this.handleCropRectVisibility(evt));
@@ -86,13 +86,13 @@ export class Toolbar {
         this.applyBtn.style.display = "none";
     }
 
-    private handleZoomBtn(evt): void {
+    private handlePanBtn(evt): void {
         if (this.state.activeTool !== ToolType.Zoom) {
-            this.zoomBtn.classList.add("active");
+            this.panBtn.classList.add("active");
             this.onActiveToolChange.emit({ data: ToolType.Zoom });
         } else {
             this.hideCropApplyBtn();
-            this.zoomBtn.classList.remove("active");
+            this.panBtn.classList.remove("active");
             this.onActiveToolChange.emit({ data: null });
         }
     }
@@ -151,7 +151,7 @@ export class Toolbar {
             case ToolType.Crop:
                 return this.crop;
             case ToolType.Zoom:
-                return this.zoom;
+                return this.pan;
             case ToolType.Pencil:
                 return this.pencil;
             default:
