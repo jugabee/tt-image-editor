@@ -22,6 +22,6 @@ export function getMousePosition(canvas, evt): Point {
     return { x: Math.round(x * sx), y: Math.round(y * sy) };
 }
 
-export function getCenteredImagePoint(canvas: HTMLCanvasElement, img: HTMLImageElement): Point {
+export function centerImageOnCanvas(canvas: HTMLCanvasElement, img: HTMLImageElement): Point {
     return { x: (canvas.width / 2) - (img.naturalWidth / 2), y: (canvas.height / 2)  - (img.naturalHeight / 2) };
 }

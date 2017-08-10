@@ -3,14 +3,15 @@ import { Toolbar, ToolType } from "./toolbar";
 import * as Util from "./util";
 
 interface CanvasState {
+    mouseX: number;
+    mouseY: number;
     imgX: number;
     imgY: number;
     imgW: number;
     imgH: number;
-    panX: number;
-    panY: number;
     translateX: number;
     translateY: number;
+    scale: number;
 }
 
 export class TTImageEditor {
@@ -30,14 +31,15 @@ export class TTImageEditor {
     private readonly DEF_Z_OUT_FACTOR: number = .8;
     private debug: boolean = true;
     private state: CanvasState = {
+        mouseX: 0,
+        mouseY: 0,
         imgX: 0,
         imgY: 0,
         imgW: 0,
         imgH: 0,
-        panX: 0,
-        panY: 0,
         translateX: 0,
-        translateY: 0
+        translateY: 0,
+        scale: 1
     }
 
     constructor(container: HTMLElement, img: HTMLImageElement) {
@@ -78,7 +80,7 @@ export class TTImageEditor {
         this.inMemoryCtx = this.inMemoryCanvas.getContext("2d");
         this.setState({ imgW: this.img.naturalWidth, imgH: this.img.naturalHeight });
         // draw initial imageCanvas from source image
-        let { x, y } = Util.getCenteredImagePoint(this.imageCanvas, this.img);
+        let { x, y } = Util.centerImageOnCanvas(this.imageCanvas, this.img);
         this.imageCtx.drawImage(
             this.img,
             0, 0,
@@ -95,6 +97,7 @@ export class TTImageEditor {
         this.toolbar.pencil.onPencilDrawingFinished.addListener( (evt) => this.handlePencilDrawingFinished(evt));
         this.toolbar.pan.onPanning.addListener( (evt) => this.handlePanning(evt));
         this.toolbar.pan.onPanningFinished.addListener( (evt) => this.handlePanningFinished(evt));
+        this.toolbar.pan.onZooming.addListener( (evt) => this.handleZooming(evt));
 
     	this.toolCanvas.addEventListener("mousedown", (evt) => this.handleMousedown(evt), false);
     	this.toolCanvas.addEventListener("mousemove", (evt) => this.handleMousemove(evt), false);
@@ -134,7 +137,6 @@ export class TTImageEditor {
     */
     private handleMousedown(evt): void {
         let activeTool = this.toolbar.getActiveTool();
-        // TODO need this? evt.preventDefault();
         if (activeTool !== null) {
             activeTool.handleMousedown(evt);
         }
@@ -154,21 +156,40 @@ export class TTImageEditor {
         }
     }
 
-    private handlePanning(evt): void {
-        this.setState({
-            panX: evt.data.x + this.state.translateX,
-            panY: evt.data.y + this.state.translateY,
-        });
+    private handleZooming(evt): void {
+        this.setState({ scale: evt.data });
         this.imageCtx.setTransform(1, 0, 0, 1, 0, 0);
         this.clearImageCanvas();
-    	this.imageCtx.translate(this.state.panX, this.state.panY);
+        this.imageCtx.setTransform(
+            this.state.scale,
+            0, 0,
+            this.state.scale,
+            this.state.translateX,
+            this.state.translateY
+        );
+        this.draw();
+    }
+
+    private handlePanning(evt): void {
+        this.imageCtx.setTransform(1, 0, 0, 1, 0, 0);
+        this.clearImageCanvas();
+        this.imageCtx.setTransform(
+            this.state.scale,
+            0, 0,
+            this.state.scale,
+            evt.data.x + this.state.translateX,
+            evt.data.y + this.state.translateY
+        );
+        if (this.debug) {
+            this.drawDebug(evt);
+        }
     	this.draw();
     }
 
-    private handlePanningFinished(evt): void {
+    private handlePanningFinished(evt) {
         this.setState({
-            translateX: this.state.panX,
-            translateY: this.state.panY
+            translateX: evt.data.x,
+            translateY: evt.data.y
         });
     }
 
@@ -201,6 +222,24 @@ export class TTImageEditor {
             this.container.appendChild(img);
         }
         img.src = this.imageCanvas.toDataURL();
+    }
+
+    private drawDebug(evt): void {
+        this.imageCtx.font = "12px sans-serif";
+        this.imageCtx.textBaseline = "middle";
+        this.imageCtx.fillStyle = "black";
+        let text =
+            (this.state.translateX + evt.data.x) +
+            ", " + (this.state.translateY + evt.data.y);
+        this.imageCtx.fillText(
+            text, 0, -10
+        );
+        this.imageCtx.beginPath();
+        this.imageCtx.moveTo(0, 0);
+        this.imageCtx.lineTo(100, 0);
+        this.imageCtx.moveTo(0, 0);
+        this.imageCtx.lineTo(0, 100);
+        this.imageCtx.stroke();
     }
 
     private draw(): void {
