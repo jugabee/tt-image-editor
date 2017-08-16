@@ -12,7 +12,7 @@ export class PencilTool extends Tool{
     private transform: Transform;
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
-    private readonly DEF_STROKE = "black";
+    private readonly DEF_STROKE = "green";
     private readonly DEF_RESET_FILL = "white";
     private debug: boolean = false;
     state: PencilToolState = {
@@ -20,12 +20,13 @@ export class PencilTool extends Tool{
         isMousedrag: false
     }
     onPencilDrawingFinished: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
+    onPencilDrawing: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
 
     constructor(canvas: HTMLCanvasElement, transform: Transform) {
         super();
         this.transform = transform;
         this.canvas = canvas;
-        this.ctx = canvas.getContext("2d");
+        this.ctx = this.canvas.getContext("2d");
     }
 
     /* *
@@ -56,8 +57,6 @@ export class PencilTool extends Tool{
         let mouse = Util.getMousePosition(this.canvas, evt);
         let world = this.transform.getWorld(mouse.x, mouse.y);
         this.setState({ isMousedown: true });
-        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-        this.transform.setTransform(this.ctx);
         this.ctx.beginPath();
 		this.ctx.moveTo(world.x, world.y);
     }
@@ -67,12 +66,14 @@ export class PencilTool extends Tool{
             let mouse = Util.getMousePosition(this.canvas, evt);
             let world = this.transform.getWorld(mouse.x, mouse.y);
             this.setState({ isMousedrag: true });
+            this.onPencilDrawing.emit({ data: true });
             this.ctx.lineTo(world.x, world.y);
 			this.ctx.stroke();
         }
     }
 
     handleMouseup(evt): void {
+        console.log(this.transform.getMatrix())
         this.setState({ isMousedown: false, isMousedrag: false });
         this.onPencilDrawingFinished.emit({ data: true });
     }
@@ -82,7 +83,7 @@ export class PencilTool extends Tool{
     activate(): void {
         this.canvas.style.cursor = "default";
         this.ctx.strokeStyle = this.DEF_STROKE;
-        this.resetCanvas();
+        // TODO this.resetCanvas();
     }
 
     private resetCanvas(): void {

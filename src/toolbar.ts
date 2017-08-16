@@ -17,8 +17,7 @@ interface ToolbarState {
 
 export class Toolbar {
     private transform: Transform;
-    private imageCanvas: HTMLCanvasElement;
-    private imageCtx: CanvasRenderingContext2D;
+    private drawCanvas: HTMLCanvasElement;
     private toolCanvas: HTMLCanvasElement;
     private toolCtx: CanvasRenderingContext2D;
     crop: CropTool;
@@ -41,12 +40,11 @@ export class Toolbar {
     constructor(container: DocumentFragment, transform: Transform) {
         this.transform = transform;
         this.container = container.querySelector("#tt-image-editor") as HTMLElement;
-        this.imageCanvas = container.querySelector("#tt-image-editor-canvas-image") as HTMLCanvasElement;
-        this.imageCtx = this.imageCanvas.getContext("2d");
+        this.drawCanvas = container.querySelector("#tt-image-editor-canvas-draw") as HTMLCanvasElement;
         this.toolCanvas = container.querySelector("#tt-image-editor-canvas-tools") as HTMLCanvasElement;
         this.toolCtx = this.toolCanvas.getContext("2d");
         this.crop = new CropTool(this.toolCanvas);
-        this.pencil = new PencilTool(this.toolCanvas, this.transform);
+        this.pencil = new PencilTool(this.drawCanvas, this.transform);
         this.pan = new PanTool(this.toolCanvas);
         this.render();
         this.addListeners();

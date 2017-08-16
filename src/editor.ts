@@ -14,6 +14,8 @@ export class TTImageEditor {
     private container: HTMLElement;
     private img: HTMLImageElement;
     private toolbar: Toolbar;
+    private drawCanvas: HTMLCanvasElement;
+    private drawCtx: CanvasRenderingContext2D;
     private imageCanvas: HTMLCanvasElement;
     private imageCtx: CanvasRenderingContext2D;
     private toolCanvas: HTMLCanvasElement;
@@ -49,6 +51,12 @@ export class TTImageEditor {
         const element = document.createElement("div");
         const html: string =
             `<canvas
+                id="tt-image-editor-canvas-draw"
+                height="${this.DEF_CANVAS_HEIGHT}",
+                width="${this.DEF_CANVAS_WIDTH}"
+                style="position: absolute; visibility: hidden">
+            </canvas>
+            <canvas
                 id="tt-image-editor-canvas-tools"
                 height="${this.DEF_CANVAS_HEIGHT}",
                 width="${this.DEF_CANVAS_WIDTH}"
@@ -67,10 +75,15 @@ export class TTImageEditor {
     }
 
     private initCanvases(): void {
+        this.drawCanvas = this.editor.querySelector("#tt-image-editor-canvas-draw") as HTMLCanvasElement;
         this.imageCanvas = this.editor.querySelector("#tt-image-editor-canvas-image") as HTMLCanvasElement;
         this.toolCanvas = this.editor.querySelector("#tt-image-editor-canvas-tools") as HTMLCanvasElement;
         this.imageCtx = this.imageCanvas.getContext("2d");
         this.toolCtx = this.toolCanvas.getContext("2d");
+        this.drawCtx = this.drawCanvas.getContext("2d");
+        this.drawCtx.imageSmoothingEnabled = false;
+        this.drawCtx.mozImageSmoothingEnabled=false;
+        this.drawCtx.webkitImageSmoothingEnabled=false;
         this.setCanvasSize(this.img.naturalWidth, this.img.naturalHeight);
         this.setState({ imgW: this.img.naturalWidth, imgH: this.img.naturalHeight });
         // draw initial imageCanvas from source image
@@ -89,6 +102,7 @@ export class TTImageEditor {
         this.toolbar.onSaveImage.addListener( (evt) => this.handleSaveImage(evt));
 
         this.toolbar.pencil.onPencilDrawingFinished.addListener( (evt) => this.handlePencilDrawingFinished(evt));
+        this.toolbar.pencil.onPencilDrawing.addListener( (evt) => this.handlePencilDrawing(evt));
         this.toolbar.pan.onPanning.addListener( (evt) => this.handlePanning(evt));
 
     	this.toolCanvas.addEventListener("mousedown", (evt) => this.handleMousedown(evt), false);
@@ -196,6 +210,14 @@ export class TTImageEditor {
 
     }
 
+    private handlePencilDrawing(evt): void {
+        this.transform.setTransform(this.imageCtx);
+        this.imageCtx.drawImage(
+           this.drawCanvas,
+           0, 0
+        );
+    }
+
     private clearImageCanvas(): void {
         this.imageCtx.setTransform(1, 0, 0, 1, 0, 0);
         this.imageCtx.clearRect(0, 0, this.imageCanvas.width, this.imageCanvas.height);
@@ -220,6 +242,8 @@ export class TTImageEditor {
             this.container.innerHTML = "";
             this.container.appendChild(img);
         }
+        this.clearImageCanvas();
+        this.draw();
         img.src = this.imageCanvas.toDataURL();
     }
 
@@ -228,10 +252,14 @@ export class TTImageEditor {
            this.img,
            0, 0
         );
-        let scale = this.transform.getScale();
-        this.imageCtx.strokeStyle = "#a6c8ff";
-        this.imageCtx.lineWidth = 1 / scale.x;
-        this.imageCtx.strokeRect(0, 0, this.state.imgW, this.state.imgH);
+        this.imageCtx.drawImage(
+           this.drawCanvas,
+           0, 0
+        );
+        // let scale = this.transform.getScale();
+        // this.imageCtx.strokeStyle = "#a6c8ff";
+        // this.imageCtx.lineWidth = 1 / scale.x;
+        // this.imageCtx.strokeRect(0, 0, this.state.imgW, this.state.imgH);
     }
 
     /**
@@ -244,5 +272,7 @@ export class TTImageEditor {
         this.imageCanvas.height = h;
         this.toolCanvas.width = w;
         this.toolCanvas.height = h;
+        this.drawCanvas.width = w;
+        this.drawCanvas.height = h;
     }
 }
