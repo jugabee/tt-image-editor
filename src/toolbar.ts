@@ -3,6 +3,7 @@ import { CropTool, Rect } from "./crop-tool";
 import { PencilTool } from "./pencil-tool";
 import { PanTool } from "./pan-tool";
 import { Tool } from "./tool";
+import { Transform } from "./transform";
 
 export enum ToolType {
     Crop,
@@ -15,6 +16,9 @@ interface ToolbarState {
 }
 
 export class Toolbar {
+    private transform: Transform;
+    private imageCanvas: HTMLCanvasElement;
+    private imageCtx: CanvasRenderingContext2D;
     private toolCanvas: HTMLCanvasElement;
     private toolCtx: CanvasRenderingContext2D;
     crop: CropTool;
@@ -34,12 +38,15 @@ export class Toolbar {
     onCropApply: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
     onActiveToolChange: Events.Dispatcher<ToolType | null> = Events.Dispatcher.createEventDispatcher();
 
-    constructor(container: DocumentFragment) {
+    constructor(container: DocumentFragment, transform: Transform) {
+        this.transform = transform;
         this.container = container.querySelector("#tt-image-editor") as HTMLElement;
+        this.imageCanvas = container.querySelector("#tt-image-editor-canvas-image") as HTMLCanvasElement;
+        this.imageCtx = this.imageCanvas.getContext("2d");
         this.toolCanvas = container.querySelector("#tt-image-editor-canvas-tools") as HTMLCanvasElement;
         this.toolCtx = this.toolCanvas.getContext("2d");
         this.crop = new CropTool(this.toolCanvas);
-        this.pencil = new PencilTool(this.toolCanvas);
+        this.pencil = new PencilTool(this.toolCanvas, this.transform);
         this.pan = new PanTool(this.toolCanvas);
         this.render();
         this.addListeners();

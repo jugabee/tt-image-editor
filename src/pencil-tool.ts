@@ -1,6 +1,7 @@
 import * as Events from "./event";
 import { Tool } from "./tool";
 import * as Util from "./util";
+import { Transform } from "./transform";
 
 interface PencilToolState {
     isMousedown: boolean;
@@ -8,6 +9,7 @@ interface PencilToolState {
  }
 
 export class PencilTool extends Tool{
+    private transform: Transform;
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
     private readonly DEF_STROKE = "black";
@@ -19,8 +21,9 @@ export class PencilTool extends Tool{
     }
     onPencilDrawingFinished: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
 
-    constructor(canvas: HTMLCanvasElement) {
+    constructor(canvas: HTMLCanvasElement, transform: Transform) {
         super();
+        this.transform = transform;
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
     }
@@ -51,16 +54,20 @@ export class PencilTool extends Tool{
 
     handleMousedown(evt): void {
         let mouse = Util.getMousePosition(this.canvas, evt);
+        let world = this.transform.getWorld(mouse.x, mouse.y);
         this.setState({ isMousedown: true });
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        this.transform.setTransform(this.ctx);
         this.ctx.beginPath();
-		this.ctx.moveTo(mouse.x, mouse.y);
+		this.ctx.moveTo(world.x, world.y);
     }
 
     handleMousemove(evt): void {
         if (this.state.isMousedown) {
             let mouse = Util.getMousePosition(this.canvas, evt);
+            let world = this.transform.getWorld(mouse.x, mouse.y);
             this.setState({ isMousedrag: true });
-            this.ctx.lineTo(mouse.x, mouse.y);
+            this.ctx.lineTo(world.x, world.y);
 			this.ctx.stroke();
         }
     }
@@ -74,6 +81,7 @@ export class PencilTool extends Tool{
 
     activate(): void {
         this.canvas.style.cursor = "default";
+        this.ctx.strokeStyle = this.DEF_STROKE;
         this.resetCanvas();
     }
 

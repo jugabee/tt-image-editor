@@ -1,17 +1,13 @@
 import * as Events from "./event";
 import { Toolbar, ToolType } from "./toolbar";
+import { Transform } from "./transform";
 import * as Util from "./util";
 
 interface CanvasState {
-    mouseX: number;
-    mouseY: number;
     imgX: number;
     imgY: number;
     imgW: number;
     imgH: number;
-    translateX: number;
-    translateY: number;
-    scale: number;
 }
 
 export class TTImageEditor {
@@ -21,25 +17,21 @@ export class TTImageEditor {
     private imageCanvas: HTMLCanvasElement;
     private imageCtx: CanvasRenderingContext2D;
     private toolCanvas: HTMLCanvasElement;
-    private inMemoryCanvas: HTMLCanvasElement = document.createElement("canvas");
-    private inMemoryCtx: CanvasRenderingContext2D;
+    private toolCtx: CanvasRenderingContext2D;
     private editor: DocumentFragment = document.createDocumentFragment();
     private readonly DEF_EDITOR_ID: string = "tt-image-editor";
     private readonly DEF_CANVAS_WIDTH: number = 800;
     private readonly DEF_CANVAS_HEIGHT: number = 436;
     private readonly DEF_Z_IN_FACTOR: number = 1.25;
     private readonly DEF_Z_OUT_FACTOR: number = .8;
+    private readonly DEF_SCALE_STEP = 1.1;
+    private transform: Transform;
     private debug: boolean = true;
     private state: CanvasState = {
-        mouseX: 0,
-        mouseY: 0,
         imgX: 0,
         imgY: 0,
         imgW: 0,
-        imgH: 0,
-        translateX: 0,
-        translateY: 0,
-        scale: 1
+        imgH: 0
     }
 
     constructor(container: HTMLElement, img: HTMLImageElement) {
@@ -47,7 +39,8 @@ export class TTImageEditor {
         this.img = img;
         this.render();
         this.initCanvases();
-        this.toolbar = new Toolbar(this.editor);
+        this.transform = new Transform(this.imageCtx);
+        this.toolbar = new Toolbar(this.editor, this.transform);
         this.addListeners();
         this.attach();
     }
@@ -65,7 +58,8 @@ export class TTImageEditor {
             <canvas
                 id="tt-image-editor-canvas-image"
                 height="${this.DEF_CANVAS_HEIGHT}",
-                width="${this.DEF_CANVAS_WIDTH}">
+                width="${this.DEF_CANVAS_WIDTH}"
+                style="background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAIElEQVQoU2NkYGCQYsAEz9CFGIeIQix+wfQgyDODXSEANzEFjc0z43QAAAAASUVORK5CYII=');">
             </canvas>`;
         element.innerHTML = html;
         element.id = this.DEF_EDITOR_ID;
@@ -75,9 +69,9 @@ export class TTImageEditor {
     private initCanvases(): void {
         this.imageCanvas = this.editor.querySelector("#tt-image-editor-canvas-image") as HTMLCanvasElement;
         this.toolCanvas = this.editor.querySelector("#tt-image-editor-canvas-tools") as HTMLCanvasElement;
-        //this.setCanvasSize(this.img.naturalWidth, this.img.naturalHeight);
         this.imageCtx = this.imageCanvas.getContext("2d");
-        this.inMemoryCtx = this.inMemoryCanvas.getContext("2d");
+        this.toolCtx = this.toolCanvas.getContext("2d");
+        this.setCanvasSize(this.img.naturalWidth, this.img.naturalHeight);
         this.setState({ imgW: this.img.naturalWidth, imgH: this.img.naturalHeight });
         // draw initial imageCanvas from source image
         let { x, y } = Util.centerImageOnCanvas(this.imageCanvas, this.img);
@@ -96,12 +90,14 @@ export class TTImageEditor {
 
         this.toolbar.pencil.onPencilDrawingFinished.addListener( (evt) => this.handlePencilDrawingFinished(evt));
         this.toolbar.pan.onPanning.addListener( (evt) => this.handlePanning(evt));
-        this.toolbar.pan.onPanningFinished.addListener( (evt) => this.handlePanningFinished(evt));
-        this.toolbar.pan.onZooming.addListener( (evt) => this.handleZooming(evt));
 
     	this.toolCanvas.addEventListener("mousedown", (evt) => this.handleMousedown(evt), false);
     	this.toolCanvas.addEventListener("mousemove", (evt) => this.handleMousemove(evt), false);
     	this.toolCanvas.addEventListener("mouseup", (evt) => this.handleMouseup(evt), false);
+        // IE9, Chrome, Safari, Opera
+        this.toolCanvas.addEventListener("mousewheel", (evt) => this.mouseWheelZoomHandler(evt), false);
+        // Firefox
+        this.toolCanvas.addEventListener("DOMMouseScroll", (evt) => this.mouseWheelZoomHandler(evt), false);
     }
 
     private attach() {
@@ -143,6 +139,7 @@ export class TTImageEditor {
     }
 
     private handleMousemove(evt): void {
+        let mouse = Util.getMousePosition(this.toolCanvas, evt);
         let activeTool = this.toolbar.getActiveTool();
         if (activeTool !== null) {
             activeTool.handleMousemove(evt);
@@ -156,49 +153,51 @@ export class TTImageEditor {
         }
     }
 
-    private handleZooming(evt): void {
-        this.setState({ scale: evt.data });
-        this.imageCtx.setTransform(1, 0, 0, 1, 0, 0);
+    private mouseWheelZoomHandler(evt): void {
+        evt.preventDefault();
+        let mouseDelta: number = Math.max(-1, Math.min(1, (evt.wheelDelta || -evt.detail)));
+        if (mouseDelta === -1) {
+            // zoom out
+            this.zoomAtPoint(evt, 1 / this.DEF_SCALE_STEP);
+        } else {
+            // zoom in
+            this.zoomAtPoint(evt, this.DEF_SCALE_STEP);
+        }
+    }
+
+    private zoomAtPoint(evt, zoom): void {
+        let mouse: Util.Point = Util.getMousePosition(this.toolCanvas, evt);
+        // world coordinate before zoom
+        let w1: Util.Point = this.transform.getWorld(mouse.x, mouse.y);
         this.clearImageCanvas();
-        this.imageCtx.setTransform(
-            this.state.scale,
-            0, 0,
-            this.state.scale,
-            this.state.translateX,
-            this.state.translateY
-        );
+        this.transform.scale(zoom, zoom);
+        // world coordinate after zoom
+        let w2 = this.transform.getWorld(mouse.x, mouse.y);
+        // translate by the change to zoom towards the point at the mouse cursor
+        let dx = w2.x - w1.x;
+        let dy = w2.y - w1.y;
+        this.transform.translate(dx, dy);
+        this.transform.setTransform(this.imageCtx);
         this.draw();
     }
 
     private handlePanning(evt): void {
-        this.imageCtx.setTransform(1, 0, 0, 1, 0, 0);
+        let w1 = this.transform.getWorld(evt.data.mouseX, evt.data.mouseY);
+        let w2 = this.transform.getWorld(evt.data.mousedownX, evt.data.mousedownY);
+        let wDx = w1.x - w2.x;
+        let wDy = w1.y - w2.y;
         this.clearImageCanvas();
-        this.imageCtx.setTransform(
-            this.state.scale,
-            0, 0,
-            this.state.scale,
-            evt.data.x + this.state.translateX,
-            evt.data.y + this.state.translateY
-        );
-        if (this.debug) {
-            this.drawDebug(evt);
-        }
-    	this.draw();
+        this.transform.translate(wDx, wDy);
+        this.transform.setTransform(this.imageCtx);
+        this.draw();
     }
 
-    private handlePanningFinished(evt) {
-        this.setState({
-            translateX: evt.data.x,
-            translateY: evt.data.y
-        });
-    }
-
-    // TODO could store state of each pencil drawing here for undo history
     private handlePencilDrawingFinished(evt): void {
-        this.imageCtx.drawImage(this.toolCanvas, 0, 0);
+
     }
 
     private clearImageCanvas(): void {
+        this.imageCtx.setTransform(1, 0, 0, 1, 0, 0);
         this.imageCtx.clearRect(0, 0, this.imageCanvas.width, this.imageCanvas.height);
     }
 
@@ -224,39 +223,15 @@ export class TTImageEditor {
         img.src = this.imageCanvas.toDataURL();
     }
 
-    private drawDebug(evt): void {
-        this.imageCtx.font = "12px sans-serif";
-        this.imageCtx.textBaseline = "middle";
-        this.imageCtx.fillStyle = "black";
-        let text =
-            (this.state.translateX + evt.data.x) +
-            ", " + (this.state.translateY + evt.data.y);
-        this.imageCtx.fillText(
-            text, 0, -10
-        );
-        this.imageCtx.beginPath();
-        this.imageCtx.moveTo(0, 0);
-        this.imageCtx.lineTo(100, 0);
-        this.imageCtx.moveTo(0, 0);
-        this.imageCtx.lineTo(0, 100);
-        this.imageCtx.stroke();
-    }
-
     private draw(): void {
-        /**
-        * Because canvas is cleared when resized, use a inMemory canvas to
-        * transfer the cropped image to, then resize image canvas to desired
-        * size and finally transfer the image from the inMemory to image canvas.
-        */
-        // this.inMemoryCanvas.width = this.imageCanvas.width;
-        // this.inMemoryCanvas.height = this.imageCanvas.height;
-        // this.inMemoryCtx.drawImage(
-        //     this.imageCanvas, 0, 0
-        // );
         this.imageCtx.drawImage(
-            this.img,
-            0, 0
+           this.img,
+           0, 0
         );
+        let scale = this.transform.getScale();
+        this.imageCtx.strokeStyle = "#a6c8ff";
+        this.imageCtx.lineWidth = 1 / scale.x;
+        this.imageCtx.strokeRect(0, 0, this.state.imgW, this.state.imgH);
     }
 
     /**
