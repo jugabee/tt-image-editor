@@ -1,0 +1,46 @@
+html, body {
+  width:  100%;
+  height: 100%;
+  margin: 0px;
+  background: gray;
+}
+
+canvas#tt-view-canvas {
+    z-index: 10;
+    position: absolute;
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAIElEQVQoU2NkYGCQYsAEz9CFGIeIQix+wfQgyDODXSEANzEFjc0z43QAAAAASUVORK5CYII=');
+    background-color: white;
+}
+
+canvas#tt-scratch-canvas {
+    visibility: hidden;
+    position: absolute;
+}
+
+canvas#tt-image-canvas {
+    visibility: hidden;
+    position: absolute;
+}
+
+canvas#tt-memory-canvas {
+}
+
+#tt-image-editor {
+    width:  100%;
+    height: 100%;
+    margin: 0px;
+    position: relative;
+    button {
+        font-size: larger;
+    }
+    #tt-toolbar {
+        padding: 5;
+        user-select: none;
+        text-align: center;
+        z-index: 100;
+        background: black;
+        position: absolute;
+        right: 0;
+        left: 0;
+    }
+}

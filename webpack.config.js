@@ -1,20 +1,37 @@
-const path = require('path');
+var webpack = require('webpack');
+var ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 module.exports = {
-    entry: './src/index.ts',
+    entry: ['./src/index.ts', './src/stylesheets/main.scss'],
     output: {
-        path: path.resolve(__dirname, 'dist'),
-        filename: 'bundle.js',
-        publicPath: '/dist/'
+        filename: './dist/bundle.js'
     },
     resolve: {
         // Add `.ts` and `.tsx` as a resolvable extension.
         extensions: ['.webpack.js', '.web.js', '.ts', '.tsx', '.js']
     },
     module: {
-        loaders: [
-            // all files with a `.ts` or `.tsx` extension will be handled by `ts-loader`
-            { test: /\.tsx?$/, loader: 'ts-loader' }
+        rules: [
+            {
+                test: /\.tsx?$/,
+                use: 'ts-loader'
+            },
+            {
+                test: /\.css$/,
+                use: ExtractTextPlugin.extract({
+                    use: 'css-loader?importLoaders=1',
+                }),
+            },
+            {
+                test: /\.(sass|scss)$/,
+                use: ExtractTextPlugin.extract(['css-loader', 'sass-loader'])
+            }
         ]
-    }
+    },
+    plugins: [
+        new ExtractTextPlugin({
+            filename: './dist/bundle.css',
+            allChunks: true,
+        })
+    ],
 }

@@ -74,13 +74,7 @@ export class PanTool extends Tool{
 
     activate(): void {
         this.canvas.style.cursor = "pointer";
-        this.resetCanvas();
-    }
-
-    private resetCanvas(): void {
-        this.ctx.fillStyle = this.DEF_RESET_FILL;
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.ctx.strokeStyle = this.DEF_STROKE;
+        console.log(this.canvas)
     }
 
     private pan(evt): void {

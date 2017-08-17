@@ -3,7 +3,6 @@ import { CropTool, Rect } from "./crop-tool";
 import { PencilTool } from "./pencil-tool";
 import { PanTool } from "./pan-tool";
 import { Tool } from "./tool";
-import { Transform } from "./transform";
 
 export enum ToolType {
     Crop,
@@ -16,10 +15,8 @@ interface ToolbarState {
 }
 
 export class Toolbar {
-    private transform: Transform;
-    private drawCanvas: HTMLCanvasElement;
-    private toolCanvas: HTMLCanvasElement;
-    private toolCtx: CanvasRenderingContext2D;
+    private viewCanvas: HTMLCanvasElement;
+    private viewCtx: CanvasRenderingContext2D;
     crop: CropTool;
     pencil: PencilTool;
     pan: PanTool;
@@ -37,15 +34,13 @@ export class Toolbar {
     onCropApply: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
     onActiveToolChange: Events.Dispatcher<ToolType | null> = Events.Dispatcher.createEventDispatcher();
 
-    constructor(container: DocumentFragment, transform: Transform) {
-        this.transform = transform;
-        this.container = container.querySelector("#tt-image-editor") as HTMLElement;
-        this.drawCanvas = container.querySelector("#tt-image-editor-canvas-draw") as HTMLCanvasElement;
-        this.toolCanvas = container.querySelector("#tt-image-editor-canvas-tools") as HTMLCanvasElement;
-        this.toolCtx = this.toolCanvas.getContext("2d");
-        this.crop = new CropTool(this.toolCanvas);
-        this.pencil = new PencilTool(this.drawCanvas, this.transform);
-        this.pan = new PanTool(this.toolCanvas);
+    constructor(container: HTMLElement) {
+        this.container = container;
+        this.viewCanvas = container.querySelector("#tt-view-canvas") as HTMLCanvasElement;
+        this.viewCtx = this.viewCanvas.getContext("2d");
+        this.crop = new CropTool(this.viewCanvas);
+        this.pencil = new PencilTool(this.viewCanvas);
+        this.pan = new PanTool(this.viewCanvas);
         this.render();
         this.addListeners();
         this.attach();
@@ -54,8 +49,7 @@ export class Toolbar {
     private render(): void {
         const element: HTMLElement = document.createElement("div");
         this.toolbar = document.createDocumentFragment();
-        element.id = "tt-image-editor-toolbar";
-        element.style.userSelect = "none";
+        element.id = "tt-toolbar";
         element.innerHTML = `<button id="pan-btn">Pan</button>
                              <button id="pencil-btn">Pencil</button>
                              <button id="crop-btn">Crop</button>
@@ -146,8 +140,7 @@ export class Toolbar {
         if (evt.data !== null) {
             this.getActiveTool().activate();
         } else {
-            this.clearToolCanvas();
-            this.toolCanvas.style.cursor = "default";
+            this.viewCanvas.style.cursor = "default";
         }
     }
 
@@ -162,9 +155,5 @@ export class Toolbar {
             default:
                 return null;
         }
-    }
-
-    private clearToolCanvas(): void {
-        this.toolCtx.clearRect(0, 0, this.toolCanvas.width, this.toolCanvas.height);
     }
 }

@@ -1,10 +1,9 @@
 import { TTImageEditor } from "./editor";
 
 function ready(): void {
-    const container: HTMLElement = document.getElementById("container");
     const img = new Image();
     img.addEventListener("load", (evt) => {
-        const editor = new TTImageEditor(container, img);
+        const editor = new TTImageEditor(img);
     });
     img.src = "../images/dwarf.png";
 }
