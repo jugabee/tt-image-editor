@@ -5,6 +5,11 @@ html, body {
   background: gray;
 }
 
+canvas#tt-tool-canvas {
+    z-index: 11;
+    position: absolute;
+}
+
 canvas#tt-view-canvas {
     z-index: 10;
     position: absolute;
@@ -13,16 +18,17 @@ canvas#tt-view-canvas {
 }
 
 canvas#tt-scratch-canvas {
-    visibility: hidden;
+    display: none;
     position: absolute;
 }
 
 canvas#tt-image-canvas {
-    visibility: hidden;
+    display: none;
     position: absolute;
 }
 
 canvas#tt-memory-canvas {
+    display: none;
 }
 
 #tt-image-editor {
@@ -32,6 +38,11 @@ canvas#tt-memory-canvas {
     position: relative;
     button {
         font-size: larger;
+        &.active {
+            background: gray;
+            color: white;
+            border: 2px inset darkgrey;
+        }
     }
     #tt-toolbar {
         padding: 5;

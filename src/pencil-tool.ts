@@ -71,6 +71,7 @@ export class PencilTool extends Tool{
         this.canvas.style.cursor = "default";
         this.ctx.strokeStyle = this.DEF_STROKE;
         this.ctx.lineWidth = 5;
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
 }
