@@ -1,6 +1,7 @@
 import * as Events from "./event";
 import { Tool } from "./tool";
 import * as Util from "./util";
+import { EditorState } from "./editor";
 
 interface PencilToolState {
     isMousedown: boolean;
@@ -8,8 +9,11 @@ interface PencilToolState {
  }
 
 export class PencilTool extends Tool{
-    private canvas: HTMLCanvasElement;
-    private ctx: CanvasRenderingContext2D;
+    private editorState: EditorState;
+    private drawCanvas: HTMLCanvasElement;
+    private drawCtx: CanvasRenderingContext2D;
+    private toolCanvas: HTMLCanvasElement;
+    private toolCtx: CanvasRenderingContext2D;
     private readonly DEF_STROKE = "green";
     private readonly DEF_RESET_FILL = "white";
     private debug: boolean = false;
@@ -17,14 +21,16 @@ export class PencilTool extends Tool{
         isMousedown: false,
         isMousedrag: false
     }
-    onPencilDrawingStart: Events.Dispatcher<Util.Point> = Events.Dispatcher.createEventDispatcher();
-    onPencilDrawingFinished: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
-    onPencilDrawing: Events.Dispatcher<Util.Point> = Events.Dispatcher.createEventDispatcher();
 
-    constructor(canvas: HTMLCanvasElement) {
+    onPencilDrawing: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
+
+    constructor(state: EditorState) {
         super();
-        this.canvas = canvas;
-        this.ctx = this.canvas.getContext("2d");
+        this.editorState = state;
+        this.drawCanvas = document.getElementById("tt-draw-canvas") as HTMLCanvasElement;
+        this.drawCtx = this.drawCanvas.getContext("2d");
+        this.toolCanvas = document.getElementById("tt-tool-canvas") as HTMLCanvasElement;
+        this.toolCtx = this.toolCanvas.getContext("2d");
     }
 
     private setState(obj): void {
@@ -47,31 +53,36 @@ export class PencilTool extends Tool{
     }
 
     handleMousedown(evt): void {
-        let mouse = Util.getMousePosition(this.canvas, evt);
+        let mouse = Util.getMousePosition(this.toolCanvas, evt);
         this.setState({ isMousedown: true });
-        this.onPencilDrawingStart.emit({ data: mouse });
+        this.drawCtx.beginPath();
+    	this.drawCtx.moveTo(
+            (mouse.x * this.editorState.scale) + this.editorState.sourceX,
+            (mouse.y * this.editorState.scale) + this.editorState.sourceY
+        );
     }
 
     handleMousemove(evt): void {
         if (this.state.isMousedown) {
-            let mouse = Util.getMousePosition(this.canvas, evt);
+            let mouse = Util.getMousePosition(this.toolCanvas, evt);
             this.setState({ isMousedrag: true });
-            this.onPencilDrawing.emit({ data: mouse });
+            this.drawCtx.lineTo(
+                (mouse.x * this.editorState.scale) + this.editorState.sourceX,
+                (mouse.y * this.editorState.scale) + this.editorState.sourceY
+            );
+            this.drawCtx.lineWidth = 5;
+            this.drawCtx.strokeStyle = "green";
+            this.drawCtx.stroke();
+            this.onPencilDrawing.emit({ data: true });
         }
     }
 
     handleMouseup(evt): void {
         this.setState({ isMousedown: false, isMousedrag: false });
-        this.onPencilDrawingFinished.emit({ data: true });
     }
 
     draw(): void { }
 
-    activate(): void {
-        this.canvas.style.cursor = "default";
-        this.ctx.strokeStyle = this.DEF_STROKE;
-        this.ctx.lineWidth = 5;
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    }
+    init(): void { }
 
 }

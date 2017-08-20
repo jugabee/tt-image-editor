@@ -4,6 +4,6 @@ export abstract class Tool {
     abstract handleMouseup(evt): void;
     abstract handleMousedown(evt): void;
     abstract handleMousemove(evt): void;
-    abstract activate(): void;
+    abstract init(): void;
     abstract draw(): void;
 }
