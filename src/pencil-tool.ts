@@ -23,6 +23,7 @@ export class PencilTool extends Tool{
     }
 
     onPencilDrawing: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
+    onPencilDrawingFinished: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
 
     constructor(state: EditorState) {
         super();
@@ -78,6 +79,7 @@ export class PencilTool extends Tool{
     }
 
     handleMouseup(evt): void {
+        this.onPencilDrawingFinished.emit({ data: true });
         this.setState({ isMousedown: false, isMousedrag: false });
     }
 

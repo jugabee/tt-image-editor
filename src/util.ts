@@ -17,6 +17,13 @@ export interface RectChange {
     dh: number
 };
 
+export interface RectOverlap {
+    t: boolean,
+    l: boolean,
+    r: boolean,
+    b: boolean
+};
+
 export function dist(p1: Point, p2: Point) {
     return Math.sqrt(
         (p2.x - p1.x) * (p2.x - p1.x) +
@@ -41,7 +48,6 @@ export function centerImageOnCanvas(canvas: HTMLCanvasElement, img: HTMLImageEle
 }
 
 // test if rect r1 contains rect r2
-// r2 width and height cannot be less than 0
 export function contains(r1: Rect, r2: Rect): boolean {
     if (
         (r2.x + r2.w) <= (r1.x + r1.w)
@@ -57,9 +63,9 @@ export function contains(r1: Rect, r2: Rect): boolean {
     }
 }
 
-// TODO return interface
-export function containsOverlap(r1: Rect, r2: Rect): any {
-    let overlap = { l: false, t: false, r: false, b: false };
+// Returns the sides of r2 that overlap r1
+export function getRectOverlap(r1: Rect, r2: Rect): RectOverlap {
+    let overlap: RectOverlap = { l: false, t: false, r: false, b: false };
     if ((r2.x + r2.w) > (r1.x + r1.w) || r2.w < 0) {
         overlap.r = true;
     }

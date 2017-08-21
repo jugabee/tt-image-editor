@@ -1,7 +1,7 @@
 import * as Events from "./event";
 import { Tool } from "./tool";
 import * as Util from "./util";
-import { Rect, Point, RectChange } from "./util";
+import { Rect, Point, RectChange, RectOverlap } from "./util";
 import { EditorState } from "./editor";
 
 interface CropToolState {
@@ -21,6 +21,8 @@ interface CropToolState {
 
 enum Knob {
     TL,
+    TR,
+    BL,
     BR
 }
 
@@ -112,7 +114,6 @@ export class CropTool extends Tool{
     }
 
     handleMousemove(evt): void {
-        // TODO disable when panning?
         if (!evt.altKey) {
             if (this.state.isMousedown) {
                 this.setState({ isMousedrag: true });
@@ -136,43 +137,39 @@ export class CropTool extends Tool{
         }
     }
 
-    handleMouseup(evt): void {
+    private handleCropOverlap(evt): void {
         let r1 = this.getImageRect();
         let r2 = this.getCropRect();
         // A crop rect must always be contained by the image rect; if the crop
         // rect is overlapping the image rect on a particular side, snap that side
         // back to default position
-        // TODO this is not working with negative widths / heights
-        let overlap = Util.containsOverlap(r1, r2);
-        console.log(overlap)
-        if (overlap.l) {
+        let o: RectOverlap = Util.getRectOverlap(r1, r2);
+        if (o.l) {
             this.setState({
                dx: 0,
                dw: this.state.dw + this.state.dx
             });
         }
-        if (overlap.t) {
+        if (o.t) {
             this.setState({
                dy: 0,
                dh: this.state.dh + this.state.dy
             });
         }
-        if (overlap.r) {
+        if (o.r) {
             this.setState({
                dw: 0 - this.state.dx,
             });
         }
-        if (overlap.b) {
+        if (o.b) {
             this.setState({
                dh: 0 - this.state.dy,
             });
         }
-        this.draw();
+    }
+
+    handleMouseup(evt): void {
         this.setState({
-            prevCrop: {
-                dx: this.state.dx, dy: this.state.dy,
-                dw: this.state.dw, dh: this.state.dh
-            },
             isMousedown: false,
             isMousedrag: false
         });
@@ -190,6 +187,7 @@ export class CropTool extends Tool{
             mousedownX: (mouse.x * this.editorState.scale),
             mousedownY: (mouse.y * this.editorState.scale),
         });
+        this.handleCropOverlap(evt);
         this.draw();
     }
 
@@ -207,6 +205,19 @@ export class CropTool extends Tool{
                 dw: this.state.dw + dx,
                 dh: this.state.dh + dy
             });
+        } else if (this.state.activeKnob === Knob.TR) {
+            this.setState({
+                dy: this.state.dy + dy,
+                dw: this.state.dw + dx,
+                dh: this.state.dh - dy
+            });
+        } else if (this.state.activeKnob === Knob.BL) {
+            this.setState({
+                dx: this.state.dx + dx,
+                dh: this.state.dh + dy,
+                dw: this.state.dw - dx
+
+            });
         } else if (this.state.activeKnob === Knob.TL) {
             this.setState({
                 dx: this.state.dx + dx,
@@ -219,6 +230,7 @@ export class CropTool extends Tool{
             mousedownX: (mouse.x * this.editorState.scale),
             mousedownY: (mouse.y * this.editorState.scale),
         });
+        this.handleCropOverlap(evt);
         this.draw();
     }
 
@@ -253,6 +265,18 @@ export class CropTool extends Tool{
             rect.x, rect.y,
             this.DEF_KNOB_RADIUS
         );
+        // top right
+        this.drawCircle(
+            rect.x + rect.w,
+            rect.y,
+            this.DEF_KNOB_RADIUS
+        );
+        // bottom left
+        this.drawCircle(
+            rect.x,
+            rect.y + rect.h,
+            this.DEF_KNOB_RADIUS
+        );
         // bottom right
         this.drawCircle(
             rect.x + rect.w,
@@ -276,6 +300,14 @@ export class CropTool extends Tool{
             x: rect.x,
             y: rect.y
         };
+        let pTR: Point = {
+            x: rect.x + rect.w,
+            y: rect.y
+        };
+        let pBL: Point = {
+            x: rect.x,
+            y: rect.y + rect.h
+        };
         let pBR: Point = {
             x: rect.x + rect.w,
             y: rect.y + rect.h
@@ -283,6 +315,16 @@ export class CropTool extends Tool{
         // top left knob
         if (Util.dist(mouse, pTL) <= this.DEF_KNOB_RADIUS) {
             this.setState({ activeKnob: Knob.TL });
+            return true;
+        }
+        // top right knob
+        else if (Util.dist(mouse, pTR) <= this.DEF_KNOB_RADIUS) {
+            this.setState({ activeKnob: Knob.TR });
+            return true;
+        }
+        // bottom left knob
+        else if (Util.dist(mouse, pBL) <= this.DEF_KNOB_RADIUS) {
+            this.setState({ activeKnob: Knob.BL });
             return true;
         }
         // bottom right knob

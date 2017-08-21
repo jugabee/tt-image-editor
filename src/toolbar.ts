@@ -88,10 +88,10 @@ export class Toolbar {
             this.cropBtn.classList.remove("active");
             this.onActiveToolChange.emit({ data: ToolType.Pencil });
         } else {
-            this.hideCropApplyBtn();
             this.pencilBtn.classList.remove("active");
             this.onActiveToolChange.emit({ data: null });
         }
+        this.hideCropApplyBtn();
     }
 
     private handleApplyBtn(evt): void {

@@ -22,6 +22,7 @@ export interface EditorState {
 export class TTImageEditor {
     private editor: HTMLElement;
     private img: HTMLImageElement;
+    private prevDrawImg: HTMLImageElement;
     private toolbar: Toolbar;
     private toolCanvas: HTMLCanvasElement;
     private viewCanvas: HTMLCanvasElement;
@@ -79,12 +80,16 @@ export class TTImageEditor {
         this.imageCanvas.height = this.img.naturalHeight;
         this.memoryCanvas.width = this.img.naturalWidth;
         this.memoryCanvas.height = this.img.naturalHeight;
+        this.prevDrawImg = new Image();
+        this.prevDrawImg.width = this.imageCanvas.width;
+        this.prevDrawImg.height = this.imageCanvas.height;
     }
 
     private addListeners(): void {
         this.toolbar.onSaveImage.addListener((evt) => this.handleSaveImage(evt));
         this.toolbar.onCropApply.addListener((evt) => this.handleCropApply(evt));
         this.toolbar.pencil.onPencilDrawing.addListener(() => this.draw());
+        this.toolbar.pencil.onPencilDrawingFinished.addListener((evt) => this.handlePencilDrawingFinished(evt));
     	this.toolCanvas.addEventListener("mousedown", (evt) => this.handleMousedown(evt), false);
     	this.toolCanvas.addEventListener("mousemove", (evt) => this.handleMousemove(evt), false);
     	this.toolCanvas.addEventListener("mouseup", (evt) => this.handleMouseup(evt), false);
@@ -235,6 +240,10 @@ export class TTImageEditor {
         );
         // save result
         img.src = this.memoryCanvas.toDataURL();
+    }
+
+    private handlePencilDrawingFinished(evt): void {
+        this.prevDrawImg.src = this.drawCanvas.toDataURL();
     }
 
     private handleCropApply(evt): void {
