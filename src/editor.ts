@@ -1,6 +1,7 @@
 import * as Events from "./event";
 import { Toolbar, ToolType } from "./toolbar";
 import * as Util from "./util";
+import { Rect, RectChange } from "./util";
 
 export interface EditorState {
     sourceX: number;
@@ -12,6 +13,10 @@ export interface EditorState {
     isMousedrag: boolean;
     mousedownX: number;
     mousedownY: number;
+    cropRectX: number;
+    cropRectY: number;
+    cropRectW: number;
+    cropRectH: number;
 }
 
 export class TTImageEditor {
@@ -31,7 +36,7 @@ export class TTImageEditor {
     private readonly DEF_STROKE = "blue";
     private readonly DEF_LINE_W = 2;
     private readonly DEF_SCALE_STEP = 1.1;
-    private debug: boolean = true;
+    private debug: boolean = false;
     private state: EditorState = {
         isMousedown: false,
         isMousedrag: false,
@@ -41,7 +46,11 @@ export class TTImageEditor {
         sourceY: 0,
         sourceW: 0,
         sourceH: 0,
-        scale: 1
+        scale: 1,
+        cropRectX: 0,
+        cropRectY: 0,
+        cropRectW: 0,
+        cropRectH: 0
     }
 
     constructor(img: HTMLImageElement) {
@@ -74,6 +83,7 @@ export class TTImageEditor {
 
     private addListeners(): void {
         this.toolbar.onSaveImage.addListener((evt) => this.handleSaveImage(evt));
+        this.toolbar.onCropApply.addListener((evt) => this.handleCropApply(evt));
         this.toolbar.pencil.onPencilDrawing.addListener(() => this.draw());
     	this.toolCanvas.addEventListener("mousedown", (evt) => this.handleMousedown(evt), false);
     	this.toolCanvas.addEventListener("mousemove", (evt) => this.handleMousemove(evt), false);
@@ -227,13 +237,42 @@ export class TTImageEditor {
         img.src = this.memoryCanvas.toDataURL();
     }
 
+    private handleCropApply(evt): void {
+        let rc: RectChange = evt.data;
+        // In order to apply a crop to the imageCanvas, cropRectX and Y are used
+        // to adjust the source rectangle that draws the imageCanvas onto the
+        // viewCanvas. The cropRectW and H are used to adjust the width and
+        // height of the imageCanvas. Used in conjunction, they reframe the source
+        // image.
+        this.setState({
+            cropRectX: this.state.cropRectX + rc.dx,
+            cropRectY: this.state.cropRectY + rc.dy,
+            cropRectW: this.state.cropRectW + rc.dw,
+            cropRectH: this.state.cropRectH + rc.dh,
+            // adjust sourceX and Y so cropped image draws in the same location
+            // that it was cropped in
+            sourceX: this.state.sourceX - (rc.dx),
+            sourceY: this.state.sourceY - (rc.dy)
+        });
+        this.drawCanvas.width = this.img.naturalWidth + this.state.cropRectW;
+        this.drawCanvas.height = this.img.naturalHeight + this.state.cropRectH;
+        this.imageCanvas.width = this.img.naturalWidth + this.state.cropRectW;
+        this.imageCanvas.height = this.img.naturalHeight + this.state.cropRectH;
+        this.memoryCanvas.width = this.img.naturalWidth + this.state.cropRectW;
+        this.memoryCanvas.height = this.img.naturalHeight + this.state.cropRectH;
+        this.draw();
+        // TODO drawing disappears when cropped; maybe draw to memory canvas,
+        // then change the sx and sy when drawing it to draw canvas, then finally
+        // draw to view canvas
+    }
+
     private draw(): void {
         this.clearImage();
         this.clearView();
         // draw source image to imageCanvas
         this.imageCtx.drawImage(
             this.img,
-            0, 0,
+            0 + this.state.cropRectX, 0 + this.state.cropRectY,
             this.img.naturalWidth,
             this.img.naturalHeight,
             0, 0,

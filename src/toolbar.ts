@@ -1,8 +1,9 @@
 import * as Events from "./event";
-import { CropTool, Rect } from "./crop-tool";
+import { CropTool } from "./crop-tool";
 import { PencilTool } from "./pencil-tool";
 import { Tool } from "./tool";
 import { EditorState } from "./editor";
+import { Rect, RectChange } from "./util";
 
 export enum ToolType {
     Crop,
@@ -27,6 +28,7 @@ export class Toolbar {
         activeTool: null
     }
     onSaveImage: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
+    onCropApply: Events.Dispatcher<RectChange> = Events.Dispatcher.createEventDispatcher();
     onActiveToolChange: Events.Dispatcher<ToolType | null> = Events.Dispatcher.createEventDispatcher();
 
     constructor(state: EditorState) {
@@ -69,6 +71,7 @@ export class Toolbar {
 
     private handleCropBtn(evt): void {
         if (this.state.activeTool !== ToolType.Crop) {
+            this.showCropApplyBtn();
             this.cropBtn.classList.add("active");
             this.pencilBtn.classList.remove("active");
             this.onActiveToolChange.emit({ data: ToolType.Crop });
@@ -93,19 +96,13 @@ export class Toolbar {
 
     private handleApplyBtn(evt): void {
         this.hideCropApplyBtn();
+        this.onCropApply.emit({ data: this.crop.getCropChange() });
+        this.crop.resetState();
         this.onActiveToolChange.emit({ data: null });
     }
 
     private handleSaveBtn(evt): void {
         this.onSaveImage.emit({ data: true });
-    }
-
-    private handleCropRectVisibility(evt): void {
-        if (evt.data === true) {
-            this.showCropApplyBtn();
-        } else {
-            this.hideCropApplyBtn();
-        }
     }
 
     private removeAllActiveClasses(): void {
