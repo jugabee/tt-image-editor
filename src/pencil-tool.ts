@@ -54,22 +54,24 @@ export class PencilTool extends Tool{
     }
 
     handleMousedown(evt): void {
+        let scale = Util.getCurrentScale(this.editorState.scale);
         let mouse = Util.getMousePosition(this.toolCanvas, evt);
         this.setState({ isMousedown: true });
         this.drawCtx.beginPath();
     	this.drawCtx.moveTo(
-            (mouse.x * this.editorState.scale) + this.editorState.sourceX,
-            (mouse.y * this.editorState.scale) + this.editorState.sourceY
+            (mouse.x * scale) + this.editorState.sourceX + this.editorState.cropRectX,
+            (mouse.y * scale) + this.editorState.sourceY + this.editorState.cropRectY
         );
     }
 
     handleMousemove(evt): void {
         if (this.state.isMousedown) {
+            let scale = Util.getCurrentScale(this.editorState.scale);
             let mouse = Util.getMousePosition(this.toolCanvas, evt);
             this.setState({ isMousedrag: true });
             this.drawCtx.lineTo(
-                (mouse.x * this.editorState.scale) + this.editorState.sourceX,
-                (mouse.y * this.editorState.scale) + this.editorState.sourceY
+                (mouse.x * scale) + this.editorState.sourceX + this.editorState.cropRectX,
+                (mouse.y * scale) + this.editorState.sourceY + this.editorState.cropRectY
             );
             this.drawCtx.lineWidth = 5;
             this.drawCtx.strokeStyle = "green";

@@ -36,9 +36,8 @@ export class TTImageEditor {
     private readonly DEF_BG_FILL = "gray";
     private readonly DEF_STROKE = "blue";
     private readonly DEF_LINE_W = 2;
-    private readonly DEF_SCALE_STEP = 1.1;
     private debug: boolean = false;
-    private state: EditorState = {
+    state: EditorState = {
         isMousedown: false,
         isMousedrag: false,
         mousedownX: 0,
@@ -47,7 +46,7 @@ export class TTImageEditor {
         sourceY: 0,
         sourceW: 0,
         sourceH: 0,
-        scale: 1,
+        scale: 0,
         cropRectX: 0,
         cropRectY: 0,
         cropRectW: 0,
@@ -131,7 +130,8 @@ export class TTImageEditor {
         this.viewCanvas.height = window.innerHeight - element.clientHeight;
         this.toolCanvas.width = window.innerWidth;
         this.toolCanvas.height = window.innerHeight - element.clientHeight;
-        this.setState({ sourceW: this.viewCanvas.width * this.state.scale, sourceH: this.viewCanvas.height * this.state.scale });
+        let scale = Util.getCurrentScale(this.state.scale);
+        this.setState({ sourceW: this.viewCanvas.width * scale, sourceH: this.viewCanvas.height * scale });
         this.draw();
     }
 
@@ -174,36 +174,39 @@ export class TTImageEditor {
         let mouseDelta: number = Math.max(-1, Math.min(1, (evt.wheelDelta || -evt.detail)));
         if (mouseDelta === -1) {
             // zoom out
-            this.zoomAtPoint(evt, this.DEF_SCALE_STEP);
+            this.zoomAtPoint(evt, 1);
         } else {
             // zoom in
-            this.zoomAtPoint(evt, 1 / this.DEF_SCALE_STEP);
+            this.zoomAtPoint(evt, -1);
         }
     }
 
     private zoomAtPoint(evt, zoom): void {
+        let s = Util.getCurrentScale(this.state.scale);
+        let z = Util.getCurrentScale(this.state.scale + zoom);
         let mouse: Util.Point = Util.getMousePosition(this.toolCanvas, evt);
         // translate by change in scale (before and after zoom) to give the illusion of zooming towards the mouse cursor
-        let dx = (mouse.x * this.state.scale) - (mouse.x * this.state.scale * zoom);
-        let dy = (mouse.y * this.state.scale) - (mouse.y * this.state.scale * zoom);
+        let dx = (mouse.x * s) - (mouse.x * z);
+        let dy = (mouse.y * s) - (mouse.y * z);
         this.setState({
             sourceX: this.state.sourceX + dx,
             sourceY: this.state.sourceY + dy,
-            sourceW: this.state.sourceW * zoom,
-            sourceH: this.state.sourceH * zoom,
-            scale: this.state.scale * zoom
+            sourceW: this.state.sourceW,
+            sourceH: this.state.sourceH,
+            scale: this.state.scale + zoom
         });
         this.draw();
     }
 
     private pan(evt): void {
         if (evt.altKey) {
+            let scale = Util.getCurrentScale(this.state.scale);
             let mouse: Util.Point = Util.getMousePosition(this.toolCanvas, evt);
             let dx = mouse.x - this.state.mousedownX;
             let dy = mouse.y - this.state.mousedownY;
             this.setState({
-                sourceX: this.state.sourceX - (dx * this.state.scale),
-                sourceY: this.state.sourceY - (dy * this.state.scale)
+                sourceX: this.state.sourceX - (dx * scale),
+                sourceY: this.state.sourceY - (dy * scale)
             });
             this.draw();
             this.setState({
@@ -224,19 +227,25 @@ export class TTImageEditor {
 
     private handleSaveImage(evt): void {
         let img: HTMLImageElement = new Image();
+        let scale = Util.getCurrentScale(this.state.scale);
+        let r: Rect = this.getImageRect();
         img.onload = () => {
             this.editor.innerHTML = "";
+            this.editor.style.display = "block";
             this.editor.appendChild(img);
         }
+
+        this.memoryCanvas.width = r.w * scale;
+        this.memoryCanvas.height = r.h * scale;
         // draw imageCanvas to memoryCanvas
         this.memoryCtx.drawImage(
            this.imageCanvas,
            0, 0,
         );
-        // overlay drawCanvas on memoryCanvas
+        // draw drawCanvas to memoryCanvas
         this.memoryCtx.drawImage(
            this.drawCanvas,
-           0, 0,
+           -this.state.cropRectX, -this.state.cropRectY
         );
         // save result
         img.src = this.memoryCanvas.toDataURL();
@@ -248,11 +257,9 @@ export class TTImageEditor {
 
     private handleCropApply(evt): void {
         let rc: RectChange = evt.data;
-        // In order to apply a crop to the imageCanvas, cropRectX and Y are used
-        // to adjust the source rectangle that draws the imageCanvas onto the
-        // viewCanvas. The cropRectW and H are used to adjust the width and
-        // height of the imageCanvas. Used in conjunction, they reframe the source
-        // image.
+        // keep track of the total amount we have cropped; this is used in
+        // calculating the source rectangle when drawing the source img to the imageCanvas
+        // and when drawing the drawCanvas to the viewCanvas
         this.setState({
             cropRectX: this.state.cropRectX + rc.dx,
             cropRectY: this.state.cropRectY + rc.dy,
@@ -263,53 +270,90 @@ export class TTImageEditor {
             sourceX: this.state.sourceX - (rc.dx),
             sourceY: this.state.sourceY - (rc.dy)
         });
-        this.drawCanvas.width = this.img.naturalWidth + this.state.cropRectW;
-        this.drawCanvas.height = this.img.naturalHeight + this.state.cropRectH;
-        this.imageCanvas.width = this.img.naturalWidth + this.state.cropRectW;
-        this.imageCanvas.height = this.img.naturalHeight + this.state.cropRectH;
-        this.memoryCanvas.width = this.img.naturalWidth + this.state.cropRectW;
-        this.memoryCanvas.height = this.img.naturalHeight + this.state.cropRectH;
         this.draw();
-        // TODO drawing disappears when cropped; maybe draw to memory canvas,
-        // then change the sx and sy when drawing it to draw canvas, then finally
-        // draw to view canvas
     }
 
     private draw(): void {
+        let scale = Util.getCurrentScale(this.state.scale);
         this.clearImage();
         this.clearView();
         // draw source image to imageCanvas
         this.imageCtx.drawImage(
             this.img,
-            0 + this.state.cropRectX, 0 + this.state.cropRectY,
-            this.img.naturalWidth,
-            this.img.naturalHeight,
+            this.state.cropRectX,
+            this.state.cropRectY,
+            this.img.naturalWidth + this.state.cropRectW,
+            this.img.naturalHeight + this.state.cropRectH,
             0, 0,
-            this.img.naturalWidth,
-            this.img.naturalHeight
+            this.img.naturalWidth + this.state.cropRectW,
+            this.img.naturalHeight + this.state.cropRectH
         );
-        // draw imageCanvas to viewCanvas using a source rectangle transformed by scale and translation state
+        // draw imageCanvas to viewCanvas
         this.viewCtx.drawImage(
            this.imageCanvas,
            this.state.sourceX, this.state.sourceY,
-           this.state.sourceW,
-           this.state.sourceH,
+           this.state.sourceW * scale,
+           this.state.sourceH * scale,
            0, 0,
            this.viewCanvas.width,
            this.viewCanvas.height
         );
-        // draw drawCanvas to viewCanvas using a source rectangle transformed by scale and translation state
+        // draw drawCanvas to viewCanvas
         this.viewCtx.drawImage(
            this.drawCanvas,
-           this.state.sourceX, this.state.sourceY,
-           this.state.sourceW,
-           this.state.sourceH,
+           this.state.sourceX + this.state.cropRectX,
+           this.state.sourceY + this.state.cropRectY,
+           this.state.sourceW * scale,
+           this.state.sourceH * scale,
            0, 0,
            this.viewCanvas.width,
            this.viewCanvas.height
         );
+        // clear drawing canvas marks outside boundary of image rect
+
         if (this.toolbar.getActiveToolType() === ToolType.Crop) {
             this.toolbar.crop.draw();
+        }
+        if (this.debug) {
+            let r = this.getImageRect();
+            this.viewCtx.strokeRect(r.x, r.y, r.w, r.h);
+            let r2 = this.getImageRectWithoutCrop();
+            this.viewCtx.strokeRect(r2.x, r2.y, r2.w, r2.h);
+        } else {
+            this.clearOutsideImageRect();
+        }
+    }
+
+    private clearOutsideImageRect() {
+        let r: Rect = this.getImageRect();
+        this.viewCtx.clearRect(0, 0, this.viewCanvas.width, r.y);
+        this.viewCtx.clearRect(0, r.y, r.x, Math.abs(r.y) + r.h);
+        this.viewCtx.clearRect(r.x + r.w, r.y, this.viewCanvas.width - (r.x + r.w), Math.abs(r.y) + r.h);
+        this.viewCtx.clearRect(0, r.y + r.h, this.viewCanvas.width, this.viewCanvas.height - (r.y + r.h));
+    }
+
+    // returns a Rect for the boundary of the image on the viewCanvas factoring in
+    // the amount cropped so far
+    getImageRect(): Rect {
+        let scale = Util.getCurrentScale(this.state.scale);
+        return {
+            x: (-this.state.sourceX) / scale,
+            y: (-this.state.sourceY) / scale,
+            w: (this.imageCanvas.width + this.state.cropRectW) / scale,
+            h: (this.imageCanvas.height + this.state.cropRectH) / scale
+        }
+    }
+
+    // returns a Rect for the boundary of the image on the viewCanvas without
+    // adjusting for cropping. This is used in debug mode only to show the original
+    // image rect
+    getImageRectWithoutCrop(): Rect {
+        let scale = Util.getCurrentScale(this.state.scale);
+        return {
+            x: (-this.state.sourceX) / scale,
+            y: (-this.state.sourceY) / scale,
+            w: (this.imageCanvas.width) / scale,
+            h: (this.imageCanvas.height) / scale
         }
     }
 }

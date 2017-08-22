@@ -1,3 +1,5 @@
+const DEF_SCALE_STEP = 1.1;
+
 export interface Point {
     x: number,
     y: number
@@ -23,6 +25,21 @@ export interface RectOverlap {
     r: boolean,
     b: boolean
 };
+
+// determine current scale factor by integer increment
+export function getCurrentScale(inc: number): number {
+    let scale = 1;
+    if (inc < 0) {
+        for (let i = 0; i < Math.abs(inc); i++) {
+            scale *= 1 / DEF_SCALE_STEP;
+        }
+    } else if (inc > 0) {
+        for (let i = 0; i < Math.abs(inc); i++) {
+            scale *= DEF_SCALE_STEP;
+        }
+    }
+    return scale;
+}
 
 export function dist(p1: Point, p2: Point) {
     return Math.sqrt(

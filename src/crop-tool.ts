@@ -105,11 +105,12 @@ export class CropTool extends Tool{
     }
 
     handleMousedown(evt): void {
+        let scale = Util.getCurrentScale(this.editorState.scale);
         let mouse = Util.getMousePosition(this.toolCanvas, evt);
         this.setState({
             isMousedown: true,
-            mousedownX: (mouse.x * this.editorState.scale),
-            mousedownY: (mouse.y * this.editorState.scale)
+            mousedownX: (mouse.x * scale),
+            mousedownY: (mouse.y * scale)
         });
     }
 
@@ -176,16 +177,17 @@ export class CropTool extends Tool{
     }
 
     private handleMoveCropRect(evt): void {
+        let scale = Util.getCurrentScale(this.editorState.scale);
         let mouse = Util.getMousePosition(this.toolCanvas, evt);
-        let dx = (mouse.x * this.editorState.scale) - this.state.mousedownX;
-        let dy = (mouse.y * this.editorState.scale) - this.state.mousedownY;
+        let dx = (mouse.x * scale) - this.state.mousedownX;
+        let dy = (mouse.y * scale) - this.state.mousedownY;
         this.setState({
             dx: this.state.dx + dx,
             dy: this.state.dy + dy,
         });
         this.setState({
-            mousedownX: (mouse.x * this.editorState.scale),
-            mousedownY: (mouse.y * this.editorState.scale),
+            mousedownX: (mouse.x * scale),
+            mousedownY: (mouse.y * scale),
         });
         this.handleCropOverlap(evt);
         this.draw();
@@ -195,11 +197,11 @@ export class CropTool extends Tool{
     // total amount that the crop rect has changed from the image rect is
     // represented by dx, dy, dw, dh
     private handleResizeCropRect(evt): void {
+        let scale = Util.getCurrentScale(this.editorState.scale);
         let mouse = Util.getMousePosition(this.toolCanvas, evt);
-        let dx = (mouse.x * this.editorState.scale) - this.state.mousedownX;
-        let dy = (mouse.y * this.editorState.scale) - this.state.mousedownY;
+        let dx = (mouse.x * scale) - this.state.mousedownX;
+        let dy = (mouse.y * scale) - this.state.mousedownY;
         let rect = this.getCropRect();
-        // TODO Make a minimum crop size?
         if (this.state.activeKnob === Knob.BR) {
             this.setState({
                 dw: this.state.dw + dx,
@@ -227,8 +229,8 @@ export class CropTool extends Tool{
             });
         }
         this.setState({
-            mousedownX: (mouse.x * this.editorState.scale),
-            mousedownY: (mouse.y * this.editorState.scale),
+            mousedownX: (mouse.x * scale),
+            mousedownY: (mouse.y * scale),
         });
         this.handleCropOverlap(evt);
         this.draw();
@@ -364,21 +366,23 @@ export class CropTool extends Tool{
 
     // the crop rect is adjusted by the amount the user has resized it (dx, dy, dw, dh)
     getCropRect(): Rect {
+        let scale = Util.getCurrentScale(this.editorState.scale);
         return {
-            x: (-this.editorState.sourceX + this.state.dx) / this.editorState.scale,
-            y: (-this.editorState.sourceY + this.state.dy) / this.editorState.scale,
-            w: (this.imageCanvas.width + this.state.dw) / this.editorState.scale,
-            h: (this.imageCanvas.height + this.state.dh) / this.editorState.scale
+            x: (-this.editorState.sourceX + this.state.dx) / scale,
+            y: (-this.editorState.sourceY + this.state.dy) / scale,
+            w: (this.imageCanvas.width + this.editorState.cropRectW + this.state.dw) / scale,
+            h: (this.imageCanvas.height + this.editorState.cropRectH + this.state.dh) / scale
         }
     }
 
     // the image rect is the current location of the image in viewCanvas coordinates
     private getImageRect(): Rect {
+        let scale = Util.getCurrentScale(this.editorState.scale);
         return {
-            x: (-this.editorState.sourceX) / this.editorState.scale,
-            y: (-this.editorState.sourceY) / this.editorState.scale,
-            w: (this.imageCanvas.width) / this.editorState.scale,
-            h: (this.imageCanvas.height) / this.editorState.scale
+            x: (-this.editorState.sourceX) / scale,
+            y: (-this.editorState.sourceY) / scale,
+            w: (this.imageCanvas.width + this.editorState.cropRectW) / scale,
+            h: (this.imageCanvas.height + this.editorState.cropRectH) / scale
         }
     }
 
