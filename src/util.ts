@@ -41,6 +41,13 @@ export function getCurrentScale(inc: number): number {
     return scale;
 }
 
+export function midpoint(p1: Point, p2: Point): Point {
+  return {
+    x: p1.x + (p2.x - p1.x) / 2,
+    y: p1.y + (p2.y - p1.y) / 2
+  };
+}
+
 export function dist(p1: Point, p2: Point) {
     return Math.sqrt(
         (p2.x - p1.x) * (p2.x - p1.x) +

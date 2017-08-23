@@ -1,6 +1,7 @@
 import * as Events from "./event";
 import { Tool } from "./tool";
 import * as Util from "./util";
+import { Point } from "./util";
 import { EditorState } from "./editor";
 
 interface PencilToolState {
@@ -14,12 +15,17 @@ export class PencilTool extends Tool{
     private drawCtx: CanvasRenderingContext2D;
     private toolCanvas: HTMLCanvasElement;
     private toolCtx: CanvasRenderingContext2D;
+    private points: Array<Point> = [];
     private readonly DEF_STROKE = "green";
     private readonly DEF_RESET_FILL = "white";
+    private readonly DEF_LINE_WIDTH = 10;
+    private readonly DEF_LINE_CAP = "round";
+    private readonly DEF_LINE_JOIN = "round";
     private debug: boolean = false;
+
     state: PencilToolState = {
         isMousedown: false,
-        isMousedrag: false
+        isMousedrag: false,
     }
 
     onPencilDrawing: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
@@ -56,31 +62,56 @@ export class PencilTool extends Tool{
     handleMousedown(evt): void {
         let scale = Util.getCurrentScale(this.editorState.scale);
         let mouse = Util.getMousePosition(this.toolCanvas, evt);
+        this.points.push(mouse);
         this.setState({ isMousedown: true });
-        this.drawCtx.beginPath();
-    	this.drawCtx.moveTo(
-            (mouse.x * scale) + this.editorState.sourceX + this.editorState.cropRectX,
-            (mouse.y * scale) + this.editorState.sourceY + this.editorState.cropRectY
-        );
+        // this.drawCtx.beginPath();
+    	// this.drawCtx.moveTo(
+        //     (mouse.x * scale) + this.editorState.sourceX + this.editorState.cropRectX,
+        //     (mouse.y * scale) + this.editorState.sourceY + this.editorState.cropRectY
+        // );
     }
 
     handleMousemove(evt): void {
         if (this.state.isMousedown) {
             let scale = Util.getCurrentScale(this.editorState.scale);
             let mouse = Util.getMousePosition(this.toolCanvas, evt);
+            this.points.push(mouse);
             this.setState({ isMousedrag: true });
-            this.drawCtx.lineTo(
-                (mouse.x * scale) + this.editorState.sourceX + this.editorState.cropRectX,
-                (mouse.y * scale) + this.editorState.sourceY + this.editorState.cropRectY
-            );
-            this.drawCtx.lineWidth = 5;
-            this.drawCtx.strokeStyle = "green";
+            // this.drawCtx.lineTo(
+            //     (mouse.x * scale) + this.editorState.sourceX + this.editorState.cropRectX,
+            //     (mouse.y * scale) + this.editorState.sourceY + this.editorState.cropRectY
+            // );
+            // this.drawCtx.lineWidth = 5;
+            // this.drawCtx.strokeStyle = "green";
+            // this.drawCtx.stroke();
+            let p1 = this.points[0];
+            let p2 = this.points[1];
+            this.drawCtx.lineWidth = this.DEF_LINE_WIDTH;
+            this.drawCtx.lineJoin = this.DEF_LINE_JOIN;
+            this.drawCtx.lineCap = this.DEF_LINE_CAP;
+            this.drawCtx.beginPath();
+            this.drawCtx.moveTo(p1.x, p1.y);
+            console.log(this.points);
+
+            for (let i = 1, len = this.points.length; i < len; i++) {
+                // we pick the point between pi+1 & pi+2 as the
+                // end point and p1 as our control point
+                let midPoint = Util.midpoint(p1, p2);
+                this.drawCtx.quadraticCurveTo(p1.x, p1.y, midPoint.x, midPoint.y);
+                p1 = this.points[i];
+                p2 = this.points[i+1];
+            }
+            // Draw last line as a straight line while
+            // we wait for the next point to be able to calculate
+            // the bezier control point
+            this.drawCtx.lineTo(p1.x, p1.y);
             this.drawCtx.stroke();
             this.onPencilDrawing.emit({ data: true });
         }
     }
 
     handleMouseup(evt): void {
+        this.points.length = 0;
         this.onPencilDrawingFinished.emit({ data: true });
         this.setState({ isMousedown: false, isMousedrag: false });
     }
