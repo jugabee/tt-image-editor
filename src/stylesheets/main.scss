@@ -7,7 +7,7 @@ html, body {
 }
 
 canvas#tt-tool-canvas {
-    z-index: 11;
+    z-index: 12;
     position: absolute;
 }
 
@@ -15,18 +15,7 @@ canvas#tt-view-canvas {
     z-index: 10;
     background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAIElEQVQoU2NkYGCQYsAEz9CFGIeIQix+wfQgyDODXSEANzEFjc0z43QAAAAASUVORK5CYII=');
     background-color: white;
-}
-
-canvas#tt-draw-canvas {
-    display: none;
-}
-
-canvas#tt-image-canvas {
-    display: none;
-}
-
-canvas#tt-memory-canvas {
-    display: none;
+    position: absolute;
 }
 
 #tt-image-editor {

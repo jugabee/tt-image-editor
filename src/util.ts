@@ -41,6 +41,14 @@ export function getCurrentScale(inc: number): number {
     return scale;
 }
 
+export function clearCanvasOutsideRect(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
+    let r: Rect = this.getImageRect();
+    ctx.clearRect(0, 0, canvas.width, r.y);
+    ctx.clearRect(0, r.y, r.x, Math.abs(r.y) + r.h);
+    ctx.clearRect(r.x + r.w, r.y, canvas.width - (r.x + r.w), Math.abs(r.y) + r.h);
+    ctx.clearRect(0, r.y + r.h, canvas.width, canvas.height - (r.y + r.h));
+}
+
 export function midpoint(p1: Point, p2: Point): Point {
   return {
     x: p1.x + (p2.x - p1.x) / 2,
@@ -55,16 +63,10 @@ export function dist(p1: Point, p2: Point) {
     );
 }
 
-export function getMousePosition(canvas, evt): Point {
-    let rect = canvas.getBoundingClientRect();
-    let x = evt.clientX - rect.left;
-    let y = evt.clientY - rect.top;
-
-    // adjust for any scaling of the canvas element done by css
-    let sx = canvas.width / rect.width;
-    let sy = canvas.height / rect.height;
-
-    return { x: Math.round(x * sx), y: Math.round(y * sy) };
+export function getMousePosition(rect: Rect, evt): Point {
+    let x = evt.clientX - rect.x;
+    let y = evt.clientY - rect.y;
+    return { x: x, y: y };
 }
 
 export function centerImageOnCanvas(canvas: HTMLCanvasElement, img: HTMLImageElement): Point {

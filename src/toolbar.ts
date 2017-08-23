@@ -31,11 +31,11 @@ export class Toolbar {
     onCropApply: Events.Dispatcher<RectChange> = Events.Dispatcher.createEventDispatcher();
     onActiveToolChange: Events.Dispatcher<ToolType | null> = Events.Dispatcher.createEventDispatcher();
 
-    constructor(state: EditorState) {
-        this.toolCanvas = document.getElementById("tt-tool-canvas") as HTMLCanvasElement;
+    constructor(state: EditorState, toolCanvas: HTMLCanvasElement, scratchCanvas: HTMLCanvasElement) {
+        this.toolCanvas = toolCanvas;
         this.toolCtx = this.toolCanvas.getContext("2d");
-        this.pencil = new PencilTool(state);
-        this.crop = new CropTool(state);
+        this.pencil = new PencilTool(state, scratchCanvas);
+        this.crop = new CropTool(state, toolCanvas);
         this.render();
         this.addListeners();
     }
@@ -97,7 +97,6 @@ export class Toolbar {
     private handleApplyBtn(evt): void {
         this.hideCropApplyBtn();
         this.onCropApply.emit({ data: this.crop.getCropChange() });
-        this.crop.resetState();
         this.onActiveToolChange.emit({ data: null });
     }
 
