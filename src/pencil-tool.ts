@@ -3,9 +3,11 @@ import { Tool } from "./tool";
 import * as Util from "./util";
 import { Point, Direction } from "./util";
 import { EditorState } from "./editor";
+import { ToolbarState, PencilToolSize } from "./toolbar";
 
 export class PencilTool extends Tool{
     private editorState: EditorState;
+    private toolbarState: ToolbarState;
     private pencilCanvas: HTMLCanvasElement;
     private pencilCtx: CanvasRenderingContext2D;
     private points: Array<Point> = [];
@@ -14,7 +16,7 @@ export class PencilTool extends Tool{
     private isMousedrag: boolean = false;
     private readonly DEF_STROKE = "black";
     private readonly DEF_RESET_FILL = "white";
-    private readonly DEF_LINE_WIDTH = 5;
+    private readonly DEF_LINE_WIDTH = 2;
     private readonly DEF_LINE_CAP = "round";
     private readonly DEF_LINE_JOIN = "round";
     private debug: boolean = false;
@@ -22,9 +24,10 @@ export class PencilTool extends Tool{
     onPencilDrawing: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
     onPencilDrawingFinished: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
 
-    constructor(state: EditorState, canvas: HTMLCanvasElement) {
+    constructor(editorState: EditorState, toolbarState: ToolbarState, canvas: HTMLCanvasElement) {
         super();
-        this.editorState = state;
+        this.editorState = editorState;
+        this.toolbarState = toolbarState;
         this.pencilCanvas = canvas;
         this.pencilCtx = this.pencilCanvas.getContext("2d");
     }
@@ -35,8 +38,8 @@ export class PencilTool extends Tool{
         this.isMousedown = true;
         if (!evt.altKey) {
             let p: Point = {
-                x: (mouse.x * scale) + this.editorState.sx + this.editorState.cropX,
-                y: (mouse.y * scale) + this.editorState.sy + this.editorState.cropY
+                x: (mouse.x * scale) + this.editorState.sx,
+                y: (mouse.y * scale) + this.editorState.sy
             }
             this.points.push(p)
             this.lastMousedown = p;
@@ -50,8 +53,8 @@ export class PencilTool extends Tool{
         if (this.isMousedown && !evt.altKey) {
             this.isMousedrag = true;
                 p = {
-                    x: (mouse.x * scale) + this.editorState.sx + this.editorState.cropX,
-                    y: (mouse.y * scale) + this.editorState.sy + this.editorState.cropY
+                    x: (mouse.x * scale) + this.editorState.sx,
+                    y: (mouse.y * scale) + this.editorState.sy
                 }
             this.points.push(p)
             this.draw();
@@ -69,7 +72,7 @@ export class PencilTool extends Tool{
     draw(): void {
         let p1 = this.points[0];
         let p2 = this.points[1];
-        this.pencilCtx.lineWidth = this.DEF_LINE_WIDTH;
+        this.pencilCtx.lineWidth = this.getCurrentLineWidth();
         this.pencilCtx.strokeStyle = this.DEF_STROKE;
         this.pencilCtx.lineJoin = this.DEF_LINE_JOIN;
         this.pencilCtx.lineCap = this.DEF_LINE_CAP;
@@ -92,5 +95,9 @@ export class PencilTool extends Tool{
     }
 
     init(): void { }
+
+    private getCurrentLineWidth(): number {
+        return this.toolbarState.pencilSize;
+    }
 
 }

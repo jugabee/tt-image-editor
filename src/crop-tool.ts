@@ -355,8 +355,8 @@ export class CropTool extends Tool{
     private getCropRect(): Rect {
         let scale = Util.getCurrentScale(this.editorState.scale);
         return {
-            x: (-this.editorState.sx + this.state.dx) / scale,
-            y: (-this.editorState.sy + this.state.dy) / scale,
+            x: (-this.editorState.sx + this.editorState.cropX + this.state.dx) / scale,
+            y: (-this.editorState.sy + this.editorState.cropY + this.state.dy) / scale,
             w: (this.editorState.imgW - this.editorState.cropW + this.state.dw) / scale,
             h: (this.editorState.imgH - this.editorState.cropH + this.state.dh) / scale
         }
@@ -366,8 +366,8 @@ export class CropTool extends Tool{
     private getCroppedImageRect(): Rect {
         let scale = Util.getCurrentScale(this.editorState.scale);
         return {
-            x: (-this.editorState.sx) / scale,
-            y: (-this.editorState.sy) / scale,
+            x: (-this.editorState.sx + this.editorState.cropX) / scale,
+            y: (-this.editorState.sy + this.editorState.cropY) / scale,
             w: (this.editorState.imgW - this.editorState.cropW) / scale,
             h: (this.editorState.imgH - this.editorState.cropH) / scale
         }

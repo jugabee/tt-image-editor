@@ -112,3 +112,10 @@ export function getRectOverlap(r1: Rect, r2: Rect): RectOverlap {
 
     return overlap;
 }
+
+export function addEventListenerList(list: NodeList, evt: string, fn: (evt: MouseEvent) => void) {
+    let length = list.length;
+    for (let i = 0; i < length; i++) {
+        list[i].addEventListener(evt, fn, false);
+    }
+}

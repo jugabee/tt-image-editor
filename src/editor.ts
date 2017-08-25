@@ -65,11 +65,11 @@ export class TTImageEditor {
 
     private init(): void {
         this.editor = document.getElementById("tt-image-editor");
-        this.toolbarElement = this.editor.querySelector("#tt-toolbar") as HTMLElement;
-        this.canvasContainer = this.editor.querySelector("#tt-canvases") as HTMLCanvasElement;
-        this.toolCanvas = this.editor.querySelector("#tt-tool-canvas") as HTMLCanvasElement;
+        this.toolbarElement = this.editor.querySelector("#toolbar") as HTMLElement;
+        this.canvasContainer = this.editor.querySelector("#layers") as HTMLCanvasElement;
+        this.toolCanvas = this.editor.querySelector("#tool-layer") as HTMLCanvasElement;
         this.toolCtx = this.toolCanvas.getContext("2d");
-        this.viewCanvas = this.editor.querySelector("#tt-view-canvas") as HTMLCanvasElement;
+        this.viewCanvas = this.editor.querySelector("#view-layer") as HTMLCanvasElement;
         this.viewCtx = this.viewCanvas.getContext("2d");
         this.setState({ imgW: this.img.naturalWidth, imgH: this.img.naturalHeight });
         this.pencilCanvas = document.createElement("canvas");
@@ -258,11 +258,7 @@ export class TTImageEditor {
             cropX: this.state.cropX + rc.dx,
             cropY: this.state.cropY + rc.dy,
             cropW: this.state.cropW - rc.dw,
-            cropH: this.state.cropH - rc.dh,
-            // adjust sx and sy so cropped image redraws in the same location
-            // that it was cropped in
-            sx: this.state.sx - (rc.dx),
-            sy: this.state.sy - (rc.dy)
+            cropH: this.state.cropH - rc.dh
         });
         this.toolbar.crop.resetState();
         this.draw();
@@ -318,7 +314,7 @@ export class TTImageEditor {
 
     private drawCropRect() {
         // update the crop rectangle if it is active
-        if (this.toolbar.getActiveToolType() === ToolType.Crop) {
+        if (this.toolbar.getActiveToolType() === ToolType.CROP) {
             this.toolbar.crop.draw();
         }
     }
@@ -337,8 +333,8 @@ export class TTImageEditor {
     private getCroppedImageRect(): Rect {
         let scale = Util.getCurrentScale(this.state.scale);
         return {
-            x: (-this.state.sx) / scale,
-            y: (-this.state.sy) / scale,
+            x: (-this.state.sx + this.state.cropX) / scale,
+            y: (-this.state.sy + this.state.cropY) / scale,
             w: (this.state.imgW - this.state.cropW) / scale,
             h: (this.state.imgH - this.state.cropH) / scale
         }
@@ -348,8 +344,8 @@ export class TTImageEditor {
     private getImageRect(): Rect {
         let scale = Util.getCurrentScale(this.state.scale);
         return {
-            x: (-this.state.sx - this.state.cropX) / scale,
-            y: (-this.state.sy - this.state.cropY) / scale,
+            x: (-this.state.sx) / scale,
+            y: (-this.state.sy) / scale,
             w: (this.state.imgW) / scale,
             h: (this.state.imgH) / scale
         }
