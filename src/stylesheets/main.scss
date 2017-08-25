@@ -42,6 +42,14 @@ html, body {
         background: black;
         display: flex;
         height: 30px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.5);
+
+        #color-selection-div {
+            margin: 0 .25rem;
+            border: 2px outset darkgrey;
+            background: black;
+            width: 2rem;
+        }
 
         button.btn {
             margin: 0 .25rem;
@@ -73,6 +81,7 @@ html, body {
             display: none;
             #crop-btn-apply {
                 color: green;
+                font-weight: bold;
             }
         }
 
@@ -87,37 +96,37 @@ html, body {
                 padding: 0;
             }
 
-            span.pencil-icon {
+            span.pencil-size-icon {
                 display: block;
                 background: black;
                 pointer-events: none;
             }
 
-            button#pencil-btn-size-1 .pencil-icon {
+            button#pencil-btn-size-1 .pencil-size-icon {
                 height: 1px;
                 width: 1px;
             }
 
-            button#pencil-btn-size-2 .pencil-icon {
+            button#pencil-btn-size-2 .pencil-size-icon {
                 height: 2px;
                 width: 2px;
             }
 
-            button#pencil-btn-size-3 .pencil-icon {
+            button#pencil-btn-size-3 .pencil-size-icon {
                 height: 4px;
                 width: 4px;
             }
 
-            button#pencil-btn-size-4 .pencil-icon {
+            button#pencil-btn-size-4 .pencil-size-icon {
                 height: 6px;
                 width: 6px;
             }
 
-            button#pencil-btn-size-5 .pencil-icon {
+            button#pencil-btn-size-5 .pencil-size-icon {
                 height: 8px;
                 width: 8px;
             }
-            button#pencil-btn-size-6 .pencil-icon {
+            button#pencil-btn-size-6 .pencil-size-icon {
                 height: 10px;
                 width: 10px;
             }

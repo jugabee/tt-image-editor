@@ -24,6 +24,7 @@ export class PencilTool extends Tool{
 
     onPencilDrawing: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
     onPencilDrawingFinished: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
+    onColorSampled: Events.Dispatcher<string> = Events.Dispatcher.createEventDispatcher();
 
     constructor(editorState: EditorState, toolbarState: ToolbarState, pencilCanvas: HTMLCanvasElement, viewCanvas: HTMLCanvasElement) {
         super();
@@ -113,6 +114,7 @@ export class PencilTool extends Tool{
         let rgba = "rgba(" + data[0] + ", " + data[1] +
                  ", " + data[2] + ", " + (data[3] / 255) + ")";
         this.color = rgba;
+        this.onColorSampled.emit({ data: rgba });
     }
 
     private getCurrentLineWidth(): number {

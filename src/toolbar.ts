@@ -39,6 +39,7 @@ export class Toolbar {
     private toolSubBtnsDivs: NodeList;
     private pencilSubBtnsDiv: HTMLElement;
     private cropSubBtnsDiv: HTMLElement;
+    private colorSelectionDiv: HTMLElement;
     private state: ToolbarState = {
         activeTool: null,
         pencilSize: PencilToolSize.SIZE_3
@@ -47,7 +48,7 @@ export class Toolbar {
     onCropApply: Events.Dispatcher<RectChange> = Events.Dispatcher.createEventDispatcher();
     onActiveToolChange: Events.Dispatcher<ToolType | null> = Events.Dispatcher.createEventDispatcher();
 
-    constructor(editorState: EditorState, toolCanvas: HTMLCanvasElement, pencilCanvas: HTMLCanvasElement, viewCanvas: HTMLCanvasElement,) {
+    constructor(editorState: EditorState, toolCanvas: HTMLCanvasElement, pencilCanvas: HTMLCanvasElement, viewCanvas: HTMLCanvasElement) {
         this.toolCanvas = toolCanvas;
         this.toolCtx = this.toolCanvas.getContext("2d");
         this.pencil = new PencilTool(editorState, this.state, pencilCanvas, viewCanvas);
@@ -60,14 +61,15 @@ export class Toolbar {
         this.toolbar = document.querySelector("#tt-image-editor #toolbar") as HTMLElement;
         this.toolbar.innerHTML =
             `
+            <div id="color-selection-div"></div>
             <button id="pencil-btn" class="btn">Pencil</button>
             <div id="pencil-sub-btns" class="tool-sub-btns">
-                <button id="pencil-btn-size-1" class="sub-btn"><span class="pencil-icon"></span></button>
-                <button id="pencil-btn-size-2" class="sub-btn"><span class="pencil-icon"></span></button>
-                <button id="pencil-btn-size-3" class="sub-btn active"><span class="pencil-icon"></span></button>
-                <button id="pencil-btn-size-4" class="sub-btn"><span class="pencil-icon"></span></button>
-                <button id="pencil-btn-size-5" class="sub-btn"><span class="pencil-icon"></span></button>
-                <button id="pencil-btn-size-6" class="sub-btn"><span class="pencil-icon"></span></button>
+                <button id="pencil-btn-size-1" class="sub-btn"><span class="pencil-size-icon"></span></button>
+                <button id="pencil-btn-size-2" class="sub-btn"><span class="pencil-size-icon"></span></button>
+                <button id="pencil-btn-size-3" class="sub-btn active"><span class="pencil-size-icon"></span></button>
+                <button id="pencil-btn-size-4" class="sub-btn"><span class="pencil-size-icon"></span></button>
+                <button id="pencil-btn-size-5" class="sub-btn"><span class="pencil-size-icon"></span></button>
+                <button id="pencil-btn-size-6" class="sub-btn"><span class="pencil-size-icon"></span></button>
             </div>
             <button id="crop-btn" class="btn">Crop</button>
             <div id="crop-sub-btns" class="tool-sub-btns">
@@ -83,6 +85,7 @@ export class Toolbar {
         this.pencilSubBtns = this.toolbar.querySelectorAll("#pencil-sub-btns .sub-btn");
         this.cropSubBtnsDiv = this.toolbar.querySelector("#crop-sub-btns") as HTMLElement;
         this.pencilSubBtnsDiv = this.toolbar.querySelector("#pencil-sub-btns") as HTMLElement;
+        this.colorSelectionDiv = this.toolbar.querySelector("#color-selection-div") as HTMLElement;
     }
 
     private addListeners(): void {
@@ -92,6 +95,7 @@ export class Toolbar {
         this.pencilBtn.addEventListener("click", (evt) => this.handlePencilBtn(evt));
         Util.addEventListenerList(this.pencilSubBtns, "click", (evt) => this.handlePencilSubBtns(evt));
         this.onActiveToolChange.addListener((evt) => this.handleActiveToolChange(evt));
+        this.pencil.onColorSampled.addListener((evt) => this.handleColorSampled(evt));
     }
 
     private handleCropBtn(evt): void {
@@ -191,6 +195,11 @@ export class Toolbar {
             this.toolCanvas.style.cursor = "default";
             this.deactivateSelector(".btn.active");
         }
+    }
+
+    private handleColorSampled(evt) {
+        this.colorSelectionDiv.style.background = evt.data;
+        this.colorSelectionDiv.title = evt.data;
     }
 
     getActiveTool(): Tool {

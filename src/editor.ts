@@ -31,9 +31,6 @@ export class TTImageEditor {
     private toolCtx: CanvasRenderingContext2D;
     private viewCanvas: HTMLCanvasElement;
     private viewCtx: CanvasRenderingContext2D;
-    private readonly DEF_BG_FILL = "gray";
-    private readonly DEF_STROKE = "blue";
-    private readonly DEF_LINE_W = 2;
     // enable debug to see state updates in console, and to draw stroked rectangles for
     // the original image and cropped image
     private debug: boolean = false;
@@ -270,6 +267,7 @@ export class TTImageEditor {
         this.viewCtx.imageSmoothingEnabled = false;
         this.drawImg();
         this.drawPencil();
+        this.clearOutsideImageRect();
         if (this.debug) {
             this.drawDebug();
         }
@@ -280,13 +278,6 @@ export class TTImageEditor {
         let r = this.getImageRect();
         let r2 = this.getCroppedImageRect();
         this.viewCtx.clearRect(0, 0, this.viewCanvas.width, this.viewCanvas.height);
-        if (!this.debug) {
-            this.viewCtx.fillStyle = "white";
-            // fill a crop rect that the source image will be composited with
-            this.viewCtx.fillRect(r2.x, r2.y, r2.w, r2.h);
-            // source-atop: The new shape is only drawn where it overlaps the existing canvas content.
-            this.viewCtx.globalCompositeOperation = "source-atop";
-        }
         this.viewCtx.drawImage(
             this.img,
             r.x,
@@ -294,14 +285,12 @@ export class TTImageEditor {
             r.w,
             r.h
         );
-        this.viewCtx.globalCompositeOperation = "source-over";
+
     }
 
     private drawPencil(): void {
         let r = this.getImageRect();
         // draw the pencilCanvas to the viewCanvas
-        // source-atop: The new shape is only drawn where it overlaps the existing canvas content.
-        this.viewCtx.globalCompositeOperation = "source-atop";
         this.viewCtx.drawImage(
             this.pencilCanvas,
             r.x,
@@ -309,7 +298,6 @@ export class TTImageEditor {
             r.w,
             r.h
         );
-        this.viewCtx.globalCompositeOperation = "source-over";
     }
 
     private drawCropRect() {
@@ -350,4 +338,15 @@ export class TTImageEditor {
             h: (this.state.imgH) / scale
         }
     }
+
+    // clear everything on the view canvas outside a rect
+    private clearOutsideImageRect(): void {
+       let r: Rect = this.getCroppedImageRect();
+       this.viewCtx.clearRect(0, 0, this.viewCanvas.width, r.y);
+       this.viewCtx.clearRect(0, 0, r.x, this.viewCanvas.height);
+       this.viewCtx.clearRect(r.x + r.w, 0, this.viewCanvas.width - (r.x + r.w), this.viewCanvas.height);
+       this.viewCtx.clearRect(0, r.y + r.h, this.viewCanvas.width, this.viewCanvas.height - (r.y + r.h));
+       this.viewCtx.strokeStyle = "rgba(0, 0, 0, .5)";
+       this.viewCtx.strokeRect(r.x, r.y, r.w, r.h);
+   }
 }
