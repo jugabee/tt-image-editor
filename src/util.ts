@@ -1,5 +1,10 @@
 const DEF_SCALE_STEP = 1.1;
 
+export enum Direction {
+    HORIZONTAL,
+    VERTICAL
+}
+
 export interface Point {
     x: number,
     y: number

@@ -26,7 +26,7 @@ export class TTImageEditor {
     private toolbarElement: HTMLElement;
     private toolbar: Toolbar;
     private canvasContainer: HTMLElement;
-    private scratchCanvas: HTMLCanvasElement;
+    private pencilCanvas: HTMLCanvasElement;
     private toolCanvas: HTMLCanvasElement;
     private toolCtx: CanvasRenderingContext2D;
     private viewCanvas: HTMLCanvasElement;
@@ -34,7 +34,7 @@ export class TTImageEditor {
     private readonly DEF_BG_FILL = "gray";
     private readonly DEF_STROKE = "blue";
     private readonly DEF_LINE_W = 2;
-    // enable debug to see state updates, and to display stroked rectangles for
+    // enable debug to see state updates in console, and to draw stroked rectangles for
     // the original image and cropped image
     private debug: boolean = false;
     state: EditorState = {
@@ -57,7 +57,7 @@ export class TTImageEditor {
     constructor(img: HTMLImageElement) {
         this.img = img;
         this.init();
-        this.toolbar = new Toolbar(this.state, this.toolCanvas, this.scratchCanvas);
+        this.toolbar = new Toolbar(this.state, this.toolCanvas, this.pencilCanvas);
         this.addListeners();
     }
 
@@ -72,15 +72,15 @@ export class TTImageEditor {
         this.viewCanvas = this.editor.querySelector("#tt-view-canvas") as HTMLCanvasElement;
         this.viewCtx = this.viewCanvas.getContext("2d");
         this.setState({ imgW: this.img.naturalWidth, imgH: this.img.naturalHeight });
-        this.scratchCanvas = document.createElement("canvas");
-        this.scratchCanvas.width = this.state.imgW;
-        this.scratchCanvas.height = this.state.imgH;
+        this.pencilCanvas = document.createElement("canvas");
+        this.pencilCanvas.width = this.state.imgW;
+        this.pencilCanvas.height = this.state.imgH;
     }
 
     private addListeners(): void {
         this.toolbar.onSaveImage.addListener((evt) => this.handleSaveImage(evt));
         this.toolbar.onCropApply.addListener((evt) => this.handleCropApply(evt));
-        this.toolbar.pencil.onPencilDrawing.addListener(() => this.draw());
+        this.toolbar.pencil.onPencilDrawing.addListener((evt) => this.handlePencilDrawing(evt));
         this.toolbar.pencil.onPencilDrawingFinished.addListener((evt) => this.handlePencilDrawingFinished(evt));
     	this.canvasContainer.addEventListener("mousedown", (evt) => this.handleMousedown(evt), false);
     	this.canvasContainer.addEventListener("mousemove", (evt) => this.handleMousemove(evt), false);
@@ -230,9 +230,9 @@ export class TTImageEditor {
             saveCanvas.width,
             saveCanvas.height
         );
-        // draw scratchCanvas to saveCanvas
+        // draw pencilCanvas to saveCanvas
         saveCtx.drawImage(
-            this.scratchCanvas,
+            this.pencilCanvas,
             this.state.cropX,
             this.state.cropY,
             (this.state.imgW - this.state.cropW),
@@ -246,6 +246,10 @@ export class TTImageEditor {
     }
 
     private handlePencilDrawingFinished(evt): void { }
+
+    private handlePencilDrawing(evt): void {
+        this.draw();
+    }
 
     private handleCropApply(evt): void {
         let rc: RectChange = evt.data;
@@ -265,13 +269,22 @@ export class TTImageEditor {
     }
 
     private draw(): void {
-        let scale = Util.getCurrentScale(this.state.scale);
+        this.viewCtx.mozImageSmoothingEnabled = false;
+        this.viewCtx.webkitImageSmoothingEnabled = false;
+        this.viewCtx.imageSmoothingEnabled = false;
+        this.drawImg();
+        this.drawPencil();
+        if (this.debug) {
+            this.drawDebug();
+        }
+        this.drawCropRect();
+    }
+
+    private drawImg(): void {
         let r = this.getImageRect();
         let r2 = this.getCroppedImageRect();
         this.viewCtx.clearRect(0, 0, this.viewCanvas.width, this.viewCanvas.height);
-        if (this.debug) {
-            this.viewCtx.globalCompositeOperation = "source-over";
-        } else {
+        if (!this.debug) {
             this.viewCtx.fillStyle = "white";
             // fill a crop rect that the source image will be composited with
             this.viewCtx.fillRect(r2.x, r2.y, r2.w, r2.h);
@@ -285,29 +298,39 @@ export class TTImageEditor {
             r.w,
             r.h
         );
-        // draw the scratchCanvas to the viewCanvas
-        // for eraser tool: viewCtx.globalCompositeOperation = "destination-out";
+        this.viewCtx.globalCompositeOperation = "source-over";
+    }
+
+    private drawPencil(): void {
+        let r = this.getImageRect();
+        // draw the pencilCanvas to the viewCanvas
+        // source-atop: The new shape is only drawn where it overlaps the existing canvas content.
+        this.viewCtx.globalCompositeOperation = "source-atop";
         this.viewCtx.drawImage(
-            this.scratchCanvas,
+            this.pencilCanvas,
             r.x,
             r.y,
             r.w,
             r.h
         );
-        if (this.debug) {
-            this.viewCtx.strokeStyle = "blue";
-            this.viewCtx.lineWidth = 3;
-            this.viewCtx.strokeRect(r.x, r.y, r.w, r.h);
-            this.viewCtx.strokeStyle = "red";
-            this.viewCtx.strokeRect(r2.x, r2.y, r2.w, r2.h);
-        } else {
-            // reset to default composite operation from "source-atop"
-            this.viewCtx.globalCompositeOperation = "source-over";
-        }
+        this.viewCtx.globalCompositeOperation = "source-over";
+    }
+
+    private drawCropRect() {
         // update the crop rectangle if it is active
         if (this.toolbar.getActiveToolType() === ToolType.Crop) {
             this.toolbar.crop.draw();
         }
+    }
+
+    private drawDebug(): void {
+        let r = this.getImageRect();
+        let r2 = this.getCroppedImageRect();
+        this.viewCtx.strokeStyle = "blue";
+        this.viewCtx.lineWidth = 3;
+        this.viewCtx.strokeRect(r.x, r.y, r.w, r.h);
+        this.viewCtx.strokeStyle = "red";
+        this.viewCtx.strokeRect(r2.x, r2.y, r2.w, r2.h);
     }
 
     // returns a Rect for the boundary of the cropped image

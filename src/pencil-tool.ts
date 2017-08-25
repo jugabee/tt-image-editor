@@ -1,29 +1,23 @@
 import * as Events from "./event";
 import { Tool } from "./tool";
 import * as Util from "./util";
-import { Point } from "./util";
+import { Point, Direction } from "./util";
 import { EditorState } from "./editor";
-
-interface PencilToolState {
-    isMousedown: boolean;
-    isMousedrag: boolean;
- }
 
 export class PencilTool extends Tool{
     private editorState: EditorState;
-    private scratchCanvas: HTMLCanvasElement;
-    private scratchCtx: CanvasRenderingContext2D;
+    private pencilCanvas: HTMLCanvasElement;
+    private pencilCtx: CanvasRenderingContext2D;
+    private points: Array<Point> = [];
+    private lastMousedown: Point = { x: 0, y: 0 };
+    private isMousedown: boolean = false;
+    private isMousedrag: boolean = false;
     private readonly DEF_STROKE = "black";
     private readonly DEF_RESET_FILL = "white";
-    private readonly DEF_LINE_WIDTH = 10;
+    private readonly DEF_LINE_WIDTH = 5;
     private readonly DEF_LINE_CAP = "round";
     private readonly DEF_LINE_JOIN = "round";
     private debug: boolean = false;
-
-    state: PencilToolState = {
-        isMousedown: false,
-        isMousedrag: false,
-    }
 
     onPencilDrawing: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
     onPencilDrawingFinished: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
@@ -31,64 +25,71 @@ export class PencilTool extends Tool{
     constructor(state: EditorState, canvas: HTMLCanvasElement) {
         super();
         this.editorState = state;
-        this.scratchCanvas = canvas;
-        this.scratchCtx = this.scratchCanvas.getContext("2d");
-    }
-
-    private setState(obj): void {
-        if (this.debug) {
-            console.log("MERGE WITH", obj);
-            console.log("BEFORE", JSON.stringify(this.state));
-            console.log("*******************************");
-        }
-        Object.getOwnPropertyNames(obj).forEach(
-            (val) => {
-                if (!(val in this.state)) {
-                    throw "Unexpected state property."
-                }
-            }
-        );
-        this.state = Object.assign(this.state, obj);
-        if (this.debug) {
-            console.log("AFTER", JSON.stringify(this.state));
-        }
+        this.pencilCanvas = canvas;
+        this.pencilCtx = this.pencilCanvas.getContext("2d");
     }
 
     handleMousedown(evt): void {
         let scale = Util.getCurrentScale(this.editorState.scale);
         let mouse = Util.getMousePosition(this.editorState.clientRect, evt);
-        this.setState({ isMousedown: true });
-        this.scratchCtx.beginPath();
-    	this.scratchCtx.moveTo(
-            (mouse.x * scale) + this.editorState.sx + this.editorState.cropX,
-            (mouse.y * scale) + this.editorState.sy + this.editorState.cropY
-        );
+        this.isMousedown = true;
+        if (!evt.altKey) {
+            let p: Point = {
+                x: (mouse.x * scale) + this.editorState.sx + this.editorState.cropX,
+                y: (mouse.y * scale) + this.editorState.sy + this.editorState.cropY
+            }
+            this.points.push(p)
+            this.lastMousedown = p;
+        }
     }
 
     handleMousemove(evt): void {
-        if (this.state.isMousedown) {
-            let scale = Util.getCurrentScale(this.editorState.scale);
-            let mouse = Util.getMousePosition(this.editorState.clientRect, evt);
-            this.setState({ isMousedrag: true });
-            this.scratchCtx.lineTo(
-                (mouse.x * scale) + this.editorState.sx + this.editorState.cropX,
-                (mouse.y * scale) + this.editorState.sy + this.editorState.cropY
-            );
-            this.scratchCtx.lineWidth = this.DEF_LINE_WIDTH;
-            this.scratchCtx.strokeStyle = this.DEF_STROKE;
-            this.scratchCtx.lineJoin = this.DEF_LINE_JOIN;
-            this.scratchCtx.lineCap = this.DEF_LINE_CAP;
-            this.scratchCtx.stroke();
+        let p: Point;
+        let scale = Util.getCurrentScale(this.editorState.scale);
+        let mouse = Util.getMousePosition(this.editorState.clientRect, evt);
+        if (this.isMousedown && !evt.altKey) {
+            this.isMousedrag = true;
+                p = {
+                    x: (mouse.x * scale) + this.editorState.sx + this.editorState.cropX,
+                    y: (mouse.y * scale) + this.editorState.sy + this.editorState.cropY
+                }
+            this.points.push(p)
+            this.draw();
             this.onPencilDrawing.emit({ data: true });
         }
     }
 
     handleMouseup(evt): void {
+        this.points = [];
         this.onPencilDrawingFinished.emit({ data: true });
-        this.setState({ isMousedown: false, isMousedrag: false });
+        this.isMousedown = false;
+        this.isMousedrag = false;
     }
 
-    draw(): void { }
+    draw(): void {
+        let p1 = this.points[0];
+        let p2 = this.points[1];
+        this.pencilCtx.lineWidth = this.DEF_LINE_WIDTH;
+        this.pencilCtx.strokeStyle = this.DEF_STROKE;
+        this.pencilCtx.lineJoin = this.DEF_LINE_JOIN;
+        this.pencilCtx.lineCap = this.DEF_LINE_CAP;
+        this.pencilCtx.clearRect(0, 0, this.pencilCtx.canvas.width, this.pencilCtx.canvas.height);
+        this.pencilCtx.beginPath();
+        this.pencilCtx.moveTo(p1.x, p1.y);
+        for (let i = 1, len = this.points.length; i < len; i++) {
+            // we pick the point between pi+1 & pi+2 as the
+            // end point and p1 as our control point
+            let midPoint = Util.midpoint(p1, p2);
+            this.pencilCtx.quadraticCurveTo(p1.x, p1.y, midPoint.x, midPoint.y);
+            p1 = this.points[i];
+            p2 = this.points[i+1];
+        }
+        // Draw last line as a straight line while
+        // we wait for the next point to be able to calculate
+        // the bezier control point
+        this.pencilCtx.lineTo(p1.x, p1.y);
+        this.pencilCtx.stroke();
+    }
 
     init(): void { }
 
