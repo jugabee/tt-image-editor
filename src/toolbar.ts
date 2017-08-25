@@ -45,13 +45,12 @@ export class Toolbar {
     }
     onSaveImage: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
     onCropApply: Events.Dispatcher<RectChange> = Events.Dispatcher.createEventDispatcher();
-    onPencilSubToolChange: Events.Dispatcher<PencilToolSize> = Events.Dispatcher.createEventDispatcher();
     onActiveToolChange: Events.Dispatcher<ToolType | null> = Events.Dispatcher.createEventDispatcher();
 
-    constructor(editorState: EditorState, toolCanvas: HTMLCanvasElement, pencilCanvas: HTMLCanvasElement) {
+    constructor(editorState: EditorState, toolCanvas: HTMLCanvasElement, pencilCanvas: HTMLCanvasElement, viewCanvas: HTMLCanvasElement,) {
         this.toolCanvas = toolCanvas;
         this.toolCtx = this.toolCanvas.getContext("2d");
-        this.pencil = new PencilTool(editorState, this.state, pencilCanvas);
+        this.pencil = new PencilTool(editorState, this.state, pencilCanvas, viewCanvas);
         this.crop = new CropTool(editorState, toolCanvas);
         this.render();
         this.addListeners();
@@ -145,8 +144,6 @@ export class Toolbar {
                 this.state.pencilSize = PencilToolSize.SIZE_6;
                 break;
         }
-        // TODO using this?
-        this.onPencilSubToolChange.emit({ data: this.state.pencilSize });
     }
 
     private handleApplyBtn(evt): void {

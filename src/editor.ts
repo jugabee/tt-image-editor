@@ -57,7 +57,7 @@ export class TTImageEditor {
     constructor(img: HTMLImageElement) {
         this.img = img;
         this.init();
-        this.toolbar = new Toolbar(this.state, this.toolCanvas, this.pencilCanvas);
+        this.toolbar = new Toolbar(this.state, this.toolCanvas, this.pencilCanvas, this.viewCanvas);
         this.addListeners();
     }
 
