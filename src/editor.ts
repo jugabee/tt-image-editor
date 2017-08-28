@@ -26,7 +26,10 @@ export class TTImageEditor {
     private toolbarElement: HTMLElement;
     private toolbar: Toolbar;
     private canvasContainer: HTMLElement;
+    private memoryCanvas: HTMLCanvasElement;
+    private memoryCtx: CanvasRenderingContext2D;
     private pencilCanvas: HTMLCanvasElement;
+    private pencilCtx: CanvasRenderingContext2D;
     private toolCanvas: HTMLCanvasElement;
     private toolCtx: CanvasRenderingContext2D;
     private viewCanvas: HTMLCanvasElement;
@@ -70,8 +73,14 @@ export class TTImageEditor {
         this.viewCtx = this.viewCanvas.getContext("2d");
         this.setState({ imgW: this.img.naturalWidth, imgH: this.img.naturalHeight });
         this.pencilCanvas = document.createElement("canvas");
+        this.pencilCtx = this.pencilCanvas.getContext("2d");
+        this.memoryCanvas = document.createElement("canvas");
+        this.memoryCtx = this.memoryCanvas.getContext("2d");
         this.pencilCanvas.width = this.state.imgW;
         this.pencilCanvas.height = this.state.imgH;
+        this.memoryCanvas.width = this.state.imgW;
+        this.memoryCanvas.height = this.state.imgH;
+        this.memoryCtx.drawImage(this.img, 0, 0);
     }
 
     private addListeners(): void {
@@ -216,20 +225,9 @@ export class TTImageEditor {
         }
         saveCanvas.width = this.state.imgW - this.state.cropW;
         saveCanvas.height = this.state.imgH - this.state.cropH;
-        // draw source img to saveCanvas
+        // draw memoryCanvas to saveCanvas with crop applied to source rectangle
         saveCtx.drawImage(
-            this.img,
-            this.state.cropX,
-            this.state.cropY,
-            (this.state.imgW - this.state.cropW),
-            (this.state.imgH - this.state.cropH),
-            0, 0,
-            saveCanvas.width,
-            saveCanvas.height
-        );
-        // draw pencilCanvas to saveCanvas
-        saveCtx.drawImage(
-            this.pencilCanvas,
+            this.memoryCanvas,
             this.state.cropX,
             this.state.cropY,
             (this.state.imgW - this.state.cropW),
@@ -242,7 +240,17 @@ export class TTImageEditor {
         img.src = saveCanvas.toDataURL();
     }
 
-    private handlePencilDrawingFinished(evt): void { }
+    private handlePencilDrawingFinished(evt): void {
+        // draw the pencilDrawing from pencilCanvas to the memoryCanvas with correct composite
+        this.memoryCtx.globalCompositeOperation = this.toolbar.pencil.getComposite();
+        this.memoryCtx.drawImage(
+            this.pencilCanvas,
+            0, 0
+        );
+        this.pencilCtx.clearRect(0, 0, this.pencilCtx.canvas.width, this.pencilCtx.canvas.height);
+        this.memoryCtx.globalCompositeOperation = "source-over";
+        this.draw();
+    }
 
     private handlePencilDrawing(evt): void {
         this.draw();
@@ -279,7 +287,7 @@ export class TTImageEditor {
         let r2 = this.getCroppedImageRect();
         this.viewCtx.clearRect(0, 0, this.viewCanvas.width, this.viewCanvas.height);
         this.viewCtx.drawImage(
-            this.img,
+            this.memoryCanvas,
             r.x,
             r.y,
             r.w,
@@ -290,7 +298,9 @@ export class TTImageEditor {
 
     private drawPencil(): void {
         let r = this.getImageRect();
-        // draw the pencilCanvas to the viewCanvas
+        // draw the pencilCanvas to the viewCanvas while the onPencilDrawing event
+        // is being emitted. Use pencil's current composite in case we are erasing
+        this.viewCtx.globalCompositeOperation = this.toolbar.pencil.getComposite();
         this.viewCtx.drawImage(
             this.pencilCanvas,
             r.x,
@@ -298,6 +308,7 @@ export class TTImageEditor {
             r.w,
             r.h
         );
+        this.viewCtx.globalCompositeOperation = "source-over";
     }
 
     private drawCropRect() {

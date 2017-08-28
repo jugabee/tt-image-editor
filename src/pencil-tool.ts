@@ -3,7 +3,7 @@ import { Tool } from "./tool";
 import * as Util from "./util";
 import { Point, Direction } from "./util";
 import { EditorState } from "./editor";
-import { ToolbarState, PencilToolSize } from "./toolbar";
+import { ToolbarState, PencilToolSize, ToolType, Toolbar } from "./toolbar";
 
 export class PencilTool extends Tool{
     private editorState: EditorState;
@@ -13,13 +13,18 @@ export class PencilTool extends Tool{
     private viewCanvas: HTMLCanvasElement;
     private viewCtx: CanvasRenderingContext2D;
     private points: Array<Point> = [];
-    private color: string = "rgba(0, 0, 0, 1)";
     private isMousedown: boolean = false;
     private isMousedrag: boolean = false;
+    private isEraser: boolean = false;
+    private readonly DEF_COMPOSITE = "source-over";
+    private readonly DEF_COLOR = "rgba(0, 0, 0, 1)";
     private readonly DEF_RESET_FILL = "white";
     private readonly DEF_LINE_WIDTH = 2;
     private readonly DEF_LINE_CAP = "round";
     private readonly DEF_LINE_JOIN = "round";
+    composite: string = this.DEF_COMPOSITE;
+    color: string = this.DEF_COLOR;
+    width: number = this.DEF_LINE_WIDTH;
     private debug: boolean = false;
 
     onPencilDrawing: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
@@ -31,9 +36,9 @@ export class PencilTool extends Tool{
         this.editorState = editorState;
         this.toolbarState = toolbarState;
         this.pencilCanvas = pencilCanvas;
+        this.pencilCtx = this.pencilCanvas.getContext("2d");
         this.viewCanvas = viewCanvas;
         this.viewCtx = this.viewCanvas.getContext("2d");
-        this.pencilCtx = this.pencilCanvas.getContext("2d");
     }
 
     handleMousedown(evt): void {
@@ -45,6 +50,11 @@ export class PencilTool extends Tool{
                 y: (mouse.y * scale) + this.editorState.sy
             }
             this.isMousedown = true;
+            if (this.isEraser) {
+                this.composite = "destination-out";
+            } else {
+                this.composite = "source-over";
+            }
             if(evt.ctrlKey || evt.metaKey) {
                 this.sampleColorAtPixel(mouse);
             } else {
@@ -74,8 +84,10 @@ export class PencilTool extends Tool{
     }
 
     handleMouseup(evt): void {
+        if (this.points.length > 1) {
+            this.onPencilDrawingFinished.emit({ data: true });
+        }
         this.points = [];
-        this.onPencilDrawingFinished.emit({ data: true });
         this.isMousedown = false;
         this.isMousedrag = false;
     }
@@ -83,7 +95,7 @@ export class PencilTool extends Tool{
     draw(): void {
         let p1 = this.points[0];
         let p2 = this.points[1];
-        this.pencilCtx.lineWidth = this.getCurrentLineWidth();
+        this.pencilCtx.lineWidth = this.width;
         this.pencilCtx.strokeStyle = this.color;
         this.pencilCtx.lineJoin = this.DEF_LINE_JOIN;
         this.pencilCtx.lineCap = this.DEF_LINE_CAP;
@@ -92,16 +104,11 @@ export class PencilTool extends Tool{
         this.pencilCtx.beginPath();
         this.pencilCtx.moveTo(p1.x, p1.y);
         for (let i = 1, len = this.points.length; i < len; i++) {
-            // we pick the point between pi+1 & pi+2 as the
-            // end point and p1 as our control point
             let midPoint = Util.midpoint(p1, p2);
             this.pencilCtx.quadraticCurveTo(p1.x, p1.y, midPoint.x, midPoint.y);
             p1 = this.points[i];
             p2 = this.points[i+1];
         }
-        // Draw last line as a straight line while
-        // we wait for the next point to be able to calculate
-        // the bezier control point
         this.pencilCtx.lineTo(p1.x, p1.y);
         this.pencilCtx.stroke();
     }
@@ -117,8 +124,16 @@ export class PencilTool extends Tool{
         this.onColorSampled.emit({ data: rgba });
     }
 
-    private getCurrentLineWidth(): number {
-        return this.toolbarState.pencilSize;
+    setLineWidth(width: number): void {
+        this.width = width;
+    }
+
+    setEraser(isEraser: boolean): void {
+        this.isEraser = isEraser;
+    }
+
+    getComposite(): string {
+        return this.composite;
     }
 
 }

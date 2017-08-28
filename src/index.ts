@@ -5,7 +5,7 @@ function ready(): void {
     img.addEventListener("load", (evt) => {
         const editor = new TTImageEditor(img);
     });
-    img.src = "../images/test.jpg";
+    img.src = "../images/dwarf.png";
 }
 
 if (document.readyState !== "loading") {

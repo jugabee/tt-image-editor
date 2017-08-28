@@ -35,7 +35,8 @@ export class Toolbar {
     private saveBtn: HTMLElement;
     private cropBtn: HTMLElement;
     private pencilBtn: HTMLElement;
-    private pencilSubBtns: NodeList;
+    private pencilEraserBtn: HTMLElement;
+    private pencilSizeBtns: NodeList;
     private toolSubBtnsDivs: NodeList;
     private pencilSubBtnsDiv: HTMLElement;
     private cropSubBtnsDiv: HTMLElement;
@@ -64,12 +65,15 @@ export class Toolbar {
             <div id="color-selection-div"></div>
             <button id="pencil-btn" class="btn">Pencil</button>
             <div id="pencil-sub-btns" class="tool-sub-btns">
-                <button id="pencil-btn-size-1" class="sub-btn"><span class="pencil-size-icon"></span></button>
-                <button id="pencil-btn-size-2" class="sub-btn"><span class="pencil-size-icon"></span></button>
-                <button id="pencil-btn-size-3" class="sub-btn active"><span class="pencil-size-icon"></span></button>
-                <button id="pencil-btn-size-4" class="sub-btn"><span class="pencil-size-icon"></span></button>
-                <button id="pencil-btn-size-5" class="sub-btn"><span class="pencil-size-icon"></span></button>
-                <button id="pencil-btn-size-6" class="sub-btn"><span class="pencil-size-icon"></span></button>
+                <button id="pencil-eraser-btn" class="sub-btn" title="Eraser">&#9746;</button>
+                <div id="pencil-size-btns">
+                    <button id="pencil-btn-size-1" class="sub-btn"><span class="pencil-size-icon"></span></button>
+                    <button id="pencil-btn-size-2" class="sub-btn"><span class="pencil-size-icon"></span></button>
+                    <button id="pencil-btn-size-3" class="sub-btn active"><span class="pencil-size-icon"></span></button>
+                    <button id="pencil-btn-size-4" class="sub-btn"><span class="pencil-size-icon"></span></button>
+                    <button id="pencil-btn-size-5" class="sub-btn"><span class="pencil-size-icon"></span></button>
+                    <button id="pencil-btn-size-6" class="sub-btn"><span class="pencil-size-icon"></span></button>
+                </div>
             </div>
             <button id="crop-btn" class="btn">Crop</button>
             <div id="crop-sub-btns" class="tool-sub-btns">
@@ -82,9 +86,10 @@ export class Toolbar {
         this.cropBtn = this.toolbar.querySelector("#crop-btn") as HTMLElement;
         this.pencilBtn = this.toolbar.querySelector("#pencil-btn") as HTMLElement;
         this.toolSubBtnsDivs = this.toolbar.querySelectorAll(".tool-sub-btns");
-        this.pencilSubBtns = this.toolbar.querySelectorAll("#pencil-sub-btns .sub-btn");
+        this.pencilSizeBtns = this.toolbar.querySelectorAll("#pencil-size-btns .sub-btn");
         this.cropSubBtnsDiv = this.toolbar.querySelector("#crop-sub-btns") as HTMLElement;
         this.pencilSubBtnsDiv = this.toolbar.querySelector("#pencil-sub-btns") as HTMLElement;
+        this.pencilEraserBtn = this.toolbar.querySelector("#pencil-eraser-btn") as HTMLElement;
         this.colorSelectionDiv = this.toolbar.querySelector("#color-selection-div") as HTMLElement;
     }
 
@@ -93,7 +98,8 @@ export class Toolbar {
         this.saveBtn.addEventListener("click", (evt) => this.handleSaveBtn(evt));
         this.cropBtn.addEventListener("click", (evt) => this.handleCropBtn(evt));
         this.pencilBtn.addEventListener("click", (evt) => this.handlePencilBtn(evt));
-        Util.addEventListenerList(this.pencilSubBtns, "click", (evt) => this.handlePencilSubBtns(evt));
+        this.pencilEraserBtn.addEventListener("click", (evt) => this.handlePencilEraserBtn(evt));
+        Util.addEventListenerList(this.pencilSizeBtns, "click", (evt) => this.handlePencilSizeBtns(evt));
         this.onActiveToolChange.addListener((evt) => this.handleActiveToolChange(evt));
         this.pencil.onColorSampled.addListener((evt) => this.handleColorSampled(evt));
     }
@@ -124,9 +130,19 @@ export class Toolbar {
         }
     }
 
-    private handlePencilSubBtns(evt): void {
+    private handlePencilEraserBtn(evt): void {
+        if (evt.target.classList.contains("active")) {
+            evt.target.classList.remove("active");
+            this.pencil.setEraser(false);
+        } else {
+            evt.target.classList.add("active");
+            this.pencil.setEraser(true);
+        }
+    }
+
+    private handlePencilSizeBtns(evt): void {
         let id: string = evt.target.id.split("").pop();
-        this.deactivateSelector("#pencil-sub-btns .sub-btn.active");
+        this.deactivateSelector("#pencil-size-btns .sub-btn.active");
         evt.target.classList.add("active");
         switch (id) {
             case "1":
@@ -148,6 +164,7 @@ export class Toolbar {
                 this.state.pencilSize = PencilToolSize.SIZE_6;
                 break;
         }
+        this.pencil.setLineWidth(this.state.pencilSize);
     }
 
     private handleApplyBtn(evt): void {

@@ -18,6 +18,7 @@ html, body {
         order: 1;
         flex: 1 1 auto;
         align-self: auto;
+
         canvas#tool-layer {
             z-index: 12;
             position: absolute;
@@ -25,8 +26,7 @@ html, body {
 
         canvas#view-layer {
             z-index: 10;
-            background-image:
-                url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAIElEQVQoU2NkYGCQYsAEz9CFGIeIQix+wfQgyDODXSEANzEFjc0z43QAAAAASUVORK5CYII=');
+            background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAAH6ji2bAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoV2luZG93cykiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6QTQzMzcyQ0M4QzQwMTFFN0JFQTc5RDY5MUM3OTcxQjUiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6QTQzMzcyQ0Q4QzQwMTFFN0JFQTc5RDY5MUM3OTcxQjUiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDpBNDMzNzJDQThDNDAxMUU3QkVBNzlENjkxQzc5NzFCNSIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDpBNDMzNzJDQjhDNDAxMUU3QkVBNzlENjkxQzc5NzFCNSIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PqIkUbkAAAB0SURBVHjaYmBgYOCFYgYmBhyAFyCAGHAq4QUIIEaYFBR8BhGM2AwACCAGZLtgAKudWAUZsZmHVSVAAKE7CcVpBO0hZDdWf5FsItEKAQKI+p4ZQIUDGI7UVwgQYLhihoGY2KLIZqp7ZfgYyEiCWt7RMKSPgQBzLgTWEduGbAAAAABJRU5ErkJggg==");
             background-color: white;
             position: absolute;
         }
@@ -87,8 +87,10 @@ html, body {
 
         #pencil-sub-btns {
             display: none;
-
-            .sub-btn {
+            #pencil-size-btns {
+                display: flex;
+            }
+            #pencil-size-btns .sub-btn {
                 display: flex;
                 align-items: center;
                 justify-content: center;
