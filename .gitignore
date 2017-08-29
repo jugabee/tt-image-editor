@@ -17,3 +17,8 @@ node_modules/
 
 # dotenv environment variables file
 .env
+
+Procfile
+
+dist/bundle.css
+dist/bundle.js

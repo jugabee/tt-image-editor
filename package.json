@@ -4,24 +4,25 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "prepublish": "typings install",
         "watch": "webpack --watch",
-        "start": "webpack-dev-server --hot --inline --no-info"
+        "start": "webpack-dev-server --content-base dist/ --hot --inline --no-info",
+        "prod": "cross-env NODE_ENV=production & node server.js",
+        "heroku-postbuild": "webpack -p"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
-    "devDependencies": {
+    "dependencies": {
+        "cross-env": "^5.0.5",
         "css-loader": "^0.28.5",
+        "express": "^4.15.4",
         "extract-text-webpack-plugin": "^3.0.0",
         "node-sass": "^4.5.3",
         "sass-loader": "^6.0.6",
         "ts-loader": "^2.3.2",
         "typescript": "^2.4.2",
         "typings": "^2.1.1",
-        "webpack": "^3.5.5"
-    },
-    "dependencies": {
+        "webpack": "^3.5.5",
         "webpack-dev-server": "^2.6.1"
     }
 }

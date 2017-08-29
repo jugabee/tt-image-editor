@@ -19,12 +19,11 @@ export class PencilTool extends Tool{
     private readonly DEF_COMPOSITE = "source-over";
     private readonly DEF_COLOR = "rgba(0, 0, 0, 1)";
     private readonly DEF_RESET_FILL = "white";
-    private readonly DEF_LINE_WIDTH = 2;
     private readonly DEF_LINE_CAP = "round";
     private readonly DEF_LINE_JOIN = "round";
     composite: string = this.DEF_COMPOSITE;
     color: string = this.DEF_COLOR;
-    width: number = this.DEF_LINE_WIDTH;
+    width: number = PencilToolSize.SIZE_3;
     private debug: boolean = false;
 
     onPencilDrawing: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
