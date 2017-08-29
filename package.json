@@ -2,10 +2,13 @@
     "name": "ttimg",
     "version": "1.0.0",
     "description": "",
-    "main": "index.js",
+    "engines": {
+        "node": "6.11.1",
+        "npm": "5.3.0"
+    },
     "scripts": {
-        "watch": "webpack --watch",
-        "start": "webpack-dev-server --content-base dist/ --hot --inline --no-info",
+        "start": "node server.js",
+        "dev": "webpack-dev-server --content-base dist/ --hot --inline --no-info",
         "prod": "cross-env NODE_ENV=production & node server.js",
         "heroku-postbuild": "webpack -p"
     },
