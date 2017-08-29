@@ -56,8 +56,8 @@ export function clearCanvasOutsideRect(ctx: CanvasRenderingContext2D, canvas: HT
 
 export function midpoint(p1: Point, p2: Point): Point {
   return {
-    x: p1.x + (p2.x - p1.x) / 2,
-    y: p1.y + (p2.y - p1.y) / 2
+    x: (p2.x + p1.x) / 2,
+    y: (p2.y + p1.y) / 2
   };
 }
 
