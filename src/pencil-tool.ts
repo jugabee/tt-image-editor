@@ -3,7 +3,7 @@ import { Tool } from "./tool";
 import * as Util from "./util";
 import { Point, Direction } from "./util";
 import { EditorState } from "./editor";
-import { ToolbarState, PencilToolSize, ToolType, Toolbar } from "./toolbar";
+import { ToolbarState, PencilSize, ToolType, Toolbar } from "./toolbar";
 
 export class PencilTool extends Tool{
     private editorState: EditorState;
@@ -16,6 +16,10 @@ export class PencilTool extends Tool{
     private isMousedown: boolean = false;
     private isMousedrag: boolean = false;
     private isEraser: boolean = false;
+    private isSpray: boolean = false;
+    private sprayTimeout: number | undefined;
+    private sprayMouse: Point;
+    private readonly DEF_SPRAY_DENSITY = 25;
     private readonly DEF_COMPOSITE = "source-over";
     private readonly DEF_COLOR = "rgba(0, 0, 0, 1)";
     private readonly DEF_RESET_FILL = "white";
@@ -23,7 +27,7 @@ export class PencilTool extends Tool{
     private readonly DEF_LINE_JOIN = "round";
     composite: string = this.DEF_COMPOSITE;
     color: string = this.DEF_COLOR;
-    width: number = PencilToolSize.SIZE_3;
+    width: number = PencilSize.SIZE_3;
     private debug: boolean = false;
 
     onPencilDrawing: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
@@ -42,12 +46,13 @@ export class PencilTool extends Tool{
 
     handleMousedown(evt): void {
         if (!evt.altKey) {
-            let scale = Util.getCurrentScale(this.editorState.scale);
-            let mouse = Util.getMousePosition(this.editorState.clientRect, evt);
+            let scale: number = Util.getCurrentScale(this.editorState.scale);
+            let mouse: Point = Util.getMousePosition(this.editorState.clientRect, evt);
             let p: Point = {
                 x: (mouse.x * scale) + this.editorState.sx,
                 y: (mouse.y * scale) + this.editorState.sy
             }
+            this.sprayMouse = p;
             this.isMousedown = true;
             if (this.isEraser) {
                 this.composite = "destination-out";
@@ -55,43 +60,50 @@ export class PencilTool extends Tool{
                 this.composite = "source-over";
             }
             if(evt.ctrlKey || evt.metaKey) {
-                this.sampleColorAtPixel(mouse);
+                this.sampleColorAtPoint(mouse);
             } else {
-                this.points.push(p)
+                if (this.isSpray) {
+                    this.drawSprayBrush();
+                } else {
+                    this.points.push(p);
+                }
             }
         }
     }
 
     handleMousemove(evt): void {
-        if (!evt.altKey && this.isMousedown) {
-            let p: Point;
-            let scale = Util.getCurrentScale(this.editorState.scale);
-            let mouse = Util.getMousePosition(this.editorState.clientRect, evt);
+        let scale: number = Util.getCurrentScale(this.editorState.scale);
+        let mouse: Point = Util.getMousePosition(this.editorState.clientRect, evt);
+        let p: Point = {
+            x: (mouse.x * scale) + this.editorState.sx,
+            y: (mouse.y * scale) + this.editorState.sy
+        };
+        this.sprayMouse = p;
+        if (!evt.altKey && this.isMousedown && !this.isSpray) {
             this.isMousedrag = true;
             if (evt.ctrlKey || evt.metaKey) {
-                this.sampleColorAtPixel(mouse);
+                this.sampleColorAtPoint(mouse);
             } else {
-                p = {
-                    x: (mouse.x * scale) + this.editorState.sx,
-                    y: (mouse.y * scale) + this.editorState.sy
-                }
-                this.points.push(p)
-                this.draw();
+                this.points.push(p);
+                this.drawPencil();
                 this.onPencilDrawing.emit({ data: true });
             }
         }
     }
 
     handleMouseup(evt): void {
-        if (this.points.length > 1) {
-            this.onPencilDrawingFinished.emit({ data: true });
-        }
+        this.onPencilDrawingFinished.emit({ data: true });
         this.points = [];
+        clearTimeout(this.sprayTimeout);
         this.isMousedown = false;
         this.isMousedrag = false;
     }
 
-    draw(): void {
+    draw(): void { }
+
+    init(): void { }
+
+    drawPencil(): void {
         let p1 = this.points[0];
         let p2 = this.points[1];
         this.pencilCtx.lineWidth = this.width;
@@ -112,13 +124,29 @@ export class PencilTool extends Tool{
         this.pencilCtx.stroke();
     }
 
-    init(): void { }
+    private drawSprayBrush(): void {
+        this.sprayTimeout = setTimeout(() => {
+            for (let i = this.width; i > 0; i--) {
+                let angle = Util.getRandomFloat(0, Math.PI * 2);
+                let radius = Util.getRandomFloat(0, this.width);
+                let side = Util.getRandomFloat(1, 2);
+                this.pencilCtx.fillStyle = this.color;
+                this.pencilCtx.fillRect(
+                    this.sprayMouse.x + radius * Math.cos(angle),
+                    this.sprayMouse.y + radius * Math.sin(angle),
+                    side, side);
+                }
+                this.onPencilDrawing.emit({ data: true });
+                if (!this.sprayTimeout) return;
+                this.drawSprayBrush();
+            }, 25
+        );
+    }
 
-    private sampleColorAtPixel(mouse): void {
+    private sampleColorAtPoint(mouse): void {
         let pixel = this.viewCtx.getImageData(mouse.x, mouse.y, 1, 1);
         let data = pixel.data;
-        let rgba = "rgba(" + data[0] + ", " + data[1] +
-                 ", " + data[2] + ", " + (data[3] / 255) + ")";
+        let rgba = `rgba(${data[0]}, ${data[1]}, ${data[2]}, ${data[3] / 255})`;
         this.color = rgba;
         this.onColorSampled.emit({ data: rgba });
     }
@@ -129,6 +157,10 @@ export class PencilTool extends Tool{
 
     setEraser(isEraser: boolean): void {
         this.isEraser = isEraser;
+    }
+
+    setSpray(isSpray: boolean): void {
+        this.isSpray = isSpray;
     }
 
     getComposite(): string {

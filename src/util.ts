@@ -31,6 +31,10 @@ export interface RectOverlap {
     b: boolean
 };
 
+export function getRandomFloat(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
 // determine current scale factor by integer increment
 export function getCurrentScale(inc: number): number {
     let scale = 1;

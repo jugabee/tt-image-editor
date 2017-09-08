@@ -241,6 +241,7 @@ export class TTImageEditor {
     }
 
     private handlePencilDrawingFinished(evt): void {
+        // TODO handle spray brush case
         // draw the pencilDrawing from pencilCanvas to the memoryCanvas with correct composite
         this.memoryCtx.globalCompositeOperation = this.toolbar.pencil.getComposite();
         this.memoryCtx.drawImage(
@@ -275,9 +276,10 @@ export class TTImageEditor {
         this.viewCtx.imageSmoothingEnabled = false;
         this.drawImg();
         this.drawPencil();
-        this.clearOutsideImageRect();
         if (this.debug) {
             this.drawDebug();
+        } else {
+            this.clearOutsideImageRect();
         }
         this.drawCropRect();
     }

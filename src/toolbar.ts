@@ -11,18 +11,22 @@ export enum ToolType {
     PENCIL
 }
 
-export enum PencilToolSize {
+export enum PencilSize {
     SIZE_1 = .5,
     SIZE_2 = 2,
     SIZE_3 = 4,
     SIZE_4 = 8,
-    SIZE_5 = 16,
-    SIZE_6 = 32
+    SIZE_5 = 12,
+    SIZE_6 = 18,
+    SIZE_7 = 24,
+    SIZE_8 = 36
 }
 
 export interface ToolbarState {
     activeTool: ToolType | null;
-    pencilSize: PencilToolSize;
+    pencilSize: PencilSize;
+    pencilIsEraser: boolean;
+    pencilIsSpray: boolean;
 }
 
 export class Toolbar {
@@ -36,6 +40,7 @@ export class Toolbar {
     private cropBtn: HTMLElement;
     private pencilBtn: HTMLElement;
     private pencilEraserBtn: HTMLElement;
+    private pencilSprayBtn: HTMLElement;
     private pencilSizeBtns: NodeList;
     private toolSubBtnsDivs: NodeList;
     private pencilSubBtnsDiv: HTMLElement;
@@ -43,7 +48,9 @@ export class Toolbar {
     private colorSelectionDiv: HTMLElement;
     private state: ToolbarState = {
         activeTool: null,
-        pencilSize: PencilToolSize.SIZE_3
+        pencilSize: PencilSize.SIZE_3,
+        pencilIsEraser: false,
+        pencilIsSpray: false
     }
     onSaveImage: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
     onCropApply: Events.Dispatcher<RectChange> = Events.Dispatcher.createEventDispatcher();
@@ -65,6 +72,7 @@ export class Toolbar {
             <div id="color-selection-div"></div>
             <button id="pencil-btn" class="btn">Pencil</button>
             <div id="pencil-sub-btns" class="tool-sub-btns">
+                <button id="pencil-spray-btn" class="sub-btn" title="Spray">&there4;</button>
                 <button id="pencil-eraser-btn" class="sub-btn" title="Eraser">&#9746;</button>
                 <div id="pencil-size-btns">
                     <button id="pencil-btn-size-1" class="sub-btn"><span class="pencil-size-icon"></span></button>
@@ -73,6 +81,8 @@ export class Toolbar {
                     <button id="pencil-btn-size-4" class="sub-btn"><span class="pencil-size-icon"></span></button>
                     <button id="pencil-btn-size-5" class="sub-btn"><span class="pencil-size-icon"></span></button>
                     <button id="pencil-btn-size-6" class="sub-btn"><span class="pencil-size-icon"></span></button>
+                    <button id="pencil-btn-size-7" class="sub-btn"><span class="pencil-size-icon"></span></button>
+                    <button id="pencil-btn-size-8" class="sub-btn"><span class="pencil-size-icon"></span></button>
                 </div>
             </div>
             <button id="crop-btn" class="btn">Crop</button>
@@ -90,6 +100,7 @@ export class Toolbar {
         this.cropSubBtnsDiv = this.toolbar.querySelector("#crop-sub-btns") as HTMLElement;
         this.pencilSubBtnsDiv = this.toolbar.querySelector("#pencil-sub-btns") as HTMLElement;
         this.pencilEraserBtn = this.toolbar.querySelector("#pencil-eraser-btn") as HTMLElement;
+        this.pencilSprayBtn = this.toolbar.querySelector("#pencil-spray-btn") as HTMLElement;
         this.colorSelectionDiv = this.toolbar.querySelector("#color-selection-div") as HTMLElement;
     }
 
@@ -99,6 +110,7 @@ export class Toolbar {
         this.cropBtn.addEventListener("click", (evt) => this.handleCropBtn(evt));
         this.pencilBtn.addEventListener("click", (evt) => this.handlePencilBtn(evt));
         this.pencilEraserBtn.addEventListener("click", (evt) => this.handlePencilEraserBtn(evt));
+        this.pencilSprayBtn.addEventListener("click", (evt) => this.handlePencilSprayBtn(evt));
         Util.addEventListenerList(this.pencilSizeBtns, "click", (evt) => this.handlePencilSizeBtns(evt));
         this.onActiveToolChange.addListener((evt) => this.handleActiveToolChange(evt));
         this.pencil.onColorSampled.addListener((evt) => this.handleColorSampled(evt));
@@ -134,9 +146,23 @@ export class Toolbar {
         if (evt.target.classList.contains("active")) {
             evt.target.classList.remove("active");
             this.pencil.setEraser(false);
+            this.state.pencilIsEraser = false;
         } else {
             evt.target.classList.add("active");
             this.pencil.setEraser(true);
+            this.state.pencilIsEraser = true;
+        }
+    }
+
+    private handlePencilSprayBtn(evt): void {
+        if (evt.target.classList.contains("active")) {
+            evt.target.classList.remove("active");
+            this.pencil.setSpray(false);
+            this.state.pencilIsSpray = false;
+        } else {
+            evt.target.classList.add("active");
+            this.pencil.setSpray(true);
+            this.state.pencilIsSpray = true;
         }
     }
 
@@ -146,22 +172,28 @@ export class Toolbar {
         evt.target.classList.add("active");
         switch (id) {
             case "1":
-                this.state.pencilSize = PencilToolSize.SIZE_1;
+                this.state.pencilSize = PencilSize.SIZE_1;
                 break;
             case "2":
-                this.state.pencilSize = PencilToolSize.SIZE_2;
+                this.state.pencilSize = PencilSize.SIZE_2;
                 break;
             case "3":
-                this.state.pencilSize = PencilToolSize.SIZE_3;
+                this.state.pencilSize = PencilSize.SIZE_3;
                 break;
             case "4":
-                this.state.pencilSize = PencilToolSize.SIZE_4;
+                this.state.pencilSize = PencilSize.SIZE_4;
                 break;
             case "5":
-                this.state.pencilSize = PencilToolSize.SIZE_5;
+                this.state.pencilSize = PencilSize.SIZE_5;
                 break;
             case "6":
-                this.state.pencilSize = PencilToolSize.SIZE_6;
+                this.state.pencilSize = PencilSize.SIZE_6;
+                break;
+            case "7":
+                this.state.pencilSize = PencilSize.SIZE_7;
+                break;
+            case "8":
+                this.state.pencilSize = PencilSize.SIZE_8;
                 break;
         }
         this.pencil.setLineWidth(this.state.pencilSize);

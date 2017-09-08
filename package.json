@@ -8,7 +8,7 @@
     },
     "scripts": {
         "start": "node ./src/server.js",
-        "dev": "webpack-dev-server --content-base ./public --hot --inline --no-info",
+        "dev": "webpack-dev-server --hot --inline --no-info",
         "prod": "cross-env NODE_ENV=production & node ./src/server.js",
         "heroku-postbuild": "webpack -p"
     },
