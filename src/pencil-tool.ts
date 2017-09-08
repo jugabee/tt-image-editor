@@ -4,17 +4,6 @@ import { Tool } from "./tool";
 import * as Util from "./util";
 import { Point, Color } from "./util";
 
-export enum PencilSize {
-    SIZE_1 = .5,
-    SIZE_2 = 2,
-    SIZE_3 = 4,
-    SIZE_4 = 8,
-    SIZE_5 = 12,
-    SIZE_6 = 18,
-    SIZE_7 = 24,
-    SIZE_8 = 36
-}
-
 class PencilTool extends Tool{
     private points: Array<Point> = [];
     private isMousedown: boolean = false;
@@ -25,6 +14,7 @@ class PencilTool extends Tool{
     private sprayMouse: Point;
     private readonly DEF_SPRAY_DENSITY = 25;
     private readonly DEF_OPACITY = 1;
+    private readonly DEF_WIDTH = 4;
     private readonly DEF_COMPOSITE = "source-over";
     private readonly DEF_COLOR = "rgba(0, 0, 0, 1)";
     private readonly DEF_RESET_FILL = "white";
@@ -34,7 +24,7 @@ class PencilTool extends Tool{
     colorString: string = this.DEF_COLOR;
     color: Color = { r: 0, g: 0, b: 0, a: 1 };
     opacity: number = this.DEF_OPACITY;
-    width: number = PencilSize.SIZE_3;
+    width: number = this.DEF_WIDTH;
     private debug: boolean = false;
 
     onPencilDrawing: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();

@@ -51,24 +51,39 @@ html, body {
             width: 2rem;
         }
 
+        select {
+            border: none;
+        }
+
         button.btn {
             margin: 0 .25rem;
             font-size: 1rem;
             font-weight: bold;
+            border: 2px outset white;
+
             &.active {
                 background: gray;
                 color: white;
                 border: 2px inset darkgrey;
             }
+
+            &:disabled {
+                border: none;
+            }
         }
 
         button.sub-btn {
             font-size: .85rem;
+            border: 2px outset white;
 
             &.active {
                 background: gray;
                 color: white;
                 border: 2px inset darkgrey;
+            }
+
+            &:disabled {
+                border: none;
             }
         }
 
@@ -104,62 +119,27 @@ html, body {
                 pointer-events: none;
             }
 
+            button#pencil-size-btn .pencil-size-icon {
+                height: 12px;
+                width: 12px;
+            }
+
             button#pencil-opacity-btn .pencil-size-icon:first-child {
                 opacity: 1;
                 height: 5px;
-                width: 10px;
+                width: 12px;
             }
 
             button#pencil-opacity-btn .pencil-size-icon {
                 opacity: .35;
                 height: 5px;
-                width: 10px;
+                width: 12px;
             }
 
             button#pencil-opacity-btn .pencil-size-icon:last-child {
                 opacity: .15;
                 height: 5px;
-                width: 10px;
-            }
-
-            button#pencil-btn-size-1 .pencil-size-icon {
-                height: 1px;
-                width: 1px;
-            }
-
-            button#pencil-btn-size-2 .pencil-size-icon {
-                height: 2px;
-                width: 2px;
-            }
-
-            button#pencil-btn-size-3 .pencil-size-icon {
-                height: 4px;
-                width: 4px;
-            }
-
-            button#pencil-btn-size-4 .pencil-size-icon {
-                height: 6px;
-                width: 6px;
-            }
-
-            button#pencil-btn-size-5 .pencil-size-icon {
-                height: 8px;
-                width: 8px;
-            }
-
-            button#pencil-btn-size-6 .pencil-size-icon {
-                height: 10px;
-                width: 10px;
-            }
-
-            button#pencil-btn-size-7 .pencil-size-icon {
-                height: 12px;
                 width: 12px;
-            }
-
-            button#pencil-btn-size-8 .pencil-size-icon {
-                height: 14px;
-                width: 14px;
             }
         }
     }

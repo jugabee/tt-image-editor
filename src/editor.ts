@@ -1,7 +1,7 @@
 import * as Events from "./event";
 import { Tool } from "./tool";
 import { ToolbarUI } from "./toolbar";
-import { Pencil, PencilSize } from "./pencil-tool";
+import { Pencil } from "./pencil-tool";
 import { Crop } from "./crop-tool";
 import * as Util from "./util";
 import { Rect, RectChange } from "./util";
@@ -200,10 +200,10 @@ export class TTImageEditor {
     setActiveTool(type: ToolType | null): void {
         this.state.activeTool = type;
         this.toolCtx.clearRect(0, 0, this.toolCanvas.width, this.toolCanvas.height);
+        this.toolCanvas.style.cursor = "default";
         if (type !== null) {
             this.getActiveTool().init();
         } else {
-            this.toolCanvas.style.cursor = "default";
             ToolbarUI.deactivateAllToolButtons();
         }
     }

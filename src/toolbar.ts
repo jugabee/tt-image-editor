@@ -1,5 +1,5 @@
 import { Editor, ToolType } from "./editor";
-import { Pencil, PencilSize } from "./pencil-tool";
+import { Pencil } from "./pencil-tool";
 import { Crop } from "./crop-tool";
 import * as Events from "./event";
 import * as Util from "./util";
@@ -11,10 +11,10 @@ class Toolbar {
     private saveBtn: HTMLElement;
     private cropBtn: HTMLElement;
     private pencilBtn: HTMLElement;
+    private pencilSizeSel: HTMLElement;
     private pencilOpacitySel: HTMLElement;
     private pencilEraserBtn: HTMLElement;
     private pencilSprayBtn: HTMLElement;
-    private pencilSizeBtns: NodeList;
     private toolSubBtnsDivs: NodeList;
     private pencilSubBtnsDiv: HTMLElement;
     private cropSubBtnsDiv: HTMLElement;
@@ -34,6 +34,23 @@ class Toolbar {
             <div id="color-selection-div"></div>
             <button id="pencil-btn" class="btn">Pencil</button>
             <div id="pencil-sub-btns" class="tool-sub-btns">
+                <button id="pencil-size-btn" class="sub-btn" title="size" disabled>
+                    <span class="pencil-size-icon"></span>
+                </button>
+                <select id="pencil-size-sel" class="sub-btn">
+                    <option value=".5">.5</option>
+                    <option value="2">2</option>
+                    <option value="4" selected>4</option>
+                    <option value="6">6</option>
+                    <option value="8">8</option>
+                    <option value="10">10</option>
+                    <option value="14">14</option>
+                    <option value="18">18</option>
+                    <option value="24">24</option>
+                    <option value="36">36</option>
+                    <option value="48">48</option>
+                    <option value="60">60</option>
+                </select>
                 <button id="pencil-opacity-btn" class="sub-btn" title="opacity" disabled>
                     <span class="pencil-size-icon"></span>
                     <span class="pencil-size-icon"></span>
@@ -53,16 +70,6 @@ class Toolbar {
                 </select>
                 <button id="pencil-spray-btn" class="sub-btn" title="spray">&there4;</button>
                 <button id="pencil-eraser-btn" class="sub-btn" title="eraser">&#9746;</button>
-                <div id="pencil-size-btns">
-                    <button id="pencil-btn-size-1" class="sub-btn"><span class="pencil-size-icon"></span></button>
-                    <button id="pencil-btn-size-2" class="sub-btn"><span class="pencil-size-icon"></span></button>
-                    <button id="pencil-btn-size-3" class="sub-btn active"><span class="pencil-size-icon"></span></button>
-                    <button id="pencil-btn-size-4" class="sub-btn"><span class="pencil-size-icon"></span></button>
-                    <button id="pencil-btn-size-5" class="sub-btn"><span class="pencil-size-icon"></span></button>
-                    <button id="pencil-btn-size-6" class="sub-btn"><span class="pencil-size-icon"></span></button>
-                    <button id="pencil-btn-size-7" class="sub-btn"><span class="pencil-size-icon"></span></button>
-                    <button id="pencil-btn-size-8" class="sub-btn"><span class="pencil-size-icon"></span></button>
-                </div>
             </div>
             <button id="crop-btn" class="btn">Crop</button>
             <div id="crop-sub-btns" class="tool-sub-btns">
@@ -75,9 +82,9 @@ class Toolbar {
         this.cropBtn = this.toolbar.querySelector("#crop-btn") as HTMLElement;
         this.pencilBtn = this.toolbar.querySelector("#pencil-btn") as HTMLElement;
         this.toolSubBtnsDivs = this.toolbar.querySelectorAll(".tool-sub-btns");
-        this.pencilSizeBtns = this.toolbar.querySelectorAll("#pencil-size-btns .sub-btn");
         this.cropSubBtnsDiv = this.toolbar.querySelector("#crop-sub-btns") as HTMLElement;
         this.pencilSubBtnsDiv = this.toolbar.querySelector("#pencil-sub-btns") as HTMLElement;
+        this.pencilSizeSel = this.toolbar.querySelector("#pencil-size-sel") as HTMLElement;
         this.pencilOpacitySel = this.toolbar.querySelector("#pencil-opacity-sel") as HTMLElement;
         this.pencilEraserBtn = this.toolbar.querySelector("#pencil-eraser-btn") as HTMLElement;
         this.pencilSprayBtn = this.toolbar.querySelector("#pencil-spray-btn") as HTMLElement;
@@ -89,10 +96,10 @@ class Toolbar {
         this.saveBtn.addEventListener("click", (evt) => this.handleSaveBtn(evt));
         this.cropBtn.addEventListener("click", (evt) => this.handleCropBtn(evt));
         this.pencilBtn.addEventListener("click", (evt) => this.handlePencilBtn(evt));
+        this.pencilSizeSel.addEventListener("change", (evt) => this.handlePencilSizeSel(evt));
         this.pencilOpacitySel.addEventListener("change", (evt) => this.handlePencilOpacitySel(evt));
         this.pencilEraserBtn.addEventListener("click", (evt) => this.handlePencilEraserBtn(evt));
         this.pencilSprayBtn.addEventListener("click", (evt) => this.handlePencilSprayBtn(evt));
-        Util.addEventListenerList(this.pencilSizeBtns, "click", (evt) => this.handlePencilSizeBtns(evt));
         Pencil.onColorSampled.addListener((evt) => this.handleColorSampled(evt));
     }
 
@@ -122,6 +129,11 @@ class Toolbar {
         }
     }
 
+    private handlePencilSizeSel(evt): void {
+        let size = evt.target.value;
+        Pencil.setLineWidth(size);
+    }
+
     private handlePencilOpacitySel(evt): void {
         let opacity = evt.target.value;
         Pencil.setOpacity(opacity);
@@ -145,40 +157,6 @@ class Toolbar {
             evt.target.classList.add("active");
             Pencil.setSpray(true);
         }
-    }
-
-    private handlePencilSizeBtns(evt): void {
-        let id: string = evt.target.id.split("").pop();
-        let size: number = PencilSize.SIZE_3;
-        this.deactivateSelector("#pencil-size-btns .sub-btn.active");
-        evt.target.classList.add("active");
-        switch (id) {
-            case "1":
-                size = PencilSize.SIZE_1;
-                break;
-            case "2":
-                size = PencilSize.SIZE_2;
-                break;
-            case "3":
-                size = PencilSize.SIZE_3;
-                break;
-            case "4":
-                size = PencilSize.SIZE_4;
-                break;
-            case "5":
-                size = PencilSize.SIZE_5;
-                break;
-            case "6":
-                size = PencilSize.SIZE_6;
-                break;
-            case "7":
-                size = PencilSize.SIZE_7;
-                break;
-            case "8":
-                size = PencilSize.SIZE_8;
-                break;
-        }
-        Pencil.setLineWidth(size);
     }
 
     private handleApplyBtn(evt): void {
