@@ -1,9 +1,9 @@
-import { TTImageEditor } from "./editor";
+import { Editor } from "./editor";
 
 function ready(): void {
     const img = new Image();
     img.addEventListener("load", (evt) => {
-        const editor = new TTImageEditor(img);
+        Editor.init(img);
     });
     img.src = "/images/test.jpg";
 }

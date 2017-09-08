@@ -1,10 +1,5 @@
 const DEF_SCALE_STEP = 1.1;
 
-export enum Direction {
-    HORIZONTAL,
-    VERTICAL
-}
-
 export interface Point {
     x: number,
     y: number
@@ -48,14 +43,6 @@ export function getCurrentScale(inc: number): number {
         }
     }
     return scale;
-}
-
-export function clearCanvasOutsideRect(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
-    let r: Rect = this.getImageRect();
-    ctx.clearRect(0, 0, canvas.width, r.y);
-    ctx.clearRect(0, r.y, r.x, Math.abs(r.y) + r.h);
-    ctx.clearRect(r.x + r.w, r.y, canvas.width - (r.x + r.w), Math.abs(r.y) + r.h);
-    ctx.clearRect(0, r.y + r.h, canvas.width, canvas.height - (r.y + r.h));
 }
 
 export function midpoint(p1: Point, p2: Point): Point {
