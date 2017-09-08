@@ -1,5 +1,12 @@
 const DEF_SCALE_STEP = 1.1;
 
+export interface Color {
+    r: number,
+    g: number,
+    b: number,
+    a: number
+}
+
 export interface Point {
     x: number,
     y: number

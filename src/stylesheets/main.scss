@@ -104,6 +104,24 @@ html, body {
                 pointer-events: none;
             }
 
+            button#pencil-opacity-btn .pencil-size-icon:first-child {
+                opacity: 1;
+                height: 5px;
+                width: 10px;
+            }
+
+            button#pencil-opacity-btn .pencil-size-icon {
+                opacity: .35;
+                height: 5px;
+                width: 10px;
+            }
+
+            button#pencil-opacity-btn .pencil-size-icon:last-child {
+                opacity: .15;
+                height: 5px;
+                width: 10px;
+            }
+
             button#pencil-btn-size-1 .pencil-size-icon {
                 height: 1px;
                 width: 1px;

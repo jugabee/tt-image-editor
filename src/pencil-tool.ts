@@ -2,7 +2,7 @@ import { Editor } from "./editor";
 import * as Events from "./event";
 import { Tool } from "./tool";
 import * as Util from "./util";
-import { Point } from "./util";
+import { Point, Color } from "./util";
 
 export enum PencilSize {
     SIZE_1 = .5,
@@ -24,13 +24,16 @@ class PencilTool extends Tool{
     private sprayTimeout: number | undefined;
     private sprayMouse: Point;
     private readonly DEF_SPRAY_DENSITY = 25;
+    private readonly DEF_OPACITY = 1;
     private readonly DEF_COMPOSITE = "source-over";
     private readonly DEF_COLOR = "rgba(0, 0, 0, 1)";
     private readonly DEF_RESET_FILL = "white";
     private readonly DEF_LINE_CAP = "round";
     private readonly DEF_LINE_JOIN = "round";
     composite: string = this.DEF_COMPOSITE;
-    color: string = this.DEF_COLOR;
+    colorString: string = this.DEF_COLOR;
+    color: Color = { r: 0, g: 0, b: 0, a: 1 };
+    opacity: number = this.DEF_OPACITY;
     width: number = PencilSize.SIZE_3;
     private debug: boolean = false;
 
@@ -105,7 +108,7 @@ class PencilTool extends Tool{
         let p1 = this.points[0];
         let p2 = this.points[1];
         Editor.pencilCtx.lineWidth = this.width;
-        Editor.pencilCtx.strokeStyle = this.color;
+        Editor.pencilCtx.strokeStyle = this.colorString;
         Editor.pencilCtx.lineJoin = this.DEF_LINE_JOIN;
         Editor.pencilCtx.lineCap = this.DEF_LINE_CAP;
         Editor.pencilCtx.clearRect(0, 0, Editor.pencilCtx.canvas.width, Editor.pencilCtx.canvas.height);
@@ -128,7 +131,7 @@ class PencilTool extends Tool{
                 let angle = Util.getRandomFloat(0, Math.PI * 2);
                 let radius = Util.getRandomFloat(0, this.width);
                 let side = Util.getRandomFloat(1, 2);
-                Editor.pencilCtx.fillStyle = this.color;
+                Editor.pencilCtx.fillStyle = this.colorString;
                 Editor.pencilCtx.fillRect(
                     this.sprayMouse.x + radius * Math.cos(angle),
                     this.sprayMouse.y + radius * Math.sin(angle),
@@ -144,9 +147,20 @@ class PencilTool extends Tool{
     private sampleColorAtPoint(mouse): void {
         let pixel = Editor.viewCtx.getImageData(mouse.x, mouse.y, 1, 1);
         let data = pixel.data;
-        let rgba = `rgba(${data[0]}, ${data[1]}, ${data[2]}, ${data[3] / 255})`;
-        this.color = rgba;
-        this.onColorSampled.emit({ data: rgba });
+        let color = { r: data[0], g: data[1], b: data[2], a: 1 };
+        this.color = { r: data[0], g: data[1], b: data[2], a: this.opacity };
+        this.colorString = this.colorToString(this.color);
+        this.onColorSampled.emit({ data: this.colorToString(color) });
+    }
+
+    private colorToString(color: Color): string {
+        return `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`;
+    }
+
+    setOpacity(opacity: number): void {
+        this.opacity = opacity;
+        this.color = { r: this.color.r, g: this.color.g, b: this.color.b, a: this.opacity };
+        this.colorString = this.colorToString(this.color);
     }
 
     setLineWidth(width: number): void {

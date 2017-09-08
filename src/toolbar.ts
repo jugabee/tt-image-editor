@@ -11,6 +11,7 @@ class Toolbar {
     private saveBtn: HTMLElement;
     private cropBtn: HTMLElement;
     private pencilBtn: HTMLElement;
+    private pencilOpacitySel: HTMLElement;
     private pencilEraserBtn: HTMLElement;
     private pencilSprayBtn: HTMLElement;
     private pencilSizeBtns: NodeList;
@@ -33,8 +34,25 @@ class Toolbar {
             <div id="color-selection-div"></div>
             <button id="pencil-btn" class="btn">Pencil</button>
             <div id="pencil-sub-btns" class="tool-sub-btns">
-                <button id="pencil-spray-btn" class="sub-btn" title="Spray">&there4;</button>
-                <button id="pencil-eraser-btn" class="sub-btn" title="Eraser">&#9746;</button>
+                <button id="pencil-opacity-btn" class="sub-btn" title="opacity" disabled>
+                    <span class="pencil-size-icon"></span>
+                    <span class="pencil-size-icon"></span>
+                    <span class="pencil-size-icon"></span>
+                </button>
+                <select id="pencil-opacity-sel" class="sub-btn">
+                    <option value="1" selected>1</option>
+                    <option value=".9">.9</option>
+                    <option value=".8">.8</option>
+                    <option value=".7">.7</option>
+                    <option value=".6">.6</option>
+                    <option value=".5">.5</option>
+                    <option value=".4">.4</option>
+                    <option value=".3">.3</option>
+                    <option value=".2">.2</option>
+                    <option value=".1">.1</option>
+                </select>
+                <button id="pencil-spray-btn" class="sub-btn" title="spray">&there4;</button>
+                <button id="pencil-eraser-btn" class="sub-btn" title="eraser">&#9746;</button>
                 <div id="pencil-size-btns">
                     <button id="pencil-btn-size-1" class="sub-btn"><span class="pencil-size-icon"></span></button>
                     <button id="pencil-btn-size-2" class="sub-btn"><span class="pencil-size-icon"></span></button>
@@ -60,6 +78,7 @@ class Toolbar {
         this.pencilSizeBtns = this.toolbar.querySelectorAll("#pencil-size-btns .sub-btn");
         this.cropSubBtnsDiv = this.toolbar.querySelector("#crop-sub-btns") as HTMLElement;
         this.pencilSubBtnsDiv = this.toolbar.querySelector("#pencil-sub-btns") as HTMLElement;
+        this.pencilOpacitySel = this.toolbar.querySelector("#pencil-opacity-sel") as HTMLElement;
         this.pencilEraserBtn = this.toolbar.querySelector("#pencil-eraser-btn") as HTMLElement;
         this.pencilSprayBtn = this.toolbar.querySelector("#pencil-spray-btn") as HTMLElement;
         this.colorSelectionDiv = this.toolbar.querySelector("#color-selection-div") as HTMLElement;
@@ -70,6 +89,7 @@ class Toolbar {
         this.saveBtn.addEventListener("click", (evt) => this.handleSaveBtn(evt));
         this.cropBtn.addEventListener("click", (evt) => this.handleCropBtn(evt));
         this.pencilBtn.addEventListener("click", (evt) => this.handlePencilBtn(evt));
+        this.pencilOpacitySel.addEventListener("change", (evt) => this.handlePencilOpacitySel(evt));
         this.pencilEraserBtn.addEventListener("click", (evt) => this.handlePencilEraserBtn(evt));
         this.pencilSprayBtn.addEventListener("click", (evt) => this.handlePencilSprayBtn(evt));
         Util.addEventListenerList(this.pencilSizeBtns, "click", (evt) => this.handlePencilSizeBtns(evt));
@@ -100,6 +120,11 @@ class Toolbar {
             this.hideElement(this.pencilSubBtnsDiv);
             Editor.setActiveTool(null);
         }
+    }
+
+    private handlePencilOpacitySel(evt): void {
+        let opacity = evt.target.value;
+        Pencil.setOpacity(opacity);
     }
 
     private handlePencilEraserBtn(evt): void {
