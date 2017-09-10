@@ -1,7 +1,7 @@
-import { Editor } from "./editor";
+import { editor } from "./editor";
 import * as Events from "./event";
 import { Tool } from "./tool";
-import * as Util from "./util";
+import * as util from "./util";
 import { Point, Color } from "./util";
 
 class PencilTool extends Tool{
@@ -37,11 +37,11 @@ class PencilTool extends Tool{
 
     handleMousedown(evt): void {
         if (!evt.altKey) {
-            let scale: number = Util.getCurrentScale(Editor.state.scale);
-            let mouse: Point = Util.getMousePosition(Editor.state.clientRect, evt);
+            let scale: number = util.getCurrentScale(editor.state.scale);
+            let mouse: Point = util.getMousePosition(editor.state.clientRect, evt);
             let p: Point = {
-                x: (mouse.x * scale) + Editor.state.sx,
-                y: (mouse.y * scale) + Editor.state.sy
+                x: (mouse.x * scale) + editor.state.sx,
+                y: (mouse.y * scale) + editor.state.sy
             }
             this.sprayMouse = p;
             this.isMousedown = true;
@@ -63,11 +63,11 @@ class PencilTool extends Tool{
     }
 
     handleMousemove(evt): void {
-        let scale: number = Util.getCurrentScale(Editor.state.scale);
-        let mouse: Point = Util.getMousePosition(Editor.state.clientRect, evt);
+        let scale: number = util.getCurrentScale(editor.state.scale);
+        let mouse: Point = util.getMousePosition(editor.state.clientRect, evt);
         let p: Point = {
-            x: (mouse.x * scale) + Editor.state.sx,
-            y: (mouse.y * scale) + Editor.state.sy
+            x: (mouse.x * scale) + editor.state.sx,
+            y: (mouse.y * scale) + editor.state.sy
         };
         this.sprayMouse = p;
         if (!evt.altKey && this.isMousedown && !this.isSpray) {
@@ -97,32 +97,32 @@ class PencilTool extends Tool{
     drawPencil(): void {
         let p1 = this.points[0];
         let p2 = this.points[1];
-        Editor.pencilCtx.lineWidth = this.width;
-        Editor.pencilCtx.strokeStyle = this.colorString;
-        Editor.pencilCtx.lineJoin = this.DEF_LINE_JOIN;
-        Editor.pencilCtx.lineCap = this.DEF_LINE_CAP;
-        Editor.pencilCtx.clearRect(0, 0, Editor.pencilCtx.canvas.width, Editor.pencilCtx.canvas.height);
+        editor.pencilCtx.lineWidth = this.width;
+        editor.pencilCtx.strokeStyle = this.colorString;
+        editor.pencilCtx.lineJoin = this.DEF_LINE_JOIN;
+        editor.pencilCtx.lineCap = this.DEF_LINE_CAP;
+        editor.pencilCtx.clearRect(0, 0, editor.pencilCtx.canvas.width, editor.pencilCtx.canvas.height);
         // Thanks to: http://perfectionkills.com/exploring-canvas-drawing-techniques/
-        Editor.pencilCtx.beginPath();
-        Editor.pencilCtx.moveTo(p1.x, p1.y);
+        editor.pencilCtx.beginPath();
+        editor.pencilCtx.moveTo(p1.x, p1.y);
         for (let i = 1, len = this.points.length; i < len; i++) {
-            let midPoint = Util.midpoint(p1, p2);
-            Editor.pencilCtx.quadraticCurveTo(p1.x, p1.y, midPoint.x, midPoint.y);
+            let midPoint = util.midpoint(p1, p2);
+            editor.pencilCtx.quadraticCurveTo(p1.x, p1.y, midPoint.x, midPoint.y);
             p1 = this.points[i];
             p2 = this.points[i+1];
         }
-        Editor.pencilCtx.lineTo(p1.x, p1.y);
-        Editor.pencilCtx.stroke();
+        editor.pencilCtx.lineTo(p1.x, p1.y);
+        editor.pencilCtx.stroke();
     }
 
     private drawSprayBrush(): void {
         this.sprayTimeout = setTimeout(() => {
             for (let i = this.width; i > 0; i--) {
-                let angle = Util.getRandomFloat(0, Math.PI * 2);
-                let radius = Util.getRandomFloat(0, this.width);
-                let side = Util.getRandomFloat(1, 2);
-                Editor.pencilCtx.fillStyle = this.colorString;
-                Editor.pencilCtx.fillRect(
+                let angle = util.getRandomFloat(0, Math.PI * 2);
+                let radius = util.getRandomFloat(0, this.width);
+                let side = util.getRandomFloat(1, 2);
+                editor.pencilCtx.fillStyle = this.colorString;
+                editor.pencilCtx.fillRect(
                     this.sprayMouse.x + radius * Math.cos(angle),
                     this.sprayMouse.y + radius * Math.sin(angle),
                     side, side);
@@ -135,7 +135,7 @@ class PencilTool extends Tool{
     }
 
     private sampleColorAtPoint(mouse): void {
-        let pixel = Editor.viewCtx.getImageData(mouse.x, mouse.y, 1, 1);
+        let pixel = editor.viewCtx.getImageData(mouse.x, mouse.y, 1, 1);
         let data = pixel.data;
         let color = { r: data[0], g: data[1], b: data[2], a: 1 };
         this.color = { r: data[0], g: data[1], b: data[2], a: this.opacity };
@@ -171,4 +171,4 @@ class PencilTool extends Tool{
 
 }
 
-export let Pencil = new PencilTool();
+export let pencilTool = new PencilTool();

@@ -44,7 +44,7 @@ export function getCurrentScale(inc: number): number {
         for (let i = 0; i < Math.abs(inc); i++) {
             scale *= 1 / DEF_SCALE_STEP;
         }
-    } else if (inc > 0) {
+    } else {
         for (let i = 0; i < Math.abs(inc); i++) {
             scale *= DEF_SCALE_STEP;
         }

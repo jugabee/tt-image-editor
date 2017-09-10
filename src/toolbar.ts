@@ -1,8 +1,8 @@
-import { Editor, ToolType } from "./editor";
-import { Pencil } from "./pencil-tool";
-import { Crop } from "./crop-tool";
+import { editor, ToolType } from "./editor";
+import { pencilTool } from "./pencil-tool";
+import { cropTool } from "./crop-tool";
 import * as Events from "./event";
-import * as Util from "./util";
+import * as util from "./util";
 import { Rect, RectChange } from "./util";
 
 class Toolbar {
@@ -10,6 +10,8 @@ class Toolbar {
     private applyBtn: HTMLElement;
     private saveBtn: HTMLElement;
     private cropBtn: HTMLElement;
+    private undoBtn: HTMLElement;
+    private redoBtn: HTMLElement;
     private pencilBtn: HTMLElement;
     private pencilSizeSel: HTMLElement;
     private pencilOpacitySel: HTMLElement;
@@ -31,6 +33,8 @@ class Toolbar {
         this.toolbar = document.querySelector("#tt-image-editor #toolbar") as HTMLElement;
         this.toolbar.innerHTML =
             `
+            <button id="undo-btn" class="btn">&cularr;</button>
+            <button id="redo-btn" class="btn">&curarr;</button>
             <div id="color-selection-div"></div>
             <button id="pencil-btn" class="btn">Pencil</button>
             <div id="pencil-sub-btns" class="tool-sub-btns">
@@ -80,6 +84,8 @@ class Toolbar {
         this.applyBtn = this.toolbar.querySelector("#crop-btn-apply") as HTMLElement;
         this.saveBtn = this.toolbar.querySelector("#save-btn") as HTMLElement;
         this.cropBtn = this.toolbar.querySelector("#crop-btn") as HTMLElement;
+        this.undoBtn = this.toolbar.querySelector("#undo-btn") as HTMLElement;
+        this.redoBtn = this.toolbar.querySelector("#redo-btn") as HTMLElement;
         this.pencilBtn = this.toolbar.querySelector("#pencil-btn") as HTMLElement;
         this.toolSubBtnsDivs = this.toolbar.querySelectorAll(".tool-sub-btns");
         this.cropSubBtnsDiv = this.toolbar.querySelector("#crop-sub-btns") as HTMLElement;
@@ -95,78 +101,88 @@ class Toolbar {
         this.applyBtn.addEventListener("click", (evt) => this.handleApplyBtn(evt));
         this.saveBtn.addEventListener("click", (evt) => this.handleSaveBtn(evt));
         this.cropBtn.addEventListener("click", (evt) => this.handleCropBtn(evt));
+        this.undoBtn.addEventListener("click", (evt) => this.handleUndoBtn(evt));
+        this.redoBtn.addEventListener("click", (evt) => this.handleRedoBtn(evt));
         this.pencilBtn.addEventListener("click", (evt) => this.handlePencilBtn(evt));
         this.pencilSizeSel.addEventListener("change", (evt) => this.handlePencilSizeSel(evt));
         this.pencilOpacitySel.addEventListener("change", (evt) => this.handlePencilOpacitySel(evt));
         this.pencilEraserBtn.addEventListener("click", (evt) => this.handlePencilEraserBtn(evt));
         this.pencilSprayBtn.addEventListener("click", (evt) => this.handlePencilSprayBtn(evt));
-        Pencil.onColorSampled.addListener((evt) => this.handleColorSampled(evt));
+        pencilTool.onColorSampled.addListener((evt) => this.handleColorSampled(evt));
+    }
+
+    private handleUndoBtn(evt): void {
+        editor.undo();
+    }
+
+    private handleRedoBtn(evt): void {
+        editor.redo();
     }
 
     private handleCropBtn(evt): void {
-        if (Editor.state.activeTool !== ToolType.CROP) {
+        if (editor.state.activeTool !== ToolType.CROP) {
             this.deactivateSelector(".btn");
             this.showElement(this.cropSubBtnsDiv);
             evt.target.classList.add("active");
-            Editor.setActiveTool(ToolType.CROP);
+            editor.setActiveTool(ToolType.CROP);
         } else {
             this.hideElement(this.cropSubBtnsDiv);
             evt.target.classList.remove("active");
-            Editor.setActiveTool(null);
+            editor.setActiveTool(null);
         }
     }
 
     private handlePencilBtn(evt): void {
-        if (Editor.state.activeTool !== ToolType.PENCIL) {
+        if (editor.state.activeTool !== ToolType.PENCIL) {
             this.deactivateSelector(".btn");
             this.showElement(this.pencilSubBtnsDiv);
             evt.target.classList.add("active");
-            Editor.setActiveTool(ToolType.PENCIL);
+            editor.setActiveTool(ToolType.PENCIL);
         } else {
             evt.target.classList.remove("active");
             this.hideElement(this.pencilSubBtnsDiv);
-            Editor.setActiveTool(null);
+            editor.setActiveTool(null);
         }
     }
 
     private handlePencilSizeSel(evt): void {
         let size = evt.target.value;
-        Pencil.setLineWidth(size);
+        pencilTool.setLineWidth(size);
     }
 
     private handlePencilOpacitySel(evt): void {
         let opacity = evt.target.value;
-        Pencil.setOpacity(opacity);
+        pencilTool.setOpacity(opacity);
     }
 
     private handlePencilEraserBtn(evt): void {
         if (evt.target.classList.contains("active")) {
             evt.target.classList.remove("active");
-            Pencil.setEraser(false);
+            pencilTool.setEraser(false);
         } else {
             evt.target.classList.add("active");
-            Pencil.setEraser(true);
+            pencilTool.setEraser(true);
         }
     }
 
     private handlePencilSprayBtn(evt): void {
         if (evt.target.classList.contains("active")) {
             evt.target.classList.remove("active");
-            Pencil.setSpray(false);
+            pencilTool.setSpray(false);
         } else {
             evt.target.classList.add("active");
-            Pencil.setSpray(true);
+            pencilTool.setSpray(true);
         }
     }
 
     private handleApplyBtn(evt): void {
         this.hideElement(this.cropSubBtnsDiv);
-        Editor.crop(Crop.getCropChange());
-        Editor.setActiveTool(null);
+        editor.crop(cropTool.getCropChange());
+        editor.setActiveTool(null);
     }
 
     private handleSaveBtn(evt): void {
-        Editor.save();
+        editor.save();
     }
 
     private deactivateSelector(selector: string): void {
@@ -206,4 +222,4 @@ class Toolbar {
     }
 }
 
-export let ToolbarUI = new Toolbar();
+export let toolbar = new Toolbar();

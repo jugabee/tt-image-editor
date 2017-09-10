@@ -1,9 +1,9 @@
-import { Editor } from "./editor";
+import { editor } from "./editor";
 
 function ready(): void {
     const img = new Image();
     img.addEventListener("load", (evt) => {
-        Editor.init(img);
+        editor.init(img);
     });
     img.src = "/images/test.jpg";
 }

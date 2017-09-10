@@ -46,13 +46,23 @@ html, body {
 
         #color-selection-div {
             margin: 0 .25rem;
-            border: 2px outset darkgrey;
+            border: 2px outset darkgray;
             background: black;
             width: 2rem;
         }
 
         select {
             border: none;
+        }
+
+        button#undo-btn:active {
+            background: gray;
+            border-style: inset!important;
+        }
+
+        button#redo-btn:active {
+            background: gray;
+            border-style: inset!important;
         }
 
         button.btn {
@@ -64,7 +74,7 @@ html, body {
             &.active {
                 background: gray;
                 color: white;
-                border: 2px inset darkgrey;
+                border: 2px inset darkgray;
             }
 
             &:disabled {
@@ -73,13 +83,13 @@ html, body {
         }
 
         button.sub-btn {
-            font-size: .85rem;
+            font-size: 1rem;
             border: 2px outset white;
 
             &.active {
                 background: gray;
                 color: white;
-                border: 2px inset darkgrey;
+                border: 2px inset darkgray;
             }
 
             &:disabled {

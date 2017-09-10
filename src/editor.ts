@@ -1,9 +1,10 @@
 import * as Events from "./event";
 import { Tool } from "./tool";
-import { ToolbarUI } from "./toolbar";
-import { Pencil } from "./pencil-tool";
-import { Crop } from "./crop-tool";
-import * as Util from "./util";
+import { toolbar } from "./toolbar";
+import { pencilTool } from "./pencil-tool";
+import { cropTool } from "./crop-tool";
+import { UndoRedo } from "./undo-redo";
+import * as util from "./util";
 import { Rect, RectChange } from "./util";
 
 export enum ToolType {
@@ -42,6 +43,7 @@ export class TTImageEditor {
     toolCtx: CanvasRenderingContext2D;
     private viewCanvas: HTMLCanvasElement;
     viewCtx: CanvasRenderingContext2D;
+    private undoRedo: UndoRedo;
     // enable debug to see state updates in console, and to draw stroked rectangles for
     // the original image and cropped image
     private debug: boolean = false;
@@ -81,6 +83,8 @@ export class TTImageEditor {
         this.memoryCanvas = document.createElement("canvas");
         this.memoryCtx = this.memoryCanvas.getContext("2d");
 
+        this.undoRedo = new UndoRedo(this.memoryCtx, this.img);
+
         this.pencilCanvas.width = this.state.imgW;
         this.pencilCanvas.height = this.state.imgH;
         this.memoryCanvas.width = this.state.imgW;
@@ -88,13 +92,13 @@ export class TTImageEditor {
         // Draw source image
         this.memoryCtx.drawImage(this.img, 0, 0);
 
-        ToolbarUI.init();
+        toolbar.init();
         this.addListeners();
     }
 
     private addListeners(): void {
-        Pencil.onPencilDrawing.addListener((evt) => this.handlePencilDrawing(evt));
-        Pencil.onPencilDrawingFinished.addListener((evt) => this.handlePencilDrawingFinished(evt));
+        pencilTool.onPencilDrawing.addListener((evt) => this.handlePencilDrawing(evt));
+        pencilTool.onPencilDrawingFinished.addListener((evt) => this.handlePencilDrawingFinished(evt));
     	this.canvasContainer.addEventListener("mousedown", (evt) => this.handleMousedown(evt), false);
     	this.canvasContainer.addEventListener("mousemove", (evt) => this.handleMousemove(evt), false);
     	this.canvasContainer.addEventListener("mouseup", (evt) => this.handleMouseup(evt), false);
@@ -131,6 +135,7 @@ export class TTImageEditor {
     }
 
     private handleResize(evt): void {
+        // TODO base this on a containing element instead of window?
         this.viewCanvas.width = window.innerWidth;
         this.viewCanvas.height = window.innerHeight - this.toolbarElement.clientHeight;
         this.toolCanvas.width = window.innerWidth;
@@ -144,7 +149,7 @@ export class TTImageEditor {
     * Handle mouse events with abstract activeTool
     */
     private handleMousedown(evt): void {
-        let mouse: Util.Point = Util.getMousePosition(this.state.clientRect, evt);
+        let mouse: util.Point = util.getMousePosition(this.state.clientRect, evt);
         this.setState({
             isMousedown: true,
             mousedownX: mouse.x,
@@ -189,9 +194,9 @@ export class TTImageEditor {
     private getActiveTool(): Tool {
         switch(this.state.activeTool) {
             case ToolType.PENCIL:
-                return Pencil;
+                return pencilTool;
             case ToolType.CROP:
-                return Crop;
+                return cropTool;
             default:
                 return null;
         }
@@ -204,14 +209,14 @@ export class TTImageEditor {
         if (type !== null) {
             this.getActiveTool().init();
         } else {
-            ToolbarUI.deactivateAllToolButtons();
+            toolbar.deactivateAllToolButtons();
         }
     }
 
     private zoomAtPoint(evt, zoom): void {
-        let s = Util.getCurrentScale(this.state.scale);
-        let z = Util.getCurrentScale(this.state.scale + zoom);
-        let mouse: Util.Point = Util.getMousePosition(this.state.clientRect, evt);
+        let s = util.getCurrentScale(this.state.scale);
+        let z = util.getCurrentScale(this.state.scale + zoom);
+        let mouse: util.Point = util.getMousePosition(this.state.clientRect, evt);
         // translate by change in scale (before and after zoom) to give the illusion of zooming towards the mouse cursor
         let dx = (mouse.x * s) - (mouse.x * z);
         let dy = (mouse.y * s) - (mouse.y * z);
@@ -225,8 +230,8 @@ export class TTImageEditor {
 
     private pan(evt): void {
         if (evt.altKey) {
-            let scale = Util.getCurrentScale(this.state.scale);
-            let mouse: Util.Point = Util.getMousePosition(this.state.clientRect, evt);
+            let scale = util.getCurrentScale(this.state.scale);
+            let mouse: util.Point = util.getMousePosition(this.state.clientRect, evt);
             let dx = mouse.x - this.state.mousedownX;
             let dy = mouse.y - this.state.mousedownY;
             this.setState({
@@ -244,7 +249,7 @@ export class TTImageEditor {
 
     save(): void {
         let img: HTMLImageElement = new Image();
-        let scale = Util.getCurrentScale(this.state.scale);
+        let scale = util.getCurrentScale(this.state.scale);
         let saveCanvas = document.createElement("canvas");
         let saveCtx = saveCanvas.getContext("2d");
         img.onload = () => {
@@ -277,12 +282,18 @@ export class TTImageEditor {
             cropW: this.state.cropW - rc.dw,
             cropH: this.state.cropH - rc.dh
         });
-        Crop.resetState();
+        cropTool.resetState();
         this.draw();
     }
 
     private handlePencilDrawingFinished(evt): void {
-        this.memoryCtx.globalCompositeOperation = Pencil.getComposite();
+        let img = new Image();
+        let composite = pencilTool.getComposite();
+        img.onload = () => {
+            this.undoRedo.insertPencilCommand(composite, img);
+        }
+        img.src = this.pencilCanvas.toDataURL();
+        this.memoryCtx.globalCompositeOperation = composite;
         this.memoryCtx.drawImage(
             this.pencilCanvas,
             0, 0
@@ -293,6 +304,16 @@ export class TTImageEditor {
     }
 
     private handlePencilDrawing(evt): void {
+        this.draw();
+    }
+
+    undo(): void {
+        this.undoRedo.undo();
+        this.draw();
+    }
+
+    redo(): void {
+        this.undoRedo.redo();
         this.draw();
     }
 
@@ -312,7 +333,7 @@ export class TTImageEditor {
     * Cropping is handle by clearing everything on the viewCanvas outside of a
     * rect defined by the total amount the user has cropped.
     */
-    private draw(): void {
+    draw(): void {
         this.viewCtx.mozImageSmoothingEnabled = false;
         this.viewCtx.webkitImageSmoothingEnabled = false;
         this.viewCtx.imageSmoothingEnabled = false;
@@ -328,7 +349,6 @@ export class TTImageEditor {
 
     private drawFromMemory(): void {
         let r = this.getImageRect();
-        let r2 = this.getCroppedImageRect();
         this.viewCtx.clearRect(0, 0, this.viewCanvas.width, this.viewCanvas.height);
         this.viewCtx.drawImage(
             this.memoryCanvas,
@@ -337,7 +357,6 @@ export class TTImageEditor {
             r.w,
             r.h
         );
-
     }
 
     /**
@@ -349,7 +368,7 @@ export class TTImageEditor {
     */
     private drawPencil(): void {
         let r = this.getImageRect();
-        this.viewCtx.globalCompositeOperation = Pencil.getComposite();
+        this.viewCtx.globalCompositeOperation = pencilTool.getComposite();
         this.viewCtx.drawImage(
             this.pencilCanvas,
             r.x,
@@ -363,7 +382,7 @@ export class TTImageEditor {
     private drawCropRect() {
         // redraw the crop rectangle if it is active
         if (this.state.activeTool === ToolType.CROP) {
-            Crop.draw();
+            cropTool.draw();
         }
     }
 
@@ -379,7 +398,7 @@ export class TTImageEditor {
 
     // returns a Rect for the boundary of the cropped image
     private getCroppedImageRect(): Rect {
-        let scale = Util.getCurrentScale(this.state.scale);
+        let scale = util.getCurrentScale(this.state.scale);
         return {
             x: (-this.state.sx + this.state.cropX) / scale,
             y: (-this.state.sy + this.state.cropY) / scale,
@@ -390,7 +409,7 @@ export class TTImageEditor {
 
     // returns a Rect for the boundary of the image on the viewCanvas
     private getImageRect(): Rect {
-        let scale = Util.getCurrentScale(this.state.scale);
+        let scale = util.getCurrentScale(this.state.scale);
         return {
             x: (-this.state.sx) / scale,
             y: (-this.state.sy) / scale,
@@ -411,4 +430,4 @@ export class TTImageEditor {
    }
 }
 
-export let Editor = new TTImageEditor();
+export let editor = new TTImageEditor();
