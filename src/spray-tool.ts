@@ -9,7 +9,7 @@ class SprayTool extends Tool{
     private isEraser: boolean = false;
     private sprayTimeout: number | undefined;
     private sprayMouse: Point;
-    private readonly DEF_SPRAY_DENSITY = 25;
+    private readonly DEF_SPRAY_SPEED = 10;
     private readonly DEF_OPACITY = 1;
     private readonly DEF_WIDTH = 4;
     private readonly DEF_COMPOSITE = "source-over";
@@ -64,6 +64,7 @@ class SprayTool extends Tool{
     init(): void { }
 
     private drawSprayBrush(): void {
+        // Adapted from: http://perfectionkills.com/exploring-canvas-drawing-techniques/
         this.sprayTimeout = setTimeout(() => {
             for (let i = this.width; i > 0; i--) {
                 let angle = util.getRandomFloat(0, Math.PI * 2);
@@ -78,7 +79,7 @@ class SprayTool extends Tool{
                 this.onDrawing.emit({ data: true });
                 if (!this.sprayTimeout) return;
                 this.drawSprayBrush();
-            }, 25
+            }, this.DEF_SPRAY_SPEED
         );
     }
 

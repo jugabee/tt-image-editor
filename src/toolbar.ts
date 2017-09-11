@@ -38,8 +38,8 @@ class Toolbar {
         this.toolbar = document.querySelector("#tt-image-editor #toolbar") as HTMLElement;
         this.toolbar.innerHTML =
             `
-            <button id="undo-btn" class="btn">&cularr;</button>
-            <button id="redo-btn" class="btn">&curarr;</button>
+            <button id="undo-btn" class="btn">&#8678;</button>
+            <button id="redo-btn" class="btn">&#8680;</button>
             <div id="color-selection-div"></div>
             <button id="pencil-btn" class="btn">Pencil</button>
             <div id="pencil-sub-btns" class="tool-sub-btns">

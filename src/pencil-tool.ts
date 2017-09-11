@@ -80,9 +80,9 @@ class PencilTool extends Tool{
         editor.drawingCtx.lineJoin = this.DEF_LINE_JOIN;
         editor.drawingCtx.lineCap = this.DEF_LINE_CAP;
         editor.drawingCtx.clearRect(0, 0, editor.drawingCtx.canvas.width, editor.drawingCtx.canvas.height);
-        // Thanks to: http://perfectionkills.com/exploring-canvas-drawing-techniques/
         editor.drawingCtx.beginPath();
         editor.drawingCtx.moveTo(p1.x, p1.y);
+        // Adapted from: http://perfectionkills.com/exploring-canvas-drawing-techniques/
         for (let i = 1, len = this.points.length; i < len; i++) {
             let midPoint = util.midpoint(p1, p2);
             editor.drawingCtx.quadraticCurveTo(p1.x, p1.y, midPoint.x, midPoint.y);
