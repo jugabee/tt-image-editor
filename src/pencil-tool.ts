@@ -60,7 +60,9 @@ class PencilTool extends Tool{
     }
 
     handleMouseup(evt): void {
-        this.onDrawingFinished.emit({ data: true });
+        if (this.points.length > 1) {
+            this.onDrawingFinished.emit({ data: true });
+        }
         this.points = [];
         this.isMousedown = false;
         this.isMousedrag = false;
