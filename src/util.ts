@@ -33,6 +33,10 @@ export interface RectOverlap {
     b: boolean
 };
 
+export function colorToString(color: Color, opacity?: number): string {
+    return `rgba(${color.r}, ${color.g}, ${color.b}, ${(opacity ? opacity : color.a)})`;
+}
+
 export function getRandomFloat(min, max) {
   return Math.random() * (max - min) + min;
 }

@@ -1,10 +1,14 @@
-import { PencilCommand } from "./pencil-command";
+import { Command } from "./command";
+import { DrawingCommand } from "./drawing-command";
+import { CropCommand } from "./crop-command";
+import { Rect } from "./util";
 
 export class UndoRedo {
     private ctx: CanvasRenderingContext2D; // memoryCtx
     private img: HTMLImageElement // source image
-    private undoCommands: Array<PencilCommand> = [];
-    private redoCommands: Array<PencilCommand> = [];
+    private undoCommands: Array<Command> = [];
+    private redoCommands: Array<Command> = [];
+    private currentUndoIndex: number = -1;
 
     constructor(ctx: CanvasRenderingContext2D, img: HTMLImageElement) {
         this.ctx = ctx;
@@ -13,24 +17,35 @@ export class UndoRedo {
 
     undo(): void {
         if (this.undoCommands.length !== 0) {
-            let cmd: PencilCommand = this.undoCommands.pop();
+            let cmd: Command = this.undoCommands.pop();
+            this.currentUndoIndex -= 1;
+            cmd.unexecute();
             this.redrawFromHistory();
             this.redoCommands.push(cmd);
-            console.log(this.redoCommands)
         }
     }
 
     redo(): void {
         if (this.redoCommands.length !== 0) {
-            let cmd: PencilCommand = this.redoCommands.pop();
+            let cmd: Command = this.redoCommands.pop();
+            this.currentUndoIndex += 1;
             this.undoCommands.push(cmd);
+            cmd.execute();
             this.redrawFromHistory();
          }
     }
 
-    insertPencilCommand(composite: string, img: HTMLImageElement): void {
-        let cmd = new PencilCommand(composite, img);
+    insertDrawingCommand(composite: string, img: HTMLImageElement): void {
+        let cmd = new DrawingCommand(composite, img);
         this.undoCommands.push(cmd);
+        this.currentUndoIndex += 1;
+        this.redoCommands = [];
+    }
+
+    insertCropCommand(crop: Rect, undoCrop: Rect): void {
+        let cmd = new CropCommand(crop, undoCrop);
+        this.undoCommands.push(cmd);
+        this.currentUndoIndex += 1;
         this.redoCommands = [];
     }
 
@@ -41,8 +56,10 @@ export class UndoRedo {
             this.img, 0, 0
         );
         for (let cmd of this.undoCommands) {
-            this.ctx.globalCompositeOperation = cmd.composite;
-            this.ctx.drawImage(cmd.img, 0, 0);
+            if (cmd instanceof DrawingCommand) {
+                this.ctx.globalCompositeOperation = cmd.composite;
+                this.ctx.drawImage(cmd.img, 0, 0);
+            }
         }
     }
 }

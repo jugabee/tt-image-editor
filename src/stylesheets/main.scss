@@ -55,17 +55,17 @@ html, body {
             border: none;
         }
 
-        button#undo-btn:active {
+        #undo-btn:active {
             background: gray;
             border-style: inset!important;
         }
 
-        button#redo-btn:active {
+        #redo-btn:active {
             background: gray;
             border-style: inset!important;
         }
 
-        button.btn {
+        .btn {
             margin: 0 .25rem;
             font-size: 1rem;
             font-weight: bold;
@@ -82,7 +82,7 @@ html, body {
             }
         }
 
-        button.sub-btn {
+        .sub-btn {
             font-size: 1rem;
             border: 2px outset white;
 
@@ -97,56 +97,39 @@ html, body {
             }
         }
 
+        #crop-btn-apply {
+            color: green;
+            font-weight: bold;
+        }
+
         .tool-sub-btns {
-            display: flex;
+            display: none;
             margin: 0 .25rem;
-        }
 
-        #crop-sub-btns {
-            display: none;
-            #crop-btn-apply {
-                color: green;
-                font-weight: bold;
-            }
-        }
-
-        #pencil-sub-btns {
-            display: none;
-            #pencil-size-btns {
-                display: flex;
-            }
-            #pencil-size-btns .sub-btn {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 2rem;
-                padding: 0;
-            }
-
-            span.pencil-size-icon {
+            .size-icon {
                 display: block;
                 background: black;
                 pointer-events: none;
             }
 
-            button#pencil-size-btn .pencil-size-icon {
+            .size-btn .size-icon {
                 height: 12px;
                 width: 12px;
             }
 
-            button#pencil-opacity-btn .pencil-size-icon:first-child {
+            .opacity-btn .size-icon:first-child {
                 opacity: 1;
                 height: 5px;
                 width: 12px;
             }
 
-            button#pencil-opacity-btn .pencil-size-icon {
+            .opacity-btn .size-icon {
                 opacity: .35;
                 height: 5px;
                 width: 12px;
             }
 
-            button#pencil-opacity-btn .pencil-size-icon:last-child {
+            .opacity-btn .size-icon:last-child {
                 opacity: .15;
                 height: 5px;
                 width: 12px;

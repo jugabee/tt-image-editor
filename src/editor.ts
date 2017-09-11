@@ -3,17 +3,20 @@ import { Tool } from "./tool";
 import { toolbar } from "./toolbar";
 import { pencilTool } from "./pencil-tool";
 import { cropTool } from "./crop-tool";
+import { sprayTool } from "./spray-tool";
 import { UndoRedo } from "./undo-redo";
 import * as util from "./util";
-import { Rect, RectChange } from "./util";
+import { Rect, RectChange, Color } from "./util";
 
 export enum ToolType {
     CROP,
-    PENCIL
+    PENCIL,
+    SPRAY
 }
 
 interface EditorState {
     activeTool: ToolType | null;
+    color: Color;
     clientRect: Rect;
     sx: number;
     sy: number;
@@ -37,8 +40,8 @@ export class TTImageEditor {
     private canvasContainer: HTMLElement;
     private memoryCanvas: HTMLCanvasElement;
     private memoryCtx: CanvasRenderingContext2D;
-    private pencilCanvas: HTMLCanvasElement;
-    pencilCtx: CanvasRenderingContext2D;
+    private drawingCanvas: HTMLCanvasElement;
+    drawingCtx: CanvasRenderingContext2D;
     toolCanvas: HTMLCanvasElement;
     toolCtx: CanvasRenderingContext2D;
     private viewCanvas: HTMLCanvasElement;
@@ -49,6 +52,7 @@ export class TTImageEditor {
     private debug: boolean = false;
     state: EditorState = {
         activeTool: null,
+        color: { r: 0, g: 0, b: 0, a: 1 },
         clientRect: { x: 0, y: 0, w: 0, h: 0 },
         isMousedown: false,
         isMousedrag: false,
@@ -65,6 +69,8 @@ export class TTImageEditor {
         cropH: 0
     }
 
+    onColorSampled: Events.Dispatcher<string> = Events.Dispatcher.createEventDispatcher();
+
     constructor() { }
 
     init(img: HTMLImageElement): void {
@@ -78,15 +84,15 @@ export class TTImageEditor {
         this.toolCtx = this.toolCanvas.getContext("2d");
         this.viewCanvas = this.editor.querySelector("#view-layer") as HTMLCanvasElement;
         this.viewCtx = this.viewCanvas.getContext("2d");
-        this.pencilCanvas = document.createElement("canvas");
-        this.pencilCtx = this.pencilCanvas.getContext("2d");
+        this.drawingCanvas = document.createElement("canvas");
+        this.drawingCtx = this.drawingCanvas.getContext("2d");
         this.memoryCanvas = document.createElement("canvas");
         this.memoryCtx = this.memoryCanvas.getContext("2d");
 
         this.undoRedo = new UndoRedo(this.memoryCtx, this.img);
 
-        this.pencilCanvas.width = this.state.imgW;
-        this.pencilCanvas.height = this.state.imgH;
+        this.drawingCanvas.width = this.state.imgW;
+        this.drawingCanvas.height = this.state.imgH;
         this.memoryCanvas.width = this.state.imgW;
         this.memoryCanvas.height = this.state.imgH;
         // Draw source image
@@ -97,8 +103,10 @@ export class TTImageEditor {
     }
 
     private addListeners(): void {
-        pencilTool.onPencilDrawing.addListener((evt) => this.handlePencilDrawing(evt));
-        pencilTool.onPencilDrawingFinished.addListener((evt) => this.handlePencilDrawingFinished(evt));
+        pencilTool.onDrawing.addListener((evt) => this.draw());
+        pencilTool.onDrawingFinished.addListener((evt) => this.handleDrawingFinished(evt));
+        sprayTool.onDrawing.addListener((evt) => this.draw());
+        sprayTool.onDrawingFinished.addListener((evt) => this.handleDrawingFinished(evt));
     	this.canvasContainer.addEventListener("mousedown", (evt) => this.handleMousedown(evt), false);
     	this.canvasContainer.addEventListener("mousemove", (evt) => this.handleMousemove(evt), false);
     	this.canvasContainer.addEventListener("mouseup", (evt) => this.handleMouseup(evt), false);
@@ -115,7 +123,7 @@ export class TTImageEditor {
     * setState takes an object parameter with valid state and merges it with
     * the existing state object.
     */
-    private setState(obj): void {
+    setState(obj): void {
         if (this.debug) {
             console.log("MERGE WITH", obj);
             console.log("BEFORE", JSON.stringify(this.state));
@@ -155,19 +163,27 @@ export class TTImageEditor {
             mousedownX: mouse.x,
             mousedownY: mouse.y
         });
-        let activeTool = this.getActiveTool();
-        if (activeTool !== null) {
-            activeTool.handleMousedown(evt);
+        if(evt.ctrlKey || evt.metaKey) {
+            this.sampleColorAtPoint(mouse);
+        } else {
+            let activeTool = this.getActiveTool();
+            if (activeTool !== null) {
+                activeTool.handleMousedown(evt);
+            }
         }
     }
 
     private handleMousemove(evt): void {
-        if (this.state.isMousedown) {
-            this.pan(evt);
-        }
-        let activeTool = this.getActiveTool();
-        if (activeTool !== null) {
-            activeTool.handleMousemove(evt);
+        let mouse: util.Point = util.getMousePosition(this.state.clientRect, evt);
+        if (this.state.isMousedown && evt.altKey) {
+            this.pan(mouse);
+        } else if (this.state.isMousedown && evt.ctrlKey || evt.metaKey) {
+            this.sampleColorAtPoint(mouse);
+        } else {
+            let activeTool = this.getActiveTool();
+            if (activeTool !== null) {
+                activeTool.handleMousemove(evt);
+            }
         }
     }
 
@@ -195,6 +211,8 @@ export class TTImageEditor {
         switch(this.state.activeTool) {
             case ToolType.PENCIL:
                 return pencilTool;
+            case ToolType.SPRAY:
+                return sprayTool;
             case ToolType.CROP:
                 return cropTool;
             default:
@@ -213,6 +231,14 @@ export class TTImageEditor {
         }
     }
 
+    private sampleColorAtPoint(mouse): void {
+        let pixel = this.viewCtx.getImageData(mouse.x, mouse.y, 1, 1);
+        let data = pixel.data;
+        let color = { r: data[0], g: data[1], b: data[2], a: 1 };
+        this.setState({ color: color });
+        this.onColorSampled.emit({ data: util.colorToString(color) });
+    }
+
     private zoomAtPoint(evt, zoom): void {
         let s = util.getCurrentScale(this.state.scale);
         let z = util.getCurrentScale(this.state.scale + zoom);
@@ -228,23 +254,20 @@ export class TTImageEditor {
         this.draw();
     }
 
-    private pan(evt): void {
-        if (evt.altKey) {
-            let scale = util.getCurrentScale(this.state.scale);
-            let mouse: util.Point = util.getMousePosition(this.state.clientRect, evt);
-            let dx = mouse.x - this.state.mousedownX;
-            let dy = mouse.y - this.state.mousedownY;
-            this.setState({
-                sx: this.state.sx - (dx * scale),
-                sy: this.state.sy - (dy * scale)
-            });
-            this.draw();
-            this.setState({
-                isMousedrag: true,
-                mousedownX: mouse.x,
-                mousedownY: mouse.y
-            });
-        }
+    private pan(mouse): void {
+        let scale = util.getCurrentScale(this.state.scale);
+        let dx = mouse.x - this.state.mousedownX;
+        let dy = mouse.y - this.state.mousedownY;
+        this.setState({
+            sx: this.state.sx - (dx * scale),
+            sy: this.state.sy - (dy * scale)
+        });
+        this.draw();
+        this.setState({
+            isMousedrag: true,
+            mousedownX: mouse.x,
+            mousedownY: mouse.y
+        });
     }
 
     save(): void {
@@ -275,6 +298,18 @@ export class TTImageEditor {
     }
 
     crop(rc: RectChange): void {
+        let crop: Rect = {
+            x: this.state.cropX + rc.dx,
+            y: this.state.cropY + rc.dy,
+            w: this.state.cropW - rc.dw,
+            h: this.state.cropH - rc.dh
+        }
+        let undoCrop: Rect = {
+            x: this.state.cropX,
+            y: this.state.cropY,
+            w: this.state.cropW,
+            h: this.state.cropH
+        }
         // keep track of the total amount we have cropped
         this.setState({
             cropX: this.state.cropX + rc.dx,
@@ -282,28 +317,30 @@ export class TTImageEditor {
             cropW: this.state.cropW - rc.dw,
             cropH: this.state.cropH - rc.dh
         });
+        this.undoRedo.insertCropCommand(crop, undoCrop);
         cropTool.resetState();
         this.draw();
     }
 
-    private handlePencilDrawingFinished(evt): void {
+    private handleDrawingFinished(evt): void {
         let img = new Image();
-        let composite = pencilTool.getComposite();
-        img.onload = () => {
-            this.undoRedo.insertPencilCommand(composite, img);
+        let composite: string = "source-over";
+        if (this.state.activeTool === ToolType.PENCIL) {
+            composite = pencilTool.getComposite();
+        } else if (this.state.activeTool === ToolType.SPRAY) {
+            composite = sprayTool.getComposite();
         }
-        img.src = this.pencilCanvas.toDataURL();
+        img.onload = () => {
+            this.undoRedo.insertDrawingCommand(composite, img);
+        }
+        img.src = this.drawingCanvas.toDataURL();
         this.memoryCtx.globalCompositeOperation = composite;
         this.memoryCtx.drawImage(
-            this.pencilCanvas,
+            this.drawingCanvas,
             0, 0
         );
-        this.pencilCtx.clearRect(0, 0, this.pencilCtx.canvas.width, this.pencilCtx.canvas.height);
+        this.drawingCtx.clearRect(0, 0, this.drawingCtx.canvas.width, this.drawingCtx.canvas.height);
         this.memoryCtx.globalCompositeOperation = "source-over";
-        this.draw();
-    }
-
-    private handlePencilDrawing(evt): void {
         this.draw();
     }
 
@@ -318,13 +355,13 @@ export class TTImageEditor {
     }
 
     /**
-    * memoryCanvas is the aggregate of the source image and all pencil drawings
+    * memoryCanvas is the aggregate of the source image and all drawings
     * with various composite effects, e.g destination-out for erasing.
     * It's never cleared and is drawn to the viewCanvas and used to
     * save the final image.
     *
-    * Each pencil drawing is drawn to the memoryCanvas with a particular composite
-    * when onPencilDrawingFinished is emitted.
+    * Each drawing is drawn to the memoryCanvas with a particular composite
+    * when onDrawingFinished is emitted from a drawing tool.
     *
     * The memoryCanvas is drawn to the viewCanvas with a destination rectangle
     * defined by how much we have panned or scaled. This gives the illusion of
@@ -338,7 +375,7 @@ export class TTImageEditor {
         this.viewCtx.webkitImageSmoothingEnabled = false;
         this.viewCtx.imageSmoothingEnabled = false;
         this.drawFromMemory();
-        this.drawPencil();
+        this.drawDrawing();
         if (this.debug) {
             this.drawDebug();
         } else {
@@ -360,17 +397,20 @@ export class TTImageEditor {
     }
 
     /**
-    * Draws the pencilCanvas to the viewCanvas in order to see the pencil as
-    * it is drawn.
+    * Draws the drawingCanvas to the viewCanvas in real-time.
     *
-    * When the pencil drawing is finished it is drawn to the memoryCanvas
+    * When the drawing is finished it is drawn to the memoryCanvas
     * and draw is called again to clear the viewCanvas and redraw the memoryCanvas.
     */
-    private drawPencil(): void {
+    private drawDrawing(): void {
         let r = this.getImageRect();
-        this.viewCtx.globalCompositeOperation = pencilTool.getComposite();
+        if (this.state.activeTool === ToolType.PENCIL) {
+            this.viewCtx.globalCompositeOperation = pencilTool.getComposite();
+        } else if (this.state.activeTool === ToolType.SPRAY) {
+            this.viewCtx.globalCompositeOperation = sprayTool.getComposite();
+        }
         this.viewCtx.drawImage(
-            this.pencilCanvas,
+            this.drawingCanvas,
             r.x,
             r.y,
             r.w,
