@@ -38,8 +38,8 @@ class Toolbar {
         this.toolbar = document.querySelector("#tt-image-editor #toolbar") as HTMLElement;
         this.toolbar.innerHTML =
             `
-            <button id="undo-btn" class="btn">&#8678;</button>
-            <button id="redo-btn" class="btn">&#8680;</button>
+            <button id="undo-btn" title="undo" class="btn">&#8678;</button>
+            <button id="redo-btn" title="redo" class="btn">&#8680;</button>
             <div id="color-selection-div"></div>
             <button id="pencil-btn" class="btn">Pencil</button>
             <div id="pencil-sub-btns" class="tool-sub-btns">
@@ -121,7 +121,7 @@ class Toolbar {
             <div id="crop-sub-btns" class="tool-sub-btns">
                 <button id="crop-btn-apply" class="sub-btn">&#10004;</button>
             </div>
-            <button id="save-btn" class="btn">Save png</button>
+            <button id="save-btn" title="download png" class="btn">&#10515;</button>
             `;
         this.applyBtn = this.toolbar.querySelector("#crop-btn-apply") as HTMLElement;
         this.saveBtn = this.toolbar.querySelector("#save-btn") as HTMLElement;

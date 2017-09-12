@@ -33,6 +33,21 @@ export interface RectOverlap {
     b: boolean
 };
 
+export function dataURIToBlob(uri: string): Blob {
+    let binStr = atob(uri.split(",")[1]);
+    let len = binStr.length;
+    let arr = new Uint8Array(len);
+    let mime = uri.split(",")[0].split(":")[1].split(";")[0];
+
+    for (let i = 0; i < len; i++) {
+        arr[i] = binStr.charCodeAt(i);
+    }
+
+    return new Blob([arr], {
+        type: mime
+    });
+}
+
 export function colorToString(color: Color, opacity?: number): string {
     return `rgba(${color.r}, ${color.g}, ${color.b}, ${(opacity ? opacity : color.a)})`;
 }

@@ -271,15 +271,8 @@ export class TTImageEditor {
     }
 
     save(): void {
-        let img: HTMLImageElement = new Image();
-        let scale = util.getCurrentScale(this.state.scale);
         let saveCanvas = document.createElement("canvas");
         let saveCtx = saveCanvas.getContext("2d");
-        img.onload = () => {
-            this.editor.innerHTML = "";
-            this.editor.style.display = "block";
-            this.editor.appendChild(img);
-        }
         saveCanvas.width = this.state.imgW - this.state.cropW;
         saveCanvas.height = this.state.imgH - this.state.cropH;
         // draw memoryCanvas to saveCanvas with crop applied to source rectangle
@@ -293,8 +286,15 @@ export class TTImageEditor {
             saveCanvas.width,
             saveCanvas.height
         );
-        // save result
-        img.src = saveCanvas.toDataURL();
+        // convert data uri to blob to skirt restrictions imposed by Chrome on
+        // the html5 download attribute, then download result
+        let uri = saveCanvas.toDataURL();
+        let blob: Blob = util.dataURIToBlob(uri);
+        let url = URL.createObjectURL(blob);
+        let a  = document.createElement("a");
+        a.href = url;
+        a.download = "tt-image.png";
+        a.click();
     }
 
     crop(rc: RectChange): void {
