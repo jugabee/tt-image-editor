@@ -11,6 +11,8 @@ class Toolbar {
     private applyBtn: HTMLElement;
     private saveBtn: HTMLElement;
     private cropBtn: HTMLElement;
+    private loadBtn: HTMLElement;
+    private loadFileInput: HTMLElement;
     private undoBtn: HTMLElement;
     private redoBtn: HTMLElement;
     private pencilBtn: HTMLElement;
@@ -38,6 +40,8 @@ class Toolbar {
         this.toolbar = document.querySelector("#tt-image-editor #toolbar") as HTMLElement;
         this.toolbar.innerHTML =
             `
+            <input type="file" id="load-file-input" style="display:none">
+            <button id="load-btn" title="load an image" class="btn">Load</button>
             <button id="undo-btn" title="undo" class="btn">&#8678;</button>
             <button id="redo-btn" title="redo" class="btn">&#8680;</button>
             <div id="color-selection-div"></div>
@@ -123,6 +127,8 @@ class Toolbar {
             </div>
             <button id="save-btn" title="download png" class="btn">&#10515;</button>
             `;
+        this.loadFileInput = this.toolbar.querySelector("#load-file-input") as HTMLElement;
+        this.loadBtn = this.toolbar.querySelector("#load-btn") as HTMLElement;
         this.applyBtn = this.toolbar.querySelector("#crop-btn-apply") as HTMLElement;
         this.saveBtn = this.toolbar.querySelector("#save-btn") as HTMLElement;
         this.cropBtn = this.toolbar.querySelector("#crop-btn") as HTMLElement;
@@ -144,6 +150,8 @@ class Toolbar {
     }
 
     private addListeners(): void {
+        this.loadBtn.addEventListener("click", (evt) => this.handleLoadBtn(evt));
+        this.loadFileInput.addEventListener("change", (evt) => this.handleLoadFileInput(evt));
         this.applyBtn.addEventListener("click", (evt) => this.handleApplyBtn(evt));
         this.saveBtn.addEventListener("click", (evt) => this.handleSaveBtn(evt));
         this.cropBtn.addEventListener("click", (evt) => this.handleCropBtn(evt));
@@ -251,6 +259,20 @@ class Toolbar {
         this.hideElement(this.cropSubBtnsDiv);
         editor.crop(cropTool.getCropChange());
         editor.setActiveTool(null);
+    }
+
+    private handleLoadBtn(evt): void {
+        if (this.loadFileInput) {
+            this.loadFileInput.click();
+        }
+        evt.preventDefault();
+    }
+
+    private handleLoadFileInput(evt): void {
+        let file = evt.target.files[0];
+        if (file) {
+            util.handleFile(file, (img) => { editor.loadImage(img) });
+        }
     }
 
     private handleSaveBtn(evt): void {

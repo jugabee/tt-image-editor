@@ -55,17 +55,7 @@ html, body {
             border: none;
         }
 
-        #undo-btn:active {
-            background: gray;
-            border-style: inset!important;
-        }
-
-        #redo-btn:active {
-            background: gray;
-            border-style: inset!important;
-        }
-
-        #save-btn:active {
+        #undo-btn:active, #redo-btn:active, #save-btn:active, #load-btn:active {
             background: gray;
             border-style: inset!important;
         }

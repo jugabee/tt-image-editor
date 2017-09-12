@@ -33,6 +33,15 @@ export interface RectOverlap {
     b: boolean
 };
 
+export interface FileReaderEventTarget extends EventTarget {
+    result: string
+}
+
+export interface FileReaderEvent extends Event {
+    target: FileReaderEventTarget;
+    getMessage(): string;
+}
+
 export function dataURIToBlob(uri: string): Blob {
     let binStr = atob(uri.split(",")[1]);
     let len = binStr.length;
@@ -46,6 +55,22 @@ export function dataURIToBlob(uri: string): Blob {
     return new Blob([arr], {
         type: mime
     });
+}
+
+export function handleFile(file: File, onComplete: (img: HTMLImageElement) => void ) {
+    let imageType = /^image\//;
+    if (imageType.test(file.type)) {
+        let reader = new FileReader();
+        reader.onload = (evt: FileReaderEvent) => {
+            let uri: string = evt.target.result;
+            let img = new Image();
+            img.onload = () => {
+                onComplete(img);
+            }
+            img.src = uri;
+        };
+        reader.readAsDataURL(file);
+    }
 }
 
 export function colorToString(color: Color, opacity?: number): string {

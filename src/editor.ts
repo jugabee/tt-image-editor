@@ -16,6 +16,7 @@ export enum ToolType {
 
 interface EditorState {
     activeTool: ToolType | null;
+    drawCanvasNeedsUpdate: boolean;
     color: Color;
     clientRect: Rect;
     sx: number;
@@ -52,6 +53,7 @@ export class TTImageEditor {
     private debug: boolean = false;
     state: EditorState = {
         activeTool: null,
+        drawCanvasNeedsUpdate: false,
         color: { r: 0, g: 0, b: 0, a: 1 },
         clientRect: { x: 0, y: 0, w: 0, h: 0 },
         isMousedown: false,
@@ -74,9 +76,6 @@ export class TTImageEditor {
     constructor() { }
 
     init(img: HTMLImageElement): void {
-        this.img = img;
-        this.setState({ imgW: this.img.naturalWidth, imgH: this.img.naturalHeight });
-
         this.editor = document.getElementById("tt-image-editor");
         this.toolbarElement = this.editor.querySelector("#toolbar") as HTMLElement;
         this.canvasContainer = this.editor.querySelector("#layers") as HTMLCanvasElement;
@@ -89,23 +88,15 @@ export class TTImageEditor {
         this.memoryCanvas = document.createElement("canvas");
         this.memoryCtx = this.memoryCanvas.getContext("2d");
 
-        this.undoRedo = new UndoRedo(this.memoryCtx, this.img);
-
-        this.drawingCanvas.width = this.state.imgW;
-        this.drawingCanvas.height = this.state.imgH;
-        this.memoryCanvas.width = this.state.imgW;
-        this.memoryCanvas.height = this.state.imgH;
-        // Draw source image
-        this.memoryCtx.drawImage(this.img, 0, 0);
-
+        this.loadImage(img);
         toolbar.init();
         this.addListeners();
     }
 
     private addListeners(): void {
-        pencilTool.onDrawing.addListener((evt) => this.draw());
+        pencilTool.onDrawing.addListener((evt) => this.handleOnDrawing(evt));
         pencilTool.onDrawingFinished.addListener((evt) => this.handleDrawingFinished(evt));
-        sprayTool.onDrawing.addListener((evt) => this.draw());
+        sprayTool.onDrawing.addListener((evt) => this.handleOnDrawing(evt));
         sprayTool.onDrawingFinished.addListener((evt) => this.handleDrawingFinished(evt));
     	this.canvasContainer.addEventListener("mousedown", (evt) => this.handleMousedown(evt), false);
     	this.canvasContainer.addEventListener("mousemove", (evt) => this.handleMousemove(evt), false);
@@ -116,6 +107,37 @@ export class TTImageEditor {
         this.canvasContainer.addEventListener("DOMMouseScroll", (evt) => this.handleMouseWheel(evt), false);
         window.addEventListener("resize", (evt) => this.handleResize(evt));
         this.handleResize(null);
+    }
+
+    // reset necessary editor state, load a new image and draw it to the view
+    loadImage(img: HTMLImageElement): void {
+        this.setState({
+            drawCanvasNeedsUpdate: false,
+            isMousedown: false,
+            isMousedrag: false,
+            mousedownX: 0,
+            mousedownY: 0,
+            sx: 0,
+            sy: 0,
+            imgW: 0,
+            imgH: 0,
+            scale: 0,
+            cropX: 0,
+            cropY: 0,
+            cropW: 0,
+            cropH: 0
+        });
+        this.img = img;
+        this.setState({ imgW: this.img.naturalWidth, imgH: this.img.naturalHeight });
+        this.undoRedo = new UndoRedo(this.memoryCtx, this.img);
+        this.drawingCanvas.width = this.state.imgW;
+        this.drawingCanvas.height = this.state.imgH;
+        this.memoryCanvas.width = this.state.imgW;
+        this.memoryCanvas.height = this.state.imgH;
+        // Draw source image
+        this.memoryCtx.clearRect(0, 0, this.memoryCanvas.width, this.memoryCanvas.height);
+        this.memoryCtx.drawImage(this.img, 0, 0);
+        this.draw();
     }
 
     /**
@@ -344,6 +366,11 @@ export class TTImageEditor {
         this.draw();
     }
 
+    private handleOnDrawing(evt): void {
+        this.setState({ drawCanvasNeedsUpdate: true });
+        this.draw();
+    }
+
     undo(): void {
         this.undoRedo.undo();
         this.draw();
@@ -397,26 +424,30 @@ export class TTImageEditor {
     }
 
     /**
-    * Draws the drawingCanvas to the viewCanvas in real-time.
+    * Draws the drawingCanvas to the viewCanvas in real-time when drawCanvasNeedsUpdate
+    * is true.
     *
     * When the drawing is finished it is drawn to the memoryCanvas
     * and draw is called again to clear the viewCanvas and redraw the memoryCanvas.
     */
     private drawDrawing(): void {
-        let r = this.getImageRect();
-        if (this.state.activeTool === ToolType.PENCIL) {
-            this.viewCtx.globalCompositeOperation = pencilTool.getComposite();
-        } else if (this.state.activeTool === ToolType.SPRAY) {
-            this.viewCtx.globalCompositeOperation = sprayTool.getComposite();
+        if (this.state.drawCanvasNeedsUpdate) {
+            let r = this.getImageRect();
+            if (this.state.activeTool === ToolType.PENCIL) {
+                this.viewCtx.globalCompositeOperation = pencilTool.getComposite();
+            } else if (this.state.activeTool === ToolType.SPRAY) {
+                this.viewCtx.globalCompositeOperation = sprayTool.getComposite();
+            }
+            this.viewCtx.drawImage(
+                this.drawingCanvas,
+                r.x,
+                r.y,
+                r.w,
+                r.h
+            );
+            this.viewCtx.globalCompositeOperation = "source-over";
+            this.setState({ drawCanvasNeedsUpdate: false });
         }
-        this.viewCtx.drawImage(
-            this.drawingCanvas,
-            r.x,
-            r.y,
-            r.w,
-            r.h
-        );
-        this.viewCtx.globalCompositeOperation = "source-over";
     }
 
     private drawCropRect() {
