@@ -4,7 +4,7 @@ import { toolbar } from "./toolbar";
 import { pencilTool } from "./pencil-tool";
 import { cropTool } from "./crop-tool";
 import { sprayTool } from "./spray-tool";
-import { UndoRedo } from "./undo-redo";
+import { undoRedo } from "./undo-redo";
 import * as util from "./util";
 import { Rect, RectChange, Color } from "./util";
 
@@ -16,6 +16,7 @@ export enum ToolType {
 
 interface EditorState {
     activeTool: ToolType | null;
+    isDrawing: boolean;
     drawCanvasNeedsUpdate: boolean;
     color: Color;
     clientRect: Rect;
@@ -25,7 +26,6 @@ interface EditorState {
     imgH: number;
     scale: number;
     isMousedown: boolean;
-    isMousedrag: boolean;
     mousedownX: number;
     mousedownY: number;
     cropX: number;
@@ -36,28 +36,27 @@ interface EditorState {
 
 export class TTImageEditor {
     private editor: HTMLElement;
-    private img: HTMLImageElement;
+    img: HTMLImageElement;
     private toolbarElement: HTMLElement;
     private canvasContainer: HTMLElement;
     private memoryCanvas: HTMLCanvasElement;
-    private memoryCtx: CanvasRenderingContext2D;
+    memoryCtx: CanvasRenderingContext2D;
     private drawingCanvas: HTMLCanvasElement;
     drawingCtx: CanvasRenderingContext2D;
     toolCanvas: HTMLCanvasElement;
     toolCtx: CanvasRenderingContext2D;
     private viewCanvas: HTMLCanvasElement;
     viewCtx: CanvasRenderingContext2D;
-    private undoRedo: UndoRedo;
     // enable debug to see state updates in console, and to draw stroked rectangles for
     // the original image and cropped image
     private debug: boolean = false;
     state: EditorState = {
         activeTool: null,
+        isDrawing: false,
         drawCanvasNeedsUpdate: false,
         color: { r: 0, g: 0, b: 0, a: 1 },
         clientRect: { x: 0, y: 0, w: 0, h: 0 },
         isMousedown: false,
-        isMousedrag: false,
         mousedownX: 0,
         mousedownY: 0,
         sx: 0,
@@ -112,9 +111,9 @@ export class TTImageEditor {
     // reset necessary editor state, load a new image and draw it to the view
     loadImage(img: HTMLImageElement): void {
         this.setState({
+            isDrawing: false,
             drawCanvasNeedsUpdate: false,
             isMousedown: false,
-            isMousedrag: false,
             mousedownX: 0,
             mousedownY: 0,
             sx: 0,
@@ -127,9 +126,9 @@ export class TTImageEditor {
             cropW: 0,
             cropH: 0
         });
+        undoRedo.clear();
         this.img = img;
         this.setState({ imgW: this.img.naturalWidth, imgH: this.img.naturalHeight });
-        this.undoRedo = new UndoRedo(this.memoryCtx, this.img);
         this.drawingCanvas.width = this.state.imgW;
         this.drawingCanvas.height = this.state.imgH;
         this.memoryCanvas.width = this.state.imgW;
@@ -185,7 +184,7 @@ export class TTImageEditor {
             mousedownX: mouse.x,
             mousedownY: mouse.y
         });
-        if(evt.ctrlKey || evt.metaKey) {
+        if(!this.state.isDrawing && evt.ctrlKey || evt.metaKey) {
             this.sampleColorAtPoint(mouse);
         } else {
             let activeTool = this.getActiveTool();
@@ -197,10 +196,10 @@ export class TTImageEditor {
 
     private handleMousemove(evt): void {
         let mouse: util.Point = util.getMousePosition(this.state.clientRect, evt);
-        if (this.state.isMousedown && evt.altKey) {
-            this.pan(mouse);
-        } else if (this.state.isMousedown && evt.ctrlKey || evt.metaKey) {
+        if (this.state.isMousedown && !this.state.isDrawing && evt.ctrlKey || evt.metaKey) {
             this.sampleColorAtPoint(mouse);
+        } else if (this.state.isMousedown && !this.state.isDrawing && evt.altKey) {
+            this.pan(mouse);
         } else {
             let activeTool = this.getActiveTool();
             if (activeTool !== null) {
@@ -210,7 +209,7 @@ export class TTImageEditor {
     }
 
     private handleMouseup(evt): void {
-        this.setState({ isMousedown: false, isMousedrag: false });
+        this.setState({ isMousedown: false });
         let activeTool = this.getActiveTool();
         if (activeTool !== null) {
             activeTool.handleMouseup(evt);
@@ -286,7 +285,6 @@ export class TTImageEditor {
         });
         this.draw();
         this.setState({
-            isMousedrag: true,
             mousedownX: mouse.x,
             mousedownY: mouse.y
         });
@@ -295,6 +293,9 @@ export class TTImageEditor {
     save(): void {
         let saveCanvas = document.createElement("canvas");
         let saveCtx = saveCanvas.getContext("2d");
+        saveCtx.mozImageSmoothingEnabled = false;
+        saveCtx.webkitImageSmoothingEnabled = false;
+        saveCtx.imageSmoothingEnabled = false;
         saveCanvas.width = this.state.imgW - this.state.cropW;
         saveCanvas.height = this.state.imgH - this.state.cropH;
         // draw memoryCanvas to saveCanvas with crop applied to source rectangle
@@ -308,7 +309,7 @@ export class TTImageEditor {
             saveCanvas.width,
             saveCanvas.height
         );
-        // convert data uri to blob to skirt restrictions imposed by Chrome on
+        // convert data uri to blob to avoid restrictions imposed by Chrome on
         // the html5 download attribute, then download result
         let uri = saveCanvas.toDataURL();
         let blob: Blob = util.dataURIToBlob(uri);
@@ -339,46 +340,51 @@ export class TTImageEditor {
             cropW: this.state.cropW - rc.dw,
             cropH: this.state.cropH - rc.dh
         });
-        this.undoRedo.insertCropCommand(crop, undoCrop);
+        undoRedo.insertCropCommand(crop, undoCrop);
         cropTool.resetState();
         this.draw();
     }
 
     private handleDrawingFinished(evt): void {
-        let img = new Image();
         let composite: string = "source-over";
+        this.setState({ isDrawing: false });
         if (this.state.activeTool === ToolType.PENCIL) {
             composite = pencilTool.getComposite();
+            undoRedo.insertPencilCommand(evt.data);
         } else if (this.state.activeTool === ToolType.SPRAY) {
             composite = sprayTool.getComposite();
+            undoRedo.insertSprayCommand(evt.data);
         }
-        img.onload = () => {
-            this.undoRedo.insertDrawingCommand(composite, img);
-        }
-        img.src = this.drawingCanvas.toDataURL();
         this.memoryCtx.globalCompositeOperation = composite;
         this.memoryCtx.drawImage(
             this.drawingCanvas,
             0, 0
         );
         this.drawingCtx.clearRect(0, 0, this.drawingCtx.canvas.width, this.drawingCtx.canvas.height);
-        this.memoryCtx.globalCompositeOperation = "source-over";
         this.draw();
     }
 
     private handleOnDrawing(evt): void {
-        this.setState({ drawCanvasNeedsUpdate: true });
+        this.setState({ drawCanvasNeedsUpdate: true, isDrawing: true });
         this.draw();
     }
 
     undo(): void {
-        this.undoRedo.undo();
+        undoRedo.undo();
         this.draw();
     }
 
     redo(): void {
-        this.undoRedo.redo();
+        undoRedo.redo();
         this.draw();
+    }
+
+    drawFromHistory(): void {
+        this.memoryCtx.globalCompositeOperation = "source-over";
+        this.memoryCtx.clearRect(0, 0, this.memoryCtx.canvas.width, this.memoryCtx.canvas.height);
+        this.memoryCtx.drawImage(
+            this.img, 0, 0
+        );
     }
 
     /**
@@ -401,6 +407,7 @@ export class TTImageEditor {
         this.viewCtx.mozImageSmoothingEnabled = false;
         this.viewCtx.webkitImageSmoothingEnabled = false;
         this.viewCtx.imageSmoothingEnabled = false;
+        this.viewCtx.globalCompositeOperation = "source-over";
         this.drawFromMemory();
         this.drawDrawing();
         if (this.debug) {
@@ -425,7 +432,7 @@ export class TTImageEditor {
 
     /**
     * Draws the drawingCanvas to the viewCanvas in real-time when drawCanvasNeedsUpdate
-    * is true.
+    * is true. This is done to prevent unecessary redraws.
     *
     * When the drawing is finished it is drawn to the memoryCanvas
     * and draw is called again to clear the viewCanvas and redraw the memoryCanvas.
@@ -445,7 +452,6 @@ export class TTImageEditor {
                 r.w,
                 r.h
             );
-            this.viewCtx.globalCompositeOperation = "source-over";
             this.setState({ drawCanvasNeedsUpdate: false });
         }
     }
@@ -460,6 +466,7 @@ export class TTImageEditor {
     private drawDebug(): void {
         let r = this.getImageRect();
         let r2 = this.getCroppedImageRect();
+        this.viewCtx.globalCompositeOperation = "source-over";
         this.viewCtx.strokeStyle = "blue";
         this.viewCtx.lineWidth = 3;
         this.viewCtx.strokeRect(r.x, r.y, r.w, r.h);
@@ -492,6 +499,7 @@ export class TTImageEditor {
     // clear everything on the view canvas outside of a rect
     private clearOutsideImageRect(): void {
        let r: Rect = this.getCroppedImageRect();
+       this.viewCtx.globalCompositeOperation = "source-over";
        this.viewCtx.clearRect(0, 0, this.viewCanvas.width, r.y);
        this.viewCtx.clearRect(0, 0, r.x, this.viewCanvas.height);
        this.viewCtx.clearRect(r.x + r.w, 0, this.viewCanvas.width - (r.x + r.w), this.viewCanvas.height);

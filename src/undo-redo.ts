@@ -1,24 +1,21 @@
+import { editor } from "./editor";
 import { Command } from "./command";
-import { DrawingCommand } from "./drawing-command";
+import { PencilCommand } from "./pencil-command";
+import { SprayCommand } from "./spray-command";
 import { CropCommand } from "./crop-command";
+import { sprayTool, SprayToolDrawing } from "./spray-tool";
+import { pencilTool, PencilToolDrawing } from "./pencil-tool";
 import { Rect } from "./util";
 
-export class UndoRedo {
-    private ctx: CanvasRenderingContext2D; // memoryCtx
-    private img: HTMLImageElement // source image
+class UndoRedo {
     private undoCommands: Array<Command> = [];
     private redoCommands: Array<Command> = [];
-    private currentUndoIndex: number = -1;
 
-    constructor(ctx: CanvasRenderingContext2D, img: HTMLImageElement) {
-        this.ctx = ctx;
-        this.img = img;
-    }
+    constructor() { }
 
     undo(): void {
         if (this.undoCommands.length !== 0) {
             let cmd: Command = this.undoCommands.pop();
-            this.currentUndoIndex -= 1;
             cmd.unexecute();
             this.redrawFromHistory();
             this.redoCommands.push(cmd);
@@ -28,38 +25,45 @@ export class UndoRedo {
     redo(): void {
         if (this.redoCommands.length !== 0) {
             let cmd: Command = this.redoCommands.pop();
-            this.currentUndoIndex += 1;
             this.undoCommands.push(cmd);
             cmd.execute();
             this.redrawFromHistory();
          }
     }
 
-    insertDrawingCommand(composite: string, img: HTMLImageElement): void {
-        let cmd = new DrawingCommand(composite, img);
+    insertPencilCommand(drawing: PencilToolDrawing): void {
+        let cmd = new PencilCommand(drawing);
         this.undoCommands.push(cmd);
-        this.currentUndoIndex += 1;
+        this.redoCommands = [];
+    }
+
+    insertSprayCommand(drawing: SprayToolDrawing): void {
+        let cmd = new SprayCommand(drawing);
+        this.undoCommands.push(cmd);
         this.redoCommands = [];
     }
 
     insertCropCommand(crop: Rect, undoCrop: Rect): void {
         let cmd = new CropCommand(crop, undoCrop);
         this.undoCommands.push(cmd);
-        this.currentUndoIndex += 1;
         this.redoCommands = [];
     }
 
+    clear() {
+        this.redoCommands = [];
+        this.undoCommands = [];
+    }
+
     private redrawFromHistory() {
-        this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-        this.ctx.globalCompositeOperation = "source-over";
-        this.ctx.drawImage(
-            this.img, 0, 0
-        );
+        editor.drawFromHistory();
         for (let cmd of this.undoCommands) {
-            if (cmd instanceof DrawingCommand) {
-                this.ctx.globalCompositeOperation = cmd.composite;
-                this.ctx.drawImage(cmd.img, 0, 0);
+            if (cmd instanceof PencilCommand) {
+                pencilTool.drawFromHistory(cmd.drawing);
+            } else if (cmd instanceof SprayCommand) {
+                sprayTool.drawFromHistory(cmd.drawing);
             }
         }
     }
 }
+
+export let undoRedo = new UndoRedo();

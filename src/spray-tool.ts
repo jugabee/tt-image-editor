@@ -2,30 +2,38 @@ import { editor } from "./editor";
 import * as Events from "./event";
 import { Tool } from "./tool";
 import * as util from "./util";
-import { Point } from "./util";
+import { Point, Rect } from "./util";
 
-class SprayTool extends Tool{
+export interface SprayToolDrawing {
+    rects: Array<Rect>,
+    composite: string,
+    opacity: number,
+    color: string
+}
+
+class SprayTool extends Tool {
     private isMousedown: boolean = false;
     private isEraser: boolean = false;
     private sprayTimeout: number | undefined;
     private sprayMouse: Point;
-    private readonly DEF_SPRAY_SPEED = 10;
+    private readonly DEF_SPRAY_SPEED = 5;
     private readonly DEF_OPACITY = 1;
     private readonly DEF_WIDTH = 4;
     private readonly DEF_COMPOSITE = "source-over";
+    tempRects = [];
     composite: string = this.DEF_COMPOSITE;
     opacity: number = this.DEF_OPACITY;
     width: number = this.DEF_WIDTH;
 
     onDrawing: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
-    onDrawingFinished: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
+    onDrawingFinished: Events.Dispatcher<SprayToolDrawing> = Events.Dispatcher.createEventDispatcher();
 
     constructor() {
         super();
     }
 
     handleMousedown(evt): void {
-        if (!evt.altKey && !evt.ctrlKey && !evt.metaKey) {
+        if (!evt.altKey) {
             let scale: number = util.getCurrentScale(editor.state.scale);
             let mouse: Point = util.getMousePosition(editor.state.clientRect, evt);
             let p: Point = {
@@ -34,27 +42,33 @@ class SprayTool extends Tool{
             }
             this.sprayMouse = p;
             this.isMousedown = true;
-            if (this.isEraser) {
-                this.composite = "destination-out";
-            } else {
-                this.composite = "source-over";
-            }
             this.drawSprayBrush();
         }
     }
 
     handleMousemove(evt): void {
-        let scale: number = util.getCurrentScale(editor.state.scale);
-        let mouse: Point = util.getMousePosition(editor.state.clientRect, evt);
-        let p: Point = {
-            x: (mouse.x * scale) + editor.state.sx,
-            y: (mouse.y * scale) + editor.state.sy
-        };
-        this.sprayMouse = p;
+        if (this.isMousedown) {
+            let scale: number = util.getCurrentScale(editor.state.scale);
+            let mouse: Point = util.getMousePosition(editor.state.clientRect, evt);
+            let p: Point = {
+                x: (mouse.x * scale) + editor.state.sx,
+                y: (mouse.y * scale) + editor.state.sy
+            };
+            this.sprayMouse = p;
+        }
     }
 
     handleMouseup(evt): void {
-        this.onDrawingFinished.emit({ data: true });
+        if (this.tempRects.length > 0) {
+            let history: SprayToolDrawing = {
+                rects: this.tempRects,
+                composite: this.composite,
+                opacity: this.opacity,
+                color: util.colorToString(editor.state.color, this.opacity)
+            }
+            this.onDrawingFinished.emit({ data: history });
+        }
+        this.tempRects = [];
         clearTimeout(this.sprayTimeout);
         this.isMousedown = false;
     }
@@ -64,23 +78,40 @@ class SprayTool extends Tool{
     init(): void { }
 
     private drawSprayBrush(): void {
+        if (this.isEraser) {
+            this.composite = "destination-out";
+        } else {
+            this.composite = "source-over";
+        }
         // Adapted from: http://perfectionkills.com/exploring-canvas-drawing-techniques/
-        this.sprayTimeout = setTimeout(() => {
-            for (let i = this.width; i > 0; i--) {
-                let angle = util.getRandomFloat(0, Math.PI * 2);
-                let radius = util.getRandomFloat(0, this.width);
-                let side = util.getRandomFloat(1, 2);
-                editor.drawingCtx.fillStyle = util.colorToString(editor.state.color, this.opacity);
-                editor.drawingCtx.fillRect(
-                    this.sprayMouse.x + radius * Math.cos(angle),
-                    this.sprayMouse.y + radius * Math.sin(angle),
-                    side, side);
+        this.sprayTimeout = setTimeout(() =>
+            {
+                for (let i = this.width / 2; i > 0; i--) {
+                    let angle: number = util.getRandomFloat(0, Math.PI * 2);
+                    let radius: number = util.getRandomFloat(0, this.width);
+                    let side: number = util.getRandomFloat(1, 2);
+                    let rect: Rect = {
+                        x: this.sprayMouse.x + radius * Math.cos(angle),
+                        y: this.sprayMouse.y + radius * Math.sin(angle),
+                        w: side, h: side
+                    };
+                    this.tempRects.push(rect);
+                    editor.drawingCtx.fillStyle = util.colorToString(editor.state.color, this.opacity);
+                    editor.drawingCtx.fillRect(rect.x, rect.y, rect.w, rect.h);
                 }
                 this.onDrawing.emit({ data: true });
                 if (!this.sprayTimeout) return;
                 this.drawSprayBrush();
-            }, this.DEF_SPRAY_SPEED
-        );
+            }, this.DEF_SPRAY_SPEED);
+    }
+
+    drawFromHistory(drawing: SprayToolDrawing): void {
+        let rects = drawing.rects;
+        editor.memoryCtx.globalCompositeOperation = drawing.composite;
+        for (let i = 0; i < rects.length; i++) {
+            editor.memoryCtx.fillStyle = drawing.color;
+            editor.memoryCtx.fillRect(rects[i].x, rects[i].y, rects[i].w, rects[i].h);
+        }
     }
 
     setOpacity(opacity: number): void {

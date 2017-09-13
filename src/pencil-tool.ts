@@ -4,6 +4,14 @@ import { Tool } from "./tool";
 import * as util from "./util";
 import { Point, Color } from "./util";
 
+export interface PencilToolDrawing {
+    points: Array<Point>,
+    width: number,
+    composite: string,
+    opacity: number,
+    color: string
+}
+
 class PencilTool extends Tool{
     private points: Array<Point> = [];
     private isMousedown: boolean = false;
@@ -19,7 +27,7 @@ class PencilTool extends Tool{
     width: number = this.DEF_WIDTH;
 
     onDrawing: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
-    onDrawingFinished: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
+    onDrawingFinished: Events.Dispatcher<PencilToolDrawing> = Events.Dispatcher.createEventDispatcher();
     onColorSampled: Events.Dispatcher<string> = Events.Dispatcher.createEventDispatcher();
 
     constructor() {
@@ -27,25 +35,18 @@ class PencilTool extends Tool{
     }
 
     handleMousedown(evt): void {
-        if (!evt.altKey) {
-            let scale: number = util.getCurrentScale(editor.state.scale);
-            let mouse: Point = util.getMousePosition(editor.state.clientRect, evt);
-            let p: Point = {
-                x: (mouse.x * scale) + editor.state.sx,
-                y: (mouse.y * scale) + editor.state.sy
-            }
-            this.isMousedown = true;
-            if (this.isEraser) {
-                this.composite = "destination-out";
-            } else {
-                this.composite = "source-over";
-            }
-            this.points.push(p);
+        let scale: number = util.getCurrentScale(editor.state.scale);
+        let mouse: Point = util.getMousePosition(editor.state.clientRect, evt);
+        let p: Point = {
+            x: (mouse.x * scale) + editor.state.sx,
+            y: (mouse.y * scale) + editor.state.sy
         }
+        this.isMousedown = true;
+        this.points.push(p);
     }
 
     handleMousemove(evt): void {
-        if (!evt.altKey && this.isMousedown) {
+        if (this.isMousedown) {
             let scale: number = util.getCurrentScale(editor.state.scale);
             let mouse: Point = util.getMousePosition(editor.state.clientRect, evt);
             let p: Point = {
@@ -61,7 +62,14 @@ class PencilTool extends Tool{
 
     handleMouseup(evt): void {
         if (this.points.length > 1) {
-            this.onDrawingFinished.emit({ data: true });
+            let history: PencilToolDrawing = {
+                points: this.points,
+                width: this.width,
+                composite: this.composite,
+                opacity: this.opacity,
+                color: util.colorToString(editor.state.color, this.opacity)
+            }
+            this.onDrawingFinished.emit({ data: history });
         }
         this.points = [];
         this.isMousedown = false;
@@ -73,6 +81,11 @@ class PencilTool extends Tool{
     init(): void { }
 
     drawPencil(): void {
+        if (this.isEraser) {
+            this.composite = "destination-out";
+        } else {
+            this.composite = "source-over";
+        }
         let p1 = this.points[0];
         let p2 = this.points[1];
         editor.drawingCtx.lineWidth = this.width;
@@ -91,6 +104,27 @@ class PencilTool extends Tool{
         }
         editor.drawingCtx.lineTo(p1.x, p1.y);
         editor.drawingCtx.stroke();
+    }
+
+    drawFromHistory(drawing: PencilToolDrawing): void {
+        let p1 = drawing.points[0];
+        let p2 = drawing.points[1];
+        editor.memoryCtx.globalCompositeOperation = drawing.composite;
+        editor.memoryCtx.lineWidth = drawing.width;
+        editor.memoryCtx.lineJoin = this.DEF_LINE_JOIN;
+        editor.memoryCtx.lineCap = this.DEF_LINE_CAP;
+        editor.memoryCtx.strokeStyle = drawing.color;
+
+        editor.memoryCtx.beginPath();
+        editor.memoryCtx.moveTo(p1.x, p1.y);
+        for (let i = 1, len = drawing.points.length; i < len; i++) {
+            let midPoint = util.midpoint(p1, p2);
+            editor.memoryCtx.quadraticCurveTo(p1.x, p1.y, midPoint.x, midPoint.y);
+            p1 = drawing.points[i];
+            p2 = drawing.points[i+1];
+        }
+        editor.memoryCtx.lineTo(p1.x, p1.y);
+        editor.memoryCtx.stroke();
     }
 
     setOpacity(opacity: number): void {

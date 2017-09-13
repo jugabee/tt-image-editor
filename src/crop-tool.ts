@@ -97,25 +97,23 @@ export class CropTool extends Tool{
     }
 
     handleMousemove(evt): void {
-        if (!evt.altKey) {
-            if (this.state.isMousedown) {
-                this.setState({ isMousedrag: true });
-                if (this.state.isResizable) {
-                    this.handleResizeCropRect(evt);
-                } else if (this.state.isMovable) {
-                    this.handleMoveCropRect(evt);
-                }
+        if (this.state.isMousedown) {
+            this.setState({ isMousedrag: true });
+            if (this.state.isResizable) {
+                this.handleResizeCropRect(evt);
+            } else if (this.state.isMovable) {
+                this.handleMoveCropRect(evt);
+            }
+        } else {
+            if(this.isMouseoverKnob(evt)) {
+                editor.toolCanvas.style.cursor = "pointer";
+                this.setState({ isResizable: true, isMovable: false });
+            } else if (this.isMouseoverRect(evt)) {
+                editor.toolCanvas.style.cursor = "move";
+                this.setState({ isMovable: true, isResizable: false });
             } else {
-                if(this.isMouseoverKnob(evt)) {
-                    editor.toolCanvas.style.cursor = "pointer";
-                    this.setState({ isResizable: true, isMovable: false });
-                } else if (this.isMouseoverRect(evt)) {
-                    editor.toolCanvas.style.cursor = "move";
-                    this.setState({ isMovable: true, isResizable: false });
-                } else {
-                    editor.toolCanvas.style.cursor = "default";
-                    this.setState({ isResizable: false, isMovable: false });
-                }
+                editor.toolCanvas.style.cursor = "default";
+                this.setState({ isResizable: false, isMovable: false });
             }
         }
     }
