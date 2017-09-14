@@ -27,7 +27,7 @@ class Toolbar {
     private sprayOpacitySel: HTMLElement;
     private sprayEraserBtn: HTMLElement;
     private cropSubBtnsDiv: HTMLElement;
-    private colorSelectionDiv: HTMLElement;
+    private colorBtn: HTMLElement;
 
     constructor() { }
 
@@ -40,17 +40,14 @@ class Toolbar {
         this.toolbar = document.querySelector("#tt-image-editor #toolbar") as HTMLElement;
         this.toolbar.innerHTML =
             `
+            <a id="color-btn" class="btn">Color</a>
             <input type="file" id="load-file-input" style="display:none">
-            <button id="load-btn" title="load an image" class="btn">Load</button>
-            <button id="undo-btn" title="undo" class="btn">&#8678;</button>
-            <button id="redo-btn" title="redo" class="btn">&#8680;</button>
-            <div id="color-selection-div"></div>
-            <button id="pencil-btn" class="btn">Pencil</button>
+            <a id="load-btn" title="load an image" class="btn">Load</a>
+            <a id="undo-btn" title="undo" class="btn"><img src="/images/Arrow Back.svg" /></a>
+            <a id="redo-btn" title="redo" class="btn"><img src="/images/Arrow Forward.svg" /></a>
+            <a id="pencil-btn" class="btn">Pencil</a>
             <div id="pencil-sub-btns" class="tool-sub-btns">
-                <button id="pencil-size-btn" class="sub-btn size-btn" title="size" disabled>
-                    <span class="size-icon"></span>
-                </button>
-                <select id="pencil-size-sel" class="sub-btn">
+                <select id="pencil-size-sel" class="btn">
                     <option value=".5">.5</option>
                     <option value="2">2</option>
                     <option value="4" selected>4</option>
@@ -64,12 +61,7 @@ class Toolbar {
                     <option value="48">48</option>
                     <option value="60">60</option>
                 </select>
-                <button id="pencil-opacity-btn" class="sub-btn opacity-btn" title="opacity" disabled>
-                    <span class="size-icon"></span>
-                    <span class="size-icon"></span>
-                    <span class="size-icon"></span>
-                </button>
-                <select id="pencil-opacity-sel" class="sub-btn">
+                <select id="pencil-opacity-sel" class="btn">
                     <option value="1" selected>1</option>
                     <option value=".9">.9</option>
                     <option value=".8">.8</option>
@@ -81,14 +73,11 @@ class Toolbar {
                     <option value=".2">.2</option>
                     <option value=".1">.1</option>
                 </select>
-                <button id="pencil-eraser-btn" class="sub-btn" title="eraser">&#9746;</button>
+                <a id="pencil-eraser-btn" class="btn" title="eraser">&#9746;</a>
             </div>
-            <button id="spray-btn" class="btn">Spray</button>
+            <a id="spray-btn" class="btn">Spray</a>
             <div id="spray-sub-btns" class="tool-sub-btns">
-                <button id="spray-size-btn" class="sub-btn size-btn" title="size" disabled>
-                    <span class="size-icon"></span>
-                </button>
-                <select id="spray-size-sel" class="sub-btn">
+                <select id="spray-size-sel" class="btn">
                     <option value=".5">.5</option>
                     <option value="2">2</option>
                     <option value="4" selected>4</option>
@@ -102,12 +91,7 @@ class Toolbar {
                     <option value="48">48</option>
                     <option value="60">60</option>
                 </select>
-                <button id="spray-opacity-btn" class="sub-btn opacity-btn" title="opacity" disabled>
-                    <span class="size-icon"></span>
-                    <span class="size-icon"></span>
-                    <span class="size-icon"></span>
-                </button>
-                <select id="spray-opacity-sel" class="sub-btn">
+                <select id="spray-opacity-sel" class="btn">
                     <option value="1" selected>1</option>
                     <option value=".9">.9</option>
                     <option value=".8">.8</option>
@@ -119,13 +103,13 @@ class Toolbar {
                     <option value=".2">.2</option>
                     <option value=".1">.1</option>
                 </select>
-                <button id="spray-eraser-btn" class="sub-btn" title="eraser">&#9746;</button>
+                <a id="spray-eraser-btn" class="btn" title="eraser">&#9746;</a>
             </div>
-            <button id="crop-btn" class="btn">Crop</button>
+            <a id="crop-btn" class="btn">Crop</a>
             <div id="crop-sub-btns" class="tool-sub-btns">
-                <button id="crop-btn-apply" class="sub-btn">&#10004;</button>
+                <a id="crop-btn-apply" class="btn">&#10004;</a>
             </div>
-            <button id="save-btn" title="download png" class="btn">&#10515;</button>
+            <a id="save-btn" title="download png" class="btn">Save</a>
             `;
         this.loadFileInput = this.toolbar.querySelector("#load-file-input") as HTMLElement;
         this.loadBtn = this.toolbar.querySelector("#load-btn") as HTMLElement;
@@ -146,7 +130,7 @@ class Toolbar {
         this.spraySizeSel = this.toolbar.querySelector("#spray-size-sel") as HTMLElement;
         this.sprayOpacitySel = this.toolbar.querySelector("#spray-opacity-sel") as HTMLElement;
         this.sprayEraserBtn = this.toolbar.querySelector("#spray-eraser-btn") as HTMLElement;
-        this.colorSelectionDiv = this.toolbar.querySelector("#color-selection-div") as HTMLElement;
+        this.colorBtn = this.toolbar.querySelector("#color-btn") as HTMLElement;
     }
 
     private addListeners(): void {
@@ -296,7 +280,7 @@ class Toolbar {
 
     private showElement(element: HTMLElement): void {
         this.hideElements(this.toolSubBtnsDivs);
-        element.style.display = "flex";
+        element.style.display = "table";
     }
 
     private hideElement(element: HTMLElement): void {
@@ -311,8 +295,8 @@ class Toolbar {
     }
 
     private handleColorSampled(evt) {
-        this.colorSelectionDiv.style.background = evt.data;
-        this.colorSelectionDiv.title = evt.data;
+        this.colorBtn.style.background = evt.data;
+        this.colorBtn.title = evt.data;
     }
 }
 

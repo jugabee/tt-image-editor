@@ -86,7 +86,6 @@ export class TTImageEditor {
         this.drawingCtx = this.drawingCanvas.getContext("2d");
         this.memoryCanvas = document.createElement("canvas");
         this.memoryCtx = this.memoryCanvas.getContext("2d");
-
         this.loadImage(img);
         toolbar.init();
         this.addListeners();
@@ -137,6 +136,13 @@ export class TTImageEditor {
         this.memoryCtx.clearRect(0, 0, this.memoryCanvas.width, this.memoryCanvas.height);
         this.memoryCtx.drawImage(this.img, 0, 0);
         this.draw();
+    }
+
+    private centerImage(): void {
+        this.setState({
+            sx: -(this.viewCanvas.width / 2) + (this.state.imgW / 2),
+            sy: -(this.viewCanvas.height / 2) + (this.state.imgH / 2)
+        })
     }
 
     /**
