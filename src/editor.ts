@@ -317,7 +317,10 @@ export class TTImageEditor {
         let a  = document.createElement("a");
         a.href = url;
         a.download = "tt-image.png";
+        // add to dom to fix in firefox
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
     }
 
     crop(rc: RectChange): void {
