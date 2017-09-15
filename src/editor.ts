@@ -224,18 +224,25 @@ export class TTImageEditor {
 
     private handleMouseWheel(evt): void {
         evt.preventDefault();
+        let mouse: util.Point = util.getMousePosition(this.state.clientRect, evt);
         let mouseDelta: number = Math.max(-1, Math.min(1, (evt.wheelDelta || -evt.detail)));
-        if (mouseDelta === -1) {
-            // zoom out
-            this.zoomAtPoint(evt, 1);
+        let isMac = navigator.platform.indexOf("Mac") > -1;
+        let isWin = navigator.platform.indexOf("Win") > -1;
+        // if mac os, pan using the scroll function (trackpad) and zoom with alt + scroll function
+        if(isMac) {
+            if (evt.altKey) {
+                this.zoomAtPoint(evt, (mouseDelta === -1 ? 1 : -1));
+            } else {
+                this.panByScrollFunction(evt.deltaX, evt.deltaY);
+            }
+        // if win os, zoom with mousewheel and pan will be handled with alt + mouse
         } else {
-            // zoom in
-            this.zoomAtPoint(evt, -1);
+            this.zoomAtPoint(evt, (mouseDelta === -1 ? 1 : -1));
         }
     }
 
     private getActiveTool(): Tool {
-        switch(this.state.activeTool) {
+        switch (this.state.activeTool) {
             case ToolType.PENCIL:
                 return pencilTool;
             case ToolType.SPRAY:
@@ -294,6 +301,15 @@ export class TTImageEditor {
             mousedownX: mouse.x,
             mousedownY: mouse.y
         });
+    }
+
+    private panByScrollFunction(dx, dy): void {
+        let scale = util.getCurrentScale(this.state.scale);
+        this.setState({
+            sx: this.state.sx - (dx * scale),
+            sy: this.state.sy - (dy * scale)
+        });
+        this.draw();
     }
 
     save(): void {

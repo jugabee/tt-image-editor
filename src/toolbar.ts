@@ -7,6 +7,7 @@ import * as util from "./util";
 import { Rect, RectChange } from "./util";
 
 class Toolbar {
+    private toolbarWrapper: HTMLElement;
     private toolbar: HTMLElement;
     private applyBtn: HTMLElement;
     private saveBtn: HTMLElement;
@@ -37,6 +38,7 @@ class Toolbar {
     }
 
     private render(): void {
+        this.toolbarWrapper = document.querySelector("#tt-image-editor #toolbar-wrapper") as HTMLElement;
         this.toolbar = document.querySelector("#tt-image-editor #toolbar") as HTMLElement;
         this.toolbar.innerHTML =
             `
@@ -47,7 +49,7 @@ class Toolbar {
             <a id="redo-btn" title="redo" class="btn"><img src="/images/Arrow Forward.svg" /></a>
             <a id="pencil-btn" class="btn">Pencil</a>
             <div id="pencil-sub-btns" class="tool-sub-btns">
-                <select id="pencil-size-sel" class="btn">
+                <select id="pencil-size-sel" class="sub-btn">
                     <option value=".5">.5</option>
                     <option value="2">2</option>
                     <option value="4" selected>4</option>
@@ -61,7 +63,7 @@ class Toolbar {
                     <option value="48">48</option>
                     <option value="60">60</option>
                 </select>
-                <select id="pencil-opacity-sel" class="btn">
+                <select id="pencil-opacity-sel" class="sub-btn">
                     <option value="1" selected>1</option>
                     <option value=".9">.9</option>
                     <option value=".8">.8</option>
@@ -73,11 +75,11 @@ class Toolbar {
                     <option value=".2">.2</option>
                     <option value=".1">.1</option>
                 </select>
-                <a id="pencil-eraser-btn" class="btn" title="eraser">&#9746;</a>
+                <a id="pencil-eraser-btn" class="sub-btn" title="eraser">&#9746;</a>
             </div>
             <a id="spray-btn" class="btn">Spray</a>
             <div id="spray-sub-btns" class="tool-sub-btns">
-                <select id="spray-size-sel" class="btn">
+                <select id="spray-size-sel" class="sub-btn">
                     <option value=".5">.5</option>
                     <option value="2">2</option>
                     <option value="4" selected>4</option>
@@ -91,7 +93,7 @@ class Toolbar {
                     <option value="48">48</option>
                     <option value="60">60</option>
                 </select>
-                <select id="spray-opacity-sel" class="btn">
+                <select id="spray-opacity-sel" class="sub-btn">
                     <option value="1" selected>1</option>
                     <option value=".9">.9</option>
                     <option value=".8">.8</option>
@@ -103,11 +105,11 @@ class Toolbar {
                     <option value=".2">.2</option>
                     <option value=".1">.1</option>
                 </select>
-                <a id="spray-eraser-btn" class="btn" title="eraser">&#9746;</a>
+                <a id="spray-eraser-btn" class="sub-btn" title="eraser">&#9746;</a>
             </div>
             <a id="crop-btn" class="btn">Crop</a>
             <div id="crop-sub-btns" class="tool-sub-btns">
-                <a id="crop-btn-apply" class="btn">&#10004;</a>
+                <a id="crop-btn-apply" class="sub-btn">&#10004;</a>
             </div>
             <a id="save-btn" title="download png" class="btn">Save</a>
             `;
@@ -255,7 +257,11 @@ class Toolbar {
     private handleLoadFileInput(evt): void {
         let file = evt.target.files[0];
         if (file) {
-            util.handleFile(file, (img) => { editor.loadImage(img) });
+            this.toolbarWrapper.classList.add("loading");
+            util.handleFile(file, (img) => {
+                this.toolbarWrapper.classList.remove("loading");
+                editor.loadImage(img)
+            });
         }
     }
 

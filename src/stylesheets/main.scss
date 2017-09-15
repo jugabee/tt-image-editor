@@ -29,8 +29,14 @@ html, body {
     }
 
     #toolbar-wrapper {
+        transition: all 0.15s ease;
         box-shadow: 0 1px 3px rgba(0,0,0,.5);
         position: relative;
+
+        &.loading {
+            opacity: .5;
+            pointer-events: none;
+        }
     }
 
     #toolbar {
@@ -106,16 +112,29 @@ html, body {
         }
 
         .tool-sub-btns {
-            .btn {
-                background: dimgray!important;
+            display: none;
+            height: 100%;
+
+            .sub-btn {
+                text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+                font: 1rem Arial;
+                display: table-cell;
+                vertical-align: middle;
+                cursor: pointer;
                 width: 3rem;
+                text-align: center;
+                color: white;
+                user-select: none;
+                transition: all 0.15s ease;
+                border-top: 1px solid #555;
+                border-bottom: 1px solid #555;
+                border-right: 1px solid #555;
+                background: dimgray!important;
+
                 &.active {
-                    color: #5dd262;
                     background: #555!important;
                 }
             }
-            display: none;
-            height: 100%;
         }
     }
 }
