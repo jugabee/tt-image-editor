@@ -170,11 +170,12 @@ export class TTImageEditor {
     }
 
     private handleResize(evt): void {
-        // TODO base this on a containing element instead of window?
-        this.viewCanvas.width = window.innerWidth;
-        this.viewCanvas.height = window.innerHeight - this.toolbarElement.clientHeight;
-        this.toolCanvas.width = window.innerWidth;
-        this.toolCanvas.height = window.innerHeight - this.toolbarElement.clientHeight;
+        let w: number = window.innerWidth;
+        let h: number = window.innerHeight - this.toolbarElement.clientHeight;
+        this.viewCanvas.width = w;
+        this.viewCanvas.height = h;
+        this.toolCanvas.width = w;
+        this.toolCanvas.height = h;
         let r: ClientRect = this.canvasContainer.getBoundingClientRect();
         this.setState({ clientRect: { x: r.left, y: r.top, w: r.width, h: r.height } });
         this.draw();
@@ -228,16 +229,11 @@ export class TTImageEditor {
         let mouseDelta: number = Math.max(-1, Math.min(1, (evt.wheelDelta || -evt.detail)));
         let isMac = navigator.platform.indexOf("Mac") > -1;
         let isWin = navigator.platform.indexOf("Win") > -1;
-        // if mac os, pan using the scroll function (trackpad) and zoom with alt + scroll function
-        if(isMac) {
-            if (evt.altKey) {
-                this.zoomAtPoint(evt, (mouseDelta === -1 ? 1 : -1));
-            } else {
-                this.panByScrollFunction(evt.deltaX, evt.deltaY);
-            }
-        // if win os, zoom with mousewheel and pan will be handled with alt + mouse
-        } else {
+        // pan using the scroll function (wheel, trackpad) and zoom with alt + scroll function
+        if (evt.altKey) {
             this.zoomAtPoint(evt, (mouseDelta === -1 ? 1 : -1));
+        } else {
+            this.panByScrollFunction(evt.deltaX, evt.deltaY);
         }
     }
 
@@ -260,8 +256,6 @@ export class TTImageEditor {
         this.toolCanvas.style.cursor = "default";
         if (type !== null) {
             this.getActiveTool().init();
-        } else {
-            toolbar.deactivateAllToolButtons();
         }
     }
 

@@ -1,140 +1,156 @@
 html, body {
-  width:  100%;
-  height: 100%;
-  margin: 0px;
-  padding: 0px;
-  background: dimgray;
-}
-
-#tt-image-editor {
-    width:  100%;
+    width: 100%;
     height: 100%;
     margin: 0px;
     padding: 0px;
+}
 
-    #layers {
-        height: auto;
-        width: auto;
+#tt-image-editor {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    margin: 0px;
+    padding: 0px;
+    overflow: hidden;
+}
 
-        canvas#tool-layer {
-            z-index: 12;
-            position: absolute;
-        }
+#tt-image-editor #layers {
+    position: relative;
+    height: auto;
+    width: auto;
+}
 
-        canvas#view-layer {
-            z-index: 10;
-            background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAAH6ji2bAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoV2luZG93cykiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6QTQzMzcyQ0M4QzQwMTFFN0JFQTc5RDY5MUM3OTcxQjUiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6QTQzMzcyQ0Q4QzQwMTFFN0JFQTc5RDY5MUM3OTcxQjUiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDpBNDMzNzJDQThDNDAxMUU3QkVBNzlENjkxQzc5NzFCNSIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDpBNDMzNzJDQjhDNDAxMUU3QkVBNzlENjkxQzc5NzFCNSIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PqIkUbkAAAB0SURBVHjaYmBgYOCFYgYmBhyAFyCAGHAq4QUIIEaYFBR8BhGM2AwACCAGZLtgAKudWAUZsZmHVSVAAKE7CcVpBO0hZDdWf5FsItEKAQKI+p4ZQIUDGI7UVwgQYLhihoGY2KLIZqp7ZfgYyEiCWt7RMKSPgQBzLgTWEduGbAAAAABJRU5ErkJggg==");
-            background-color: white;
-        }
-    }
+#tt-image-editor #layers #tool-layer {
+    z-index: 12;
+    position: absolute;
+}
 
-    #toolbar-wrapper {
-        transition: all 0.15s ease;
-        box-shadow: 0 1px 3px rgba(0,0,0,.5);
-        position: relative;
+#tt-image-editor #layers #view-layer {
+    position: relative;
+    z-index: 10;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAAH6ji2bAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoV2luZG93cykiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6QTQzMzcyQ0M4QzQwMTFFN0JFQTc5RDY5MUM3OTcxQjUiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6QTQzMzcyQ0Q4QzQwMTFFN0JFQTc5RDY5MUM3OTcxQjUiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDpBNDMzNzJDQThDNDAxMUU3QkVBNzlENjkxQzc5NzFCNSIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDpBNDMzNzJDQjhDNDAxMUU3QkVBNzlENjkxQzc5NzFCNSIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PqIkUbkAAAB0SURBVHjaYmBgYOCFYgYmBhyAFyCAGHAq4QUIIEaYFBR8BhGM2AwACCAGZLtgAKudWAUZsZmHVSVAAKE7CcVpBO0hZDdWf5FsItEKAQKI+p4ZQIUDGI7UVwgQYLhihoGY2KLIZqp7ZfgYyEiCWt7RMKSPgQBzLgTWEduGbAAAAABJRU5ErkJggg==");
+    background-color: white;
+}
 
-        &.loading {
-            opacity: .5;
-            pointer-events: none;
-        }
-    }
+#tt-image-editor #toolbar .dropdown {
+    float: left;
+    overflow: hidden;
+}
 
-    #toolbar {
-        position: relative;
-        display: table;
-        background-color: gray;
-        height: 40px;
-        margin: 0 auto;
-        z-index: 100;
+#tt-image-editor #toolbar .dropdown .drop-btn {
+    width: 5rem;
+    background-color: gray;
+    color: white;
+    text-decoration: none;
+    text-shadow: 0 1px 1px rgba(0,0,0,.5);
+    font: 1rem Arial;
+    cursor: pointer;
+    text-align: center;
+    user-select: none;
+    transition: all 0.15s ease;
+    padding: .5rem;
+    border: none;
+    outline: none;
+}
 
-        select {
-            border: none;
-            background: dimgray!important;
-            color: white!important;
-            height: 100%;
-            border: 1px solid #555;
-        }
+#tt-image-editor #toolbar .dropdown-content {
+    background-color: gray;
+    display: none;
+    position: absolute;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    margin-top: 1px;
+}
 
-        #undo-btn, #redo-btn {
-            width: 3rem;
-        }
+#tt-image-editor #toolbar .dropdown-content .tool-sub-btn {
+    transition: all 0.15s ease;
+    display: table-cell;
+    cursor: pointer;
+    color: white;
+    text-decoration: none;
+    border: none;
+    vertical-align: middle;
+    height: 2rem;
+    width: 5rem;
+    box-sizing: content-box;
+}
 
-        #color-btn {
-            color: transparent!important;
-            background-color: black;
-            text-shadow: none!important;
-            transition: none!important;
-        }
+#tt-image-editor #toolbar .dropdown-content .tool-sub-btn.active {
+    background: dimgray;
+    color: #5dd262;
+}
 
-        .btn {
-            text-shadow: 0 1px 1px rgba(0,0,0,.5);
-            font: 1rem Arial;
-            display: table-cell;
-            vertical-align: middle;
-            cursor: pointer;
-            width: 6rem;
-            text-align: center;
-            color: white;
-            user-select: none;
-            transition: all 0.15s ease;
-            border-top: 1px solid #555;
-            border-bottom: 1px solid #555;
-            border-right: 1px solid #555;
+#tt-image-editor #toolbar .dropdown-content select {
+    color: black!important;
+}
 
-            &:first-child {
-                border-left: 1px solid #555;
-            }
+#tt-image-editor #toolbar-wrapper {
+    text-align: center;
+    width: 100%;
+    background: #555;
+    margin: 0;
+    padding: 0;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,.5);
+    position: relative;
+    z-index: 14;
+    border-bottom: 1px solid #555;
+}
 
-            &.active {
-                background: dimgray;
-            }
+#tt-image-editor #toolbar-wrapper.loading {
+    opacity: .5;
+    pointer-events: none;
+}
 
-            &:hover {
-                background: dimgray;
-            }
+#tt-image-editor #toolbar {
+    display: inline-block;
+}
 
-            &:disabled {
-                border: none;
-            }
+#tt-image-editor #toolbar .show{
+    display: table;
+}
 
-            img {
-                height: 1.5rem;
-                user-select: none;
-            }
-        }
+#tt-image-editor #toolbar #undo-btn, #tt-image-editor #toolbar #redo-btn {
+}
 
-        #crop-btn-apply {
-            color: white;
-            font-weight: bold;
-            &:hover {
-                color: #5dd262;
-            }
-        }
+#tt-image-editor #toolbar #color-btn {
+    color: transparent!important;
+    background-color: black;
+    width: 4rem;
+    color: white;
+    padding: .5rem;
+    float: left;
+    user-select: none;
+    cursor: default;
+}
 
-        .tool-sub-btns {
-            display: none;
-            height: 100%;
+#tt-image-editor #toolbar .tool-btn {
+    background-color: gray;
+    width: 4rem;
+    color: white;
+    padding: .5rem;
+    float: left;
+    text-decoration: none;
+    text-shadow: 0 1px 1px rgba(0,0,0,.5);
+    font: 1rem Arial;
+    cursor: pointer;
+    text-align: center;
+    user-select: none;
+    transition: all 0.15s ease;
+}
 
-            .sub-btn {
-                text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
-                font: 1rem Arial;
-                display: table-cell;
-                vertical-align: middle;
-                cursor: pointer;
-                width: 3rem;
-                text-align: center;
-                color: white;
-                user-select: none;
-                transition: all 0.15s ease;
-                border-top: 1px solid #555;
-                border-bottom: 1px solid #555;
-                border-right: 1px solid #555;
-                background: dimgray!important;
+#tt-image-editor #toolbar .tool-btn.active, #tt-image-editor #toolbar .drop-btn.active {
+    background: dimgray;
+}
 
-                &.active {
-                    background: #555!important;
-                }
-            }
-        }
-    }
+#tt-image-editor #toolbar .tool-btn:hover, #tt-image-editor .drop-btn:hover {
+    background-color: dimgray!important;
+}
+
+#tt-image-editor #toolbar #crop-apply-btn {
+    color: white;
+    font-weight: bold;
+}
+
+#tt-image-editor #toolbar #crop-apply-btn:hover {
+    color: #5dd262;
 }

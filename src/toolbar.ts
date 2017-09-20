@@ -9,7 +9,7 @@ import { Rect, RectChange } from "./util";
 class Toolbar {
     private toolbarWrapper: HTMLElement;
     private toolbar: HTMLElement;
-    private applyBtn: HTMLElement;
+    private cropApplyBtn: HTMLElement;
     private saveBtn: HTMLElement;
     private cropBtn: HTMLElement;
     private loadBtn: HTMLElement;
@@ -21,14 +21,12 @@ class Toolbar {
     private pencilSizeSel: HTMLElement;
     private pencilOpacitySel: HTMLElement;
     private pencilEraserBtn: HTMLElement;
-    private toolSubBtnsDivs: NodeList;
-    private pencilSubBtnsDiv: HTMLElement;
-    private spraySubBtnsDiv: HTMLElement;
     private spraySizeSel: HTMLElement;
     private sprayOpacitySel: HTMLElement;
     private sprayEraserBtn: HTMLElement;
-    private cropSubBtnsDiv: HTMLElement;
+    private cropDropdown: HTMLElement;
     private colorBtn: HTMLElement;
+    private dropdownBtns: NodeList;
 
     constructor() { }
 
@@ -42,103 +40,107 @@ class Toolbar {
         this.toolbar = document.querySelector("#tt-image-editor #toolbar") as HTMLElement;
         this.toolbar.innerHTML =
             `
-            <a id="color-btn" class="btn">Color</a>
             <input type="file" id="load-file-input" style="display:none">
-            <a id="load-btn" title="load an image" class="btn">Load</a>
-            <a id="undo-btn" title="undo" class="btn"><img src="/images/Arrow Back.svg" /></a>
-            <a id="redo-btn" title="redo" class="btn"><img src="/images/Arrow Forward.svg" /></a>
-            <a id="pencil-btn" class="btn">Pencil</a>
-            <div id="pencil-sub-btns" class="tool-sub-btns">
-                <select id="pencil-size-sel" class="sub-btn">
-                    <option value=".5">.5</option>
-                    <option value="2">2</option>
-                    <option value="4" selected>4</option>
-                    <option value="6">6</option>
-                    <option value="8">8</option>
-                    <option value="10">10</option>
-                    <option value="14">14</option>
-                    <option value="18">18</option>
-                    <option value="24">24</option>
-                    <option value="36">36</option>
-                    <option value="48">48</option>
-                    <option value="60">60</option>
-                </select>
-                <select id="pencil-opacity-sel" class="sub-btn">
-                    <option value="1" selected>1</option>
-                    <option value=".9">.9</option>
-                    <option value=".8">.8</option>
-                    <option value=".7">.7</option>
-                    <option value=".6">.6</option>
-                    <option value=".5">.5</option>
-                    <option value=".4">.4</option>
-                    <option value=".3">.3</option>
-                    <option value=".2">.2</option>
-                    <option value=".1">.1</option>
-                </select>
-                <a id="pencil-eraser-btn" class="sub-btn" title="eraser">&#9746;</a>
+            <a id="color-btn">Color</a>
+            <a id="load-btn" title="load an image" class="tool-btn">Load</a>
+            <a id="undo-btn" title="undo" class="tool-btn">Undo</a>
+            <a id="redo-btn" title="redo" class="tool-btn">Redo</a>
+            <div class="dropdown">
+                <button id="pencil-btn" class="drop-btn">Pencil</button>
+                <div class="dropdown-content" id="pencil-dropdown">
+                    <select id="pencil-size-sel" class="tool-sub-btn">
+                        <option value=".5">.5</option>
+                        <option value="2">2</option>
+                        <option value="4" selected>4</option>
+                        <option value="6">6</option>
+                        <option value="8">8</option>
+                        <option value="10">10</option>
+                        <option value="14">14</option>
+                        <option value="18">18</option>
+                        <option value="24">24</option>
+                        <option value="36">36</option>
+                        <option value="48">48</option>
+                        <option value="60">60</option>
+                    </select>
+                    <select id="pencil-opacity-sel" class="tool-sub-btn">
+                        <option value="1" selected>1</option>
+                        <option value=".9">.9</option>
+                        <option value=".8">.8</option>
+                        <option value=".7">.7</option>
+                        <option value=".6">.6</option>
+                        <option value=".5">.5</option>
+                        <option value=".4">.4</option>
+                        <option value=".3">.3</option>
+                        <option value=".2">.2</option>
+                        <option value=".1">.1</option>
+                    </select>
+                    <a id="pencil-eraser-btn" title="eraser" class="tool-sub-btn">&#9746;</a>
+                </div>
             </div>
-            <a id="spray-btn" class="btn">Spray</a>
-            <div id="spray-sub-btns" class="tool-sub-btns">
-                <select id="spray-size-sel" class="sub-btn">
-                    <option value=".5">.5</option>
-                    <option value="2">2</option>
-                    <option value="4" selected>4</option>
-                    <option value="6">6</option>
-                    <option value="8">8</option>
-                    <option value="10">10</option>
-                    <option value="14">14</option>
-                    <option value="18">18</option>
-                    <option value="24">24</option>
-                    <option value="36">36</option>
-                    <option value="48">48</option>
-                    <option value="60">60</option>
-                </select>
-                <select id="spray-opacity-sel" class="sub-btn">
-                    <option value="1" selected>1</option>
-                    <option value=".9">.9</option>
-                    <option value=".8">.8</option>
-                    <option value=".7">.7</option>
-                    <option value=".6">.6</option>
-                    <option value=".5">.5</option>
-                    <option value=".4">.4</option>
-                    <option value=".3">.3</option>
-                    <option value=".2">.2</option>
-                    <option value=".1">.1</option>
-                </select>
-                <a id="spray-eraser-btn" class="sub-btn" title="eraser">&#9746;</a>
+            <div class="dropdown">
+                <button id="spray-btn" class="drop-btn">Spray</button>
+                <div class="dropdown-content" id="spray-dropdown">
+                    <select id="spray-size-sel" class="tool-sub-btn">
+                        <option value=".5">.5</option>
+                        <option value="2">2</option>
+                        <option value="4" selected>4</option>
+                        <option value="6">6</option>
+                        <option value="8">8</option>
+                        <option value="10">10</option>
+                        <option value="14">14</option>
+                        <option value="18">18</option>
+                        <option value="24">24</option>
+                        <option value="36">36</option>
+                        <option value="48">48</option>
+                        <option value="60">60</option>
+                    </select>
+                    <select id="spray-opacity-sel" class="tool-sub-btn">
+                        <option value="1" selected>1</option>
+                        <option value=".9">.9</option>
+                        <option value=".8">.8</option>
+                        <option value=".7">.7</option>
+                        <option value=".6">.6</option>
+                        <option value=".5">.5</option>
+                        <option value=".4">.4</option>
+                        <option value=".3">.3</option>
+                        <option value=".2">.2</option>
+                        <option value=".1">.1</option>
+                    </select>
+                    <a id="spray-eraser-btn" title="eraser" class="tool-sub-btn">&#9746;</a>
+                </div>
             </div>
-            <a id="crop-btn" class="btn">Crop</a>
-            <div id="crop-sub-btns" class="tool-sub-btns">
-                <a id="crop-btn-apply" class="sub-btn">&#10004;</a>
+            <div class="dropdown">
+                <button id="crop-btn" class="drop-btn">Crop</button>
+                <div class="dropdown-content" id="crop-dropdown">
+                    <a id="crop-apply-btn" class="tool-sub-btn">&#10004;</a>
+                </div>
             </div>
-            <a id="save-btn" title="download png" class="btn">Save</a>
+            <a id="save-btn" title="download png" class="tool-btn">Save</a>
             `;
         this.loadFileInput = this.toolbar.querySelector("#load-file-input") as HTMLElement;
         this.loadBtn = this.toolbar.querySelector("#load-btn") as HTMLElement;
-        this.applyBtn = this.toolbar.querySelector("#crop-btn-apply") as HTMLElement;
+        this.cropApplyBtn = this.toolbar.querySelector("#crop-apply-btn") as HTMLElement;
         this.saveBtn = this.toolbar.querySelector("#save-btn") as HTMLElement;
         this.cropBtn = this.toolbar.querySelector("#crop-btn") as HTMLElement;
         this.undoBtn = this.toolbar.querySelector("#undo-btn") as HTMLElement;
         this.redoBtn = this.toolbar.querySelector("#redo-btn") as HTMLElement;
         this.pencilBtn = this.toolbar.querySelector("#pencil-btn") as HTMLElement;
         this.sprayBtn = this.toolbar.querySelector("#spray-btn") as HTMLElement;
-        this.toolSubBtnsDivs = this.toolbar.querySelectorAll(".tool-sub-btns");
-        this.cropSubBtnsDiv = this.toolbar.querySelector("#crop-sub-btns") as HTMLElement;
-        this.pencilSubBtnsDiv = this.toolbar.querySelector("#pencil-sub-btns") as HTMLElement;
+        this.cropDropdown = this.toolbar.querySelector("#crop-dropdown") as HTMLElement;
         this.pencilSizeSel = this.toolbar.querySelector("#pencil-size-sel") as HTMLElement;
         this.pencilOpacitySel = this.toolbar.querySelector("#pencil-opacity-sel") as HTMLElement;
         this.pencilEraserBtn = this.toolbar.querySelector("#pencil-eraser-btn") as HTMLElement;
-        this.spraySubBtnsDiv = this.toolbar.querySelector("#spray-sub-btns") as HTMLElement;
         this.spraySizeSel = this.toolbar.querySelector("#spray-size-sel") as HTMLElement;
         this.sprayOpacitySel = this.toolbar.querySelector("#spray-opacity-sel") as HTMLElement;
         this.sprayEraserBtn = this.toolbar.querySelector("#spray-eraser-btn") as HTMLElement;
         this.colorBtn = this.toolbar.querySelector("#color-btn") as HTMLElement;
+        this.dropdownBtns = this.toolbar.querySelectorAll(".drop-btn");
     }
 
     private addListeners(): void {
         this.loadBtn.addEventListener("click", (evt) => this.handleLoadBtn(evt));
         this.loadFileInput.addEventListener("change", (evt) => this.handleLoadFileInput(evt));
-        this.applyBtn.addEventListener("click", (evt) => this.handleApplyBtn(evt));
+        this.cropApplyBtn.addEventListener("click", (evt) => this.handleCropApplyBtn(evt));
         this.saveBtn.addEventListener("click", (evt) => this.handleSaveBtn(evt));
         this.cropBtn.addEventListener("click", (evt) => this.handleCropBtn(evt));
         this.undoBtn.addEventListener("click", (evt) => this.handleUndoBtn(evt));
@@ -154,6 +156,26 @@ class Toolbar {
         editor.onColorSampled.addListener((evt) => this.handleColorSampled(evt));
     }
 
+    private toggleDropdown(id): void {
+        this.toolbar.querySelector(id).classList.toggle("show");
+    }
+
+    private hideDropdowns(): void {
+        let nodes: NodeList = this.toolbar.querySelectorAll(".dropdown-content.show");
+        for (let i = 0; i < nodes.length; i++) {
+            let node: HTMLElement = nodes[i] as HTMLElement;
+            node.classList.remove("show");
+        }
+    }
+
+    private deactivateDropdownBtns(): void {
+        let nodes: NodeList = this.toolbar.querySelectorAll(".drop-btn.active");
+        for (let i = 0; i < nodes.length; i++) {
+            let node: HTMLElement = nodes[i] as HTMLElement;
+            node.classList.remove("active");
+        }
+    }
+
     private handleUndoBtn(evt): void {
         editor.undo();
     }
@@ -164,41 +186,41 @@ class Toolbar {
 
     private handleCropBtn(evt): void {
         if (editor.state.activeTool !== ToolType.CROP) {
-            this.deactivateSelector(".btn");
-            this.showElement(this.cropSubBtnsDiv);
+            this.hideDropdowns();
+            this.deactivateDropdownBtns();
             evt.target.classList.add("active");
             editor.setActiveTool(ToolType.CROP);
         } else {
-            this.hideElement(this.cropSubBtnsDiv);
             evt.target.classList.remove("active");
             editor.setActiveTool(null);
         }
+        this.toggleDropdown("#crop-dropdown");
     }
 
     private handlePencilBtn(evt): void {
         if (editor.state.activeTool !== ToolType.PENCIL) {
-            this.deactivateSelector(".btn");
-            this.showElement(this.pencilSubBtnsDiv);
+            this.hideDropdowns();
+            this.deactivateDropdownBtns();
             evt.target.classList.add("active");
             editor.setActiveTool(ToolType.PENCIL);
         } else {
             evt.target.classList.remove("active");
-            this.hideElement(this.pencilSubBtnsDiv);
             editor.setActiveTool(null);
         }
+        this.toggleDropdown("#pencil-dropdown");
     }
 
     private handleSprayBtn(evt): void {
         if (editor.state.activeTool !== ToolType.SPRAY) {
-            this.deactivateSelector(".btn");
-            this.showElement(this.spraySubBtnsDiv);
+            this.hideDropdowns();
+            this.deactivateDropdownBtns();
             evt.target.classList.add("active");
             editor.setActiveTool(ToolType.SPRAY);
         } else {
             evt.target.classList.remove("active");
-            this.hideElement(this.spraySubBtnsDiv);
             editor.setActiveTool(null);
         }
+        this.toggleDropdown("#spray-dropdown");
     }
 
     private handlePencilSizeSel(evt): void {
@@ -241,8 +263,9 @@ class Toolbar {
         }
     }
 
-    private handleApplyBtn(evt): void {
-        this.hideElement(this.cropSubBtnsDiv);
+    private handleCropApplyBtn(evt): void {
+        this.toggleDropdown("#crop-dropdown");
+        this.deactivateDropdownBtns();
         editor.crop(cropTool.getCropChange());
         editor.setActiveTool(null);
     }
@@ -267,37 +290,6 @@ class Toolbar {
 
     private handleSaveBtn(evt): void {
         editor.save();
-    }
-
-    private deactivateSelector(selector: string): void {
-        let buttons = this.toolbar.querySelectorAll(selector);
-        if (buttons.length !== 0) {
-            for (let i = 0; i < buttons.length; ++i) {
-                let item = buttons[i];
-                item.classList.remove("active");
-            }
-        }
-    }
-
-    // deactive parent tool buttons
-    deactivateAllToolButtons(): void {
-        this.deactivateSelector(".btn.active");
-    }
-
-    private showElement(element: HTMLElement): void {
-        this.hideElements(this.toolSubBtnsDivs);
-        element.style.display = "table";
-    }
-
-    private hideElement(element: HTMLElement): void {
-        element.style.display = "none";
-    }
-
-    private hideElements(elements: NodeList): void {
-        for (let i = 0; i < elements.length; i++) {
-            let element: HTMLElement = elements[i] as HTMLElement;
-            element.style.display = "none";
-        }
     }
 
     private handleColorSampled(evt) {
