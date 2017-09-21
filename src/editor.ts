@@ -225,8 +225,6 @@ export class TTImageEditor {
 
     private handleMouseWheel(evt, delta, deltaX, deltaY): void {
         evt.preventDefault();
-        let isMac = navigator.platform.indexOf("Mac") > -1;
-        let isWin = navigator.platform.indexOf("Win") > -1;
         if (evt.originalEvent.altKey) {
             this.zoomAtPoint(evt.originalEvent, -delta);
         } else {
