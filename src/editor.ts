@@ -7,6 +7,7 @@ import { sprayTool } from "./spray-tool";
 import { undoRedo } from "./undo-redo";
 import * as util from "./util";
 import { Rect, RectChange, Color } from "./util";
+import * as Hamster from "hamsterjs";
 
 export enum ToolType {
     CROP,
@@ -99,12 +100,11 @@ export class TTImageEditor {
     	this.canvasContainer.addEventListener("mousedown", (evt) => this.handleMousedown(evt), false);
     	this.canvasContainer.addEventListener("mousemove", (evt) => this.handleMousemove(evt), false);
     	this.canvasContainer.addEventListener("mouseup", (evt) => this.handleMouseup(evt), false);
-        // IE9, Chrome, Safari, Opera
-        this.canvasContainer.addEventListener("mousewheel", (evt) => this.handleMouseWheel(evt), false);
-        // Firefox
-        this.canvasContainer.addEventListener("DOMMouseScroll", (evt) => this.handleMouseWheel(evt), false);
         window.addEventListener("resize", (evt) => this.handleResize(evt));
         this.handleResize(null);
+        Hamster(this.canvasContainer).wheel((evt, delta, deltaX, deltaY) => {
+            this.handleMouseWheel(evt, delta, deltaX, deltaY);
+        });
     }
 
     // reset necessary editor state, load a new image and draw it to the view
@@ -223,17 +223,14 @@ export class TTImageEditor {
         }
     }
 
-    private handleMouseWheel(evt): void {
+    private handleMouseWheel(evt, delta, deltaX, deltaY): void {
         evt.preventDefault();
-        let mouse: util.Point = util.getMousePosition(this.state.clientRect, evt);
-        let mouseDelta: number = Math.max(-1, Math.min(1, (evt.wheelDelta || -evt.detail)));
         let isMac = navigator.platform.indexOf("Mac") > -1;
         let isWin = navigator.platform.indexOf("Win") > -1;
-        // pan using the scroll function (wheel, trackpad) and zoom with alt + scroll function
-        if (evt.altKey) {
-            this.zoomAtPoint(evt, (mouseDelta === -1 ? 1 : -1));
+        if (evt.originalEvent.altKey) {
+            this.zoomAtPoint(evt.originalEvent, -delta);
         } else {
-            this.panByScrollFunction(evt.deltaX, evt.deltaY);
+            this.panByScrollFunction(deltaX, deltaY);
         }
     }
 

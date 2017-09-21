@@ -43,12 +43,12 @@ class Toolbar {
             <input type="file" id="load-file-input" style="display:none">
             <a id="color-btn">Color</a>
             <a id="load-btn" title="load an image" class="tool-btn">Load</a>
-            <a id="undo-btn" title="undo" class="tool-btn">Undo</a>
-            <a id="redo-btn" title="redo" class="tool-btn">Redo</a>
+            <a id="undo-btn" title="undo" class="tool-btn"><img src="/images/Arrow Back.svg"></a>
+            <a id="redo-btn" title="redo" class="tool-btn"><img src="/images/Arrow Forward.svg"></a>
             <div class="dropdown">
                 <button id="pencil-btn" class="drop-btn">Pencil</button>
                 <div class="dropdown-content" id="pencil-dropdown">
-                    <select id="pencil-size-sel" class="tool-sub-btn">
+                    <select id="pencil-size-sel" class="tool-sub-btn small">
                         <option value=".5">.5</option>
                         <option value="2">2</option>
                         <option value="4" selected>4</option>
@@ -61,8 +61,10 @@ class Toolbar {
                         <option value="36">36</option>
                         <option value="48">48</option>
                         <option value="60">60</option>
-                    </select>
-                    <select id="pencil-opacity-sel" class="tool-sub-btn">
+                        <option value="72">72</option>
+                        <option value="84">84</option>
+                        <option value="96">96</option>
+                    </select><select id="pencil-opacity-sel" class="tool-sub-btn small">
                         <option value="1" selected>1</option>
                         <option value=".9">.9</option>
                         <option value=".8">.8</option>
@@ -73,14 +75,13 @@ class Toolbar {
                         <option value=".3">.3</option>
                         <option value=".2">.2</option>
                         <option value=".1">.1</option>
-                    </select>
-                    <a id="pencil-eraser-btn" title="eraser" class="tool-sub-btn">&#9746;</a>
+                    </select><a id="pencil-eraser-btn" title="eraser" class="tool-sub-btn">&#9746;</a>
                 </div>
             </div>
             <div class="dropdown">
                 <button id="spray-btn" class="drop-btn">Spray</button>
                 <div class="dropdown-content" id="spray-dropdown">
-                    <select id="spray-size-sel" class="tool-sub-btn">
+                    <select id="spray-size-sel" class="tool-sub-btn small">
                         <option value=".5">.5</option>
                         <option value="2">2</option>
                         <option value="4" selected>4</option>
@@ -93,8 +94,10 @@ class Toolbar {
                         <option value="36">36</option>
                         <option value="48">48</option>
                         <option value="60">60</option>
-                    </select>
-                    <select id="spray-opacity-sel" class="tool-sub-btn">
+                        <option value="72">72</option>
+                        <option value="84">84</option>
+                        <option value="96">96</option>
+                    </select><select id="spray-opacity-sel" class="tool-sub-btn small">
                         <option value="1" selected>1</option>
                         <option value=".9">.9</option>
                         <option value=".8">.8</option>
@@ -105,8 +108,7 @@ class Toolbar {
                         <option value=".3">.3</option>
                         <option value=".2">.2</option>
                         <option value=".1">.1</option>
-                    </select>
-                    <a id="spray-eraser-btn" title="eraser" class="tool-sub-btn">&#9746;</a>
+                    </select><a id="spray-eraser-btn" title="eraser" class="tool-sub-btn">&#9746;</a>
                 </div>
             </div>
             <div class="dropdown">

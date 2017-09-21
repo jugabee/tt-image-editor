@@ -33,11 +33,13 @@ html, body {
 }
 
 #tt-image-editor #toolbar .dropdown {
-    float: left;
+    vertical-align: middle;
+    display: table-cell;
     overflow: hidden;
 }
 
 #tt-image-editor #toolbar .dropdown .drop-btn {
+    height: 100%;
     width: 5rem;
     background-color: gray;
     color: white;
@@ -53,6 +55,14 @@ html, body {
     outline: none;
 }
 
+#tt-image-editor #toolbar .tool-btn.active, #tt-image-editor #toolbar .drop-btn.active {
+    background: dimgray;
+}
+
+#tt-image-editor #toolbar .tool-btn:hover, #tt-image-editor .drop-btn:hover {
+    background-color: dimgray!important;
+}
+
 #tt-image-editor #toolbar .dropdown-content {
     background-color: gray;
     display: none;
@@ -61,29 +71,13 @@ html, body {
     margin-top: 1px;
 }
 
-#tt-image-editor #toolbar .dropdown-content .tool-sub-btn {
-    transition: all 0.15s ease;
-    display: table-cell;
-    cursor: pointer;
-    color: white;
-    text-decoration: none;
-    border: none;
-    vertical-align: middle;
-    height: 2rem;
-    width: 5rem;
-    box-sizing: content-box;
-}
-
-#tt-image-editor #toolbar .dropdown-content .tool-sub-btn.active {
-    background: dimgray;
-    color: #5dd262;
-}
-
 #tt-image-editor #toolbar .dropdown-content select {
     color: black!important;
 }
 
 #tt-image-editor #toolbar-wrapper {
+    display: inline-block;
+    max-height: 100%;
     text-align: center;
     width: 100%;
     background: #555;
@@ -102,7 +96,9 @@ html, body {
 }
 
 #tt-image-editor #toolbar {
-    display: inline-block;
+    height: 2rem;
+    display: table;
+    margin: 0 auto;
 }
 
 #tt-image-editor #toolbar .show{
@@ -113,22 +109,26 @@ html, body {
 }
 
 #tt-image-editor #toolbar #color-btn {
+    vertical-align: middle;
+    height: inherit;
     color: transparent!important;
     background-color: black;
     width: 4rem;
     color: white;
     padding: .5rem;
-    float: left;
+    display: table-cell;
     user-select: none;
     cursor: default;
 }
 
 #tt-image-editor #toolbar .tool-btn {
+    vertical-align: middle;
+    height: inherit;
     background-color: gray;
     width: 4rem;
     color: white;
     padding: .5rem;
-    float: left;
+    display: table-cell;
     text-decoration: none;
     text-shadow: 0 1px 1px rgba(0,0,0,.5);
     font: 1rem Arial;
@@ -138,12 +138,35 @@ html, body {
     transition: all 0.15s ease;
 }
 
-#tt-image-editor #toolbar .tool-btn.active, #tt-image-editor #toolbar .drop-btn.active {
-    background: dimgray;
+#tt-image-editor #toolbar .tool-btn img {
+    height: 1.5rem;
 }
 
-#tt-image-editor #toolbar .tool-btn:hover, #tt-image-editor .drop-btn:hover {
-    background-color: dimgray!important;
+#tt-image-editor #toolbar a.tool-btn:active {
+    background-color: #555!important;
+}
+
+
+#tt-image-editor #toolbar .dropdown-content .tool-sub-btn {
+    height: 2rem;
+    width: 5rem;
+    transition: all 0.15s ease;
+    display: table-cell;
+    cursor: pointer;
+    color: white;
+    text-decoration: none;
+    border: none;
+    vertical-align: middle;
+    box-sizing: content-box;
+}
+
+#tt-image-editor #toolbar .dropdown-content .tool-sub-btn.small {
+    width: 2.5rem!important;
+}
+
+#tt-image-editor #toolbar .dropdown-content .tool-sub-btn.active {
+    background: dimgray;
+    color: #5dd262;
 }
 
 #tt-image-editor #toolbar #crop-apply-btn {
