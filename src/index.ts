@@ -2,8 +2,9 @@ import { editor } from "./editor";
 
 function ready(): void {
     const img = new Image();
+    const container = document.getElementById("example");
     img.addEventListener("load", (evt) => {
-        editor.init(img);
+        editor.init(img, container);
     });
     img.src = "/images/dwarf.png";
 }

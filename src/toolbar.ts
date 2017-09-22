@@ -2,7 +2,6 @@ import { editor, ToolType } from "./editor";
 import { pencilTool } from "./pencil-tool";
 import { cropTool } from "./crop-tool";
 import { sprayTool } from "./spray-tool";
-import * as Events from "./event";
 import * as util from "./util";
 import { Rect, RectChange } from "./util";
 

@@ -1,5 +1,5 @@
 import { editor } from "./editor";
-import * as Events from "./event";
+import * as events from "./event";
 import { Tool } from "./tool";
 import * as util from "./util";
 import { Point, Rect } from "./util";
@@ -25,8 +25,8 @@ class SprayTool extends Tool {
     opacity: number = this.DEF_OPACITY;
     width: number = this.DEF_WIDTH;
 
-    onDrawing: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
-    onDrawingFinished: Events.Dispatcher<SprayToolDrawing> = Events.Dispatcher.createEventDispatcher();
+    onDrawing: events.Dispatcher<boolean> = events.Dispatcher.createEventDispatcher();
+    onDrawingFinished: events.Dispatcher<SprayToolDrawing> = events.Dispatcher.createEventDispatcher();
 
     constructor() {
         super();

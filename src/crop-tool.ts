@@ -1,4 +1,4 @@
-import * as Events from "./event";
+import * as events from "./event";
 import { Tool } from "./tool";
 import * as util from "./util";
 import { Rect, Point, RectChange, RectOverlap } from "./util";
@@ -46,7 +46,7 @@ export class CropTool extends Tool{
         dh: 0
     }
 
-    onCropResizing: Events.Dispatcher<{}> = Events.Dispatcher.createEventDispatcher();
+    onCropResizing: events.Dispatcher<{}> = events.Dispatcher.createEventDispatcher();
 
     constructor() {
         super();

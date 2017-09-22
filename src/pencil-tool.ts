@@ -1,5 +1,5 @@
 import { editor } from "./editor";
-import * as Events from "./event";
+import * as events from "./event";
 import { Tool } from "./tool";
 import * as util from "./util";
 import { Point, Color } from "./util";
@@ -26,9 +26,9 @@ class PencilTool extends Tool{
     opacity: number = this.DEF_OPACITY;
     width: number = this.DEF_WIDTH;
 
-    onDrawing: Events.Dispatcher<boolean> = Events.Dispatcher.createEventDispatcher();
-    onDrawingFinished: Events.Dispatcher<PencilToolDrawing> = Events.Dispatcher.createEventDispatcher();
-    onColorSampled: Events.Dispatcher<string> = Events.Dispatcher.createEventDispatcher();
+    onDrawing: events.Dispatcher<boolean> = events.Dispatcher.createEventDispatcher();
+    onDrawingFinished: events.Dispatcher<PencilToolDrawing> = events.Dispatcher.createEventDispatcher();
+    onColorSampled: events.Dispatcher<string> = events.Dispatcher.createEventDispatcher();
 
     constructor() {
         super();

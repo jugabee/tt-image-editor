@@ -1,4 +1,4 @@
-import * as Events from "./event";
+import * as events from "./event";
 import { Tool } from "./tool";
 import { toolbar } from "./toolbar";
 import { pencilTool } from "./pencil-tool";
@@ -71,12 +71,22 @@ export class TTImageEditor {
         cropH: 0
     }
 
-    onColorSampled: Events.Dispatcher<string> = Events.Dispatcher.createEventDispatcher();
+    onColorSampled: events.Dispatcher<string> = events.Dispatcher.createEventDispatcher();
 
-    constructor() { }
+    constructor() {}
 
-    init(img: HTMLImageElement): void {
-        this.editor = document.getElementById("tt-image-editor");
+    init(img: HTMLImageElement, container: HTMLElement): void {
+        container.innerHTML =
+            `
+            <div id="tt-image-editor">
+                <div id="toolbar-wrapper"><div id="toolbar"></div></div>
+                <div id="layers">
+                    <canvas id="tool-layer" width="800" height="600"></canvas>
+                    <canvas id="view-layer" width="800" height="600"></canvas>
+                </div></div>
+            </div>
+            `;
+        this.editor = container.querySelector("#tt-image-editor") as HTMLElement;
         this.toolbarElement = this.editor.querySelector("#toolbar") as HTMLElement;
         this.canvasContainer = this.editor.querySelector("#layers") as HTMLCanvasElement;
         this.toolCanvas = this.editor.querySelector("#tool-layer") as HTMLCanvasElement;
@@ -404,7 +414,7 @@ export class TTImageEditor {
     /**
     * memoryCanvas is the aggregate of the source image and all drawings
     * with various composite effects, e.g destination-out for erasing.
-    * It's never cleared and is drawn to the viewCanvas and used to
+    * It's never cleared and is used to draw the viewCanvas and to
     * save the final image.
     *
     * Each drawing is drawn to the memoryCanvas with a particular composite
@@ -414,7 +424,7 @@ export class TTImageEditor {
     * defined by how much we have panned or scaled. This gives the illusion of
     * panning / zooming on particular mouse events.
     *
-    * Cropping is handle by clearing everything on the viewCanvas outside of a
+    * Cropping is handled by clearing everything on the viewCanvas outside of a
     * rect defined by the total amount the user has cropped.
     */
     draw(): void {
