@@ -1,4 +1,4 @@
-import { editor } from "./editor";
+import { editor } from "./src/editor";
 
 function ready(): void {
     const img = new Image();
@@ -6,7 +6,7 @@ function ready(): void {
     img.addEventListener("load", (evt) => {
         editor.init(img, container);
     });
-    img.src = "/images/dwarf.png";
+    img.src = "./images/dwarf.png";
 }
 
 if (document.readyState !== "loading") {
