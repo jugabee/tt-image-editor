@@ -141,19 +141,19 @@ class Toolbar {
     private addListeners(): void {
         this.loadBtn.addEventListener("click", (evt) => this.handleLoadBtn(evt));
         this.loadFileInput.addEventListener("change", (evt) => this.handleLoadFileInput(evt));
-        this.cropApplyBtn.addEventListener("click", (evt) => this.handleCropApplyBtn(evt));
+        this.cropApplyBtn.addEventListener("click", (evt) => this.handleCropApplyBtn());
         this.saveBtn.addEventListener("click", (evt) => this.handleSaveBtn(evt));
-        this.cropBtn.addEventListener("click", (evt) => this.handleCropBtn(evt));
+        this.cropBtn.addEventListener("click", (evt) => this.handleCropBtn());
         this.undoBtn.addEventListener("click", (evt) => this.handleUndoBtn(evt));
         this.redoBtn.addEventListener("click", (evt) => this.handleRedoBtn(evt));
-        this.pencilBtn.addEventListener("click", (evt) => this.handlePencilBtn(evt));
+        this.pencilBtn.addEventListener("click", (evt) => this.handlePencilBtn());
         this.pencilSizeSel.addEventListener("change", (evt) => this.handlePencilSizeSel(evt));
         this.pencilOpacitySel.addEventListener("change", (evt) => this.handlePencilOpacitySel(evt));
-        this.pencilEraserBtn.addEventListener("click", (evt) => this.handlePencilEraserBtn(evt));
-        this.sprayBtn.addEventListener("click", (evt) => this.handleSprayBtn(evt));
+        this.pencilEraserBtn.addEventListener("click", (evt) => this.handlePencilEraserBtn());
+        this.sprayBtn.addEventListener("click", (evt) => this.handleSprayBtn());
         this.spraySizeSel.addEventListener("change", (evt) => this.handleSpraySizeSel(evt));
         this.sprayOpacitySel.addEventListener("change", (evt) => this.handleSprayOpacitySel(evt));
-        this.sprayEraserBtn.addEventListener("click", (evt) => this.handleSprayEraserBtn(evt));
+        this.sprayEraserBtn.addEventListener("click", (evt) => this.handleSprayEraserBtn());
         editor.onColorSampled.addListener((evt) => this.handleColorSampled(evt));
     }
 
@@ -185,40 +185,40 @@ class Toolbar {
         editor.redo();
     }
 
-    private handleCropBtn(evt): void {
+    handleCropBtn(): void {
         if (editor.state.activeTool !== ToolType.CROP) {
             this.hideDropdowns();
             this.deactivateDropdownBtns();
-            evt.target.classList.add("active");
+            this.cropBtn.classList.add("active");
             editor.setActiveTool(ToolType.CROP);
         } else {
-            evt.target.classList.remove("active");
+            this.cropBtn.classList.remove("active");
             editor.setActiveTool(null);
         }
         this.toggleDropdown("#crop-dropdown");
     }
 
-    private handlePencilBtn(evt): void {
+    handlePencilBtn(): void {
         if (editor.state.activeTool !== ToolType.PENCIL) {
             this.hideDropdowns();
             this.deactivateDropdownBtns();
-            evt.target.classList.add("active");
+            this.pencilBtn.classList.add("active");
             editor.setActiveTool(ToolType.PENCIL);
         } else {
-            evt.target.classList.remove("active");
+            this.pencilBtn.classList.remove("active");
             editor.setActiveTool(null);
         }
         this.toggleDropdown("#pencil-dropdown");
     }
 
-    private handleSprayBtn(evt): void {
+    handleSprayBtn(): void {
         if (editor.state.activeTool !== ToolType.SPRAY) {
             this.hideDropdowns();
             this.deactivateDropdownBtns();
-            evt.target.classList.add("active");
+            this.sprayBtn.classList.add("active");
             editor.setActiveTool(ToolType.SPRAY);
         } else {
-            evt.target.classList.remove("active");
+            this.sprayBtn.classList.remove("active");
             editor.setActiveTool(null);
         }
         this.toggleDropdown("#spray-dropdown");
@@ -234,12 +234,12 @@ class Toolbar {
         pencilTool.setOpacity(opacity);
     }
 
-    private handlePencilEraserBtn(evt): void {
-        if (evt.target.classList.contains("active")) {
-            evt.target.classList.remove("active");
+    handlePencilEraserBtn(): void {
+        if (this.pencilEraserBtn.classList.contains("active")) {
+            this.pencilEraserBtn.classList.remove("active");
             pencilTool.setEraser(false);
         } else {
-            evt.target.classList.add("active");
+            this.pencilEraserBtn.classList.add("active");
             pencilTool.setEraser(true);
         }
     }
@@ -254,28 +254,30 @@ class Toolbar {
         sprayTool.setOpacity(opacity);
     }
 
-    private handleSprayEraserBtn(evt): void {
-        if (evt.target.classList.contains("active")) {
-            evt.target.classList.remove("active");
+    handleSprayEraserBtn(): void {
+        if (this.sprayEraserBtn.classList.contains("active")) {
+            this.sprayEraserBtn.classList.remove("active");
             sprayTool.setEraser(false);
         } else {
-            evt.target.classList.add("active");
+            this.sprayEraserBtn.classList.add("active");
             sprayTool.setEraser(true);
         }
     }
 
-    private handleCropApplyBtn(evt): void {
+    handleCropApplyBtn(): void {
         this.toggleDropdown("#crop-dropdown");
         this.deactivateDropdownBtns();
         editor.crop(cropTool.getCropChange());
         editor.setActiveTool(null);
     }
 
-    private handleLoadBtn(evt): void {
+    handleLoadBtn(evt?): void {
         if (this.loadFileInput) {
             this.loadFileInput.click();
         }
-        evt.preventDefault();
+        if (evt) {
+            evt.preventDefault();
+        }
     }
 
     private handleLoadFileInput(evt): void {

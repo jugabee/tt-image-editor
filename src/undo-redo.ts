@@ -43,6 +43,7 @@ class UndoRedo {
         this.redoCommands = [];
     }
 
+    // TODO don't insert crop if there was no change in the rectangle
     insertCropCommand(crop: Rect, undoCrop: Rect): void {
         let cmd = new CropCommand(crop, undoCrop);
         this.undoCommands.push(cmd);

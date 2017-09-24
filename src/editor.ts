@@ -7,6 +7,7 @@ import { sprayTool } from "./spray-tool";
 import { undoRedo } from "./undo-redo";
 import * as util from "./util";
 import { Rect, RectChange, Color } from "./util";
+import { keyMap } from "./key-map";
 import * as Hamster from "hamsterjs";
 
 export enum ToolType {
@@ -87,6 +88,7 @@ export class TTImageEditor {
             </div>
             `;
         this.editor = container.querySelector("#tt-image-editor") as HTMLElement;
+        this.editor.setAttribute("tabindex", "0");
         this.toolbarElement = this.editor.querySelector("#toolbar") as HTMLElement;
         this.canvasContainer = this.editor.querySelector("#layers") as HTMLCanvasElement;
         this.toolCanvas = this.editor.querySelector("#tool-layer") as HTMLCanvasElement;
@@ -97,6 +99,7 @@ export class TTImageEditor {
         this.drawingCtx = this.drawingCanvas.getContext("2d");
         this.memoryCanvas = document.createElement("canvas");
         this.memoryCtx = this.memoryCanvas.getContext("2d");
+        this.editor.focus();
         this.loadImage(img);
         toolbar.init();
         this.addListeners();
@@ -107,6 +110,7 @@ export class TTImageEditor {
         pencilTool.onDrawingFinished.addListener((evt) => this.handleDrawingFinished(evt));
         sprayTool.onDrawing.addListener((evt) => this.handleOnDrawing(evt));
         sprayTool.onDrawingFinished.addListener((evt) => this.handleDrawingFinished(evt));
+        this.editor.addEventListener("keydown", (evt) => this.handleKeydown(evt));
     	this.canvasContainer.addEventListener("mousedown", (evt) => this.handleMousedown(evt), false);
     	this.canvasContainer.addEventListener("mousemove", (evt) => this.handleMousemove(evt), false);
     	this.canvasContainer.addEventListener("mouseup", (evt) => this.handleMouseup(evt), false);
@@ -191,6 +195,32 @@ export class TTImageEditor {
         this.draw();
     }
 
+    private handleKeydown(evt): void {
+        if (keyMap.isUndo(evt)) {
+            this.undo();
+        } else if (keyMap.isRedo(evt)) {
+            this.redo();
+        } else if (keyMap.isSave(evt)) {
+            this.save();
+        } else if (keyMap.isLoad(evt)) {
+            toolbar.handleLoadBtn();
+        }  else if (keyMap.isCropTool(evt)) {
+            toolbar.handleCropBtn();
+        } else if (keyMap.isCropApplyTool(evt)) {
+            if (this.state.activeTool === ToolType.CROP) {
+                toolbar.handleCropApplyBtn();
+            }
+        } else if (keyMap.isPencilTool(evt)) {
+            toolbar.handlePencilBtn();
+        } else if (keyMap.isPencilEraserTool(evt) && this.state.activeTool === ToolType.PENCIL) {
+                toolbar.handlePencilEraserBtn();
+        } else if (keyMap.isSprayTool(evt)) {
+            toolbar.handleSprayBtn();
+        } else if (keyMap.isSprayEraserTool(evt) && this.state.activeTool === ToolType.SPRAY) {
+            toolbar.handleSprayEraserBtn();
+        }
+    }
+
     /**
     * Handle mouse events with abstract activeTool
     */
@@ -201,7 +231,7 @@ export class TTImageEditor {
             mousedownX: mouse.x,
             mousedownY: mouse.y
         });
-        if(!this.state.isDrawing && evt.ctrlKey || evt.metaKey) {
+        if (!this.state.isDrawing && keyMap.isColorSample(evt)) {
             this.sampleColorAtPoint(mouse);
         } else {
             let activeTool = this.getActiveTool();
@@ -213,9 +243,9 @@ export class TTImageEditor {
 
     private handleMousemove(evt): void {
         let mouse: util.Point = util.getMousePosition(this.state.clientRect, evt);
-        if (this.state.isMousedown && !this.state.isDrawing && evt.ctrlKey || evt.metaKey) {
+        if (this.state.isMousedown && !this.state.isDrawing && keyMap.isColorSample(evt)) {
             this.sampleColorAtPoint(mouse);
-        } else if (this.state.isMousedown && !this.state.isDrawing && evt.altKey) {
+        } else if (this.state.isMousedown && !this.state.isDrawing && keyMap.isPan(evt)) {
             this.pan(mouse);
         } else {
             let activeTool = this.getActiveTool();
@@ -235,7 +265,7 @@ export class TTImageEditor {
 
     private handleMouseWheel(evt, delta, deltaX, deltaY): void {
         evt.preventDefault();
-        if (evt.originalEvent.altKey) {
+        if (keyMap.isWheelZoom(evt.originalEvent)) {
             this.zoomAtPoint(evt.originalEvent, -delta);
         } else {
             this.panByScrollFunction(deltaX, deltaY);
