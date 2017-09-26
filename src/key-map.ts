@@ -1,4 +1,4 @@
-class KeyMap {
+export class KeyMap {
 
     private readonly SHIFT = 1;
     private readonly CTRL = 2;

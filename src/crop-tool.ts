@@ -4,7 +4,7 @@ import * as util from "./util";
 import { Rect, Point, RectChange, RectOverlap } from "./util";
 import { editor } from "./editor";
 
-interface CropToolState {
+export interface CropToolState {
     isMousedown: boolean;
     isMousedrag: boolean;
     activeKnob: Knob | null;
@@ -18,7 +18,7 @@ interface CropToolState {
     dh: number;
 }
 
-enum Knob {
+export enum Knob {
     TL,
     TR,
     BL,

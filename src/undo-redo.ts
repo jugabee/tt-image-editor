@@ -7,7 +7,7 @@ import { sprayTool, SprayToolDrawing } from "./spray-tool";
 import { pencilTool, PencilToolDrawing } from "./pencil-tool";
 import { Rect } from "./util";
 
-class UndoRedo {
+export class UndoRedo {
     private undoCommands: Array<Command> = [];
     private redoCommands: Array<Command> = [];
 

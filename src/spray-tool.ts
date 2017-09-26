@@ -11,7 +11,7 @@ export interface SprayToolDrawing {
     color: string
 }
 
-class SprayTool extends Tool {
+export class SprayTool extends Tool {
     private isMousedown: boolean = false;
     private isEraser: boolean = false;
     private sprayTimeout: number | undefined;

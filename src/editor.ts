@@ -16,7 +16,7 @@ export enum ToolType {
     SPRAY
 }
 
-interface EditorState {
+export interface EditorState {
     activeTool: ToolType | null;
     isDrawing: boolean;
     drawCanvasNeedsUpdate: boolean;

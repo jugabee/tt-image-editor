@@ -12,7 +12,7 @@ export interface PencilToolDrawing {
     color: string
 }
 
-class PencilTool extends Tool{
+export class PencilTool extends Tool{
     private points: Array<Point> = [];
     private isMousedown: boolean = false;
     private isMousedrag: boolean = false;
