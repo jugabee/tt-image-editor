@@ -51,11 +51,12 @@ export class Toolbar {
             <div class="dropdown">
                 <button id="pencil-btn" class="drop-btn">Pencil</button>
                 <div class="dropdown-content" id="pencil-dropdown">
-                    <div class="label-container tool-sub-btn">
+                    <div class="title">Pencil Settings</div>
+                    <div class="label-container">
                         <label>size <span id="pencil-size-val">4</span></label>
                         <input id="pencil-size-sel" type="range" value="4" min="1" max="150" step="1" />
                     </div>
-                    <div class="label-container tool-sub-btn">
+                    <div class="label-container">
                         <label>opacity <span id="pencil-opacity-val">1</span></label>
                         <input id="pencil-opacity-sel" type="range" value="1" min="0" max="1" step=".1" />
                     </div>
@@ -65,20 +66,22 @@ export class Toolbar {
             <div class="dropdown">
                 <button id="spray-btn" class="drop-btn">Spray</button>
                 <div class="dropdown-content" id="spray-dropdown">
-                <div class="label-container tool-sub-btn">
-                    <label>size <span id="spray-size-val">4</span></label>
-                    <input id="spray-size-sel" type="range" value="4" min="1" max="150" step="1" />
-                </div>
-                <div class="label-container tool-sub-btn">
-                    <label>opacity <span id="spray-opacity-val">1</span></label>
-                    <input id="spray-opacity-sel" type="range" value="1" min="0" max="1" step=".1" />
-                </div>
-                <a id="spray-eraser-btn" title="eraser" class="tool-sub-btn">Eraser</a>
+                    <div class="title">Spray Settings</div>
+                    <div class="label-container">
+                        <label>size <span id="spray-size-val">4</span></label>
+                        <input id="spray-size-sel" type="range" value="4" min="1" max="150" step="1" />
+                    </div>
+                    <div class="label-container">
+                        <label>opacity <span id="spray-opacity-val">1</span></label>
+                        <input id="spray-opacity-sel" type="range" value="1" min="0" max="1" step=".1" />
+                    </div>
+                    <a id="spray-eraser-btn" title="eraser" class="tool-sub-btn">Eraser</a>
                 </div>
             </div>
             <div class="dropdown">
                 <button id="crop-btn" class="drop-btn">Crop</button>
                 <div class="dropdown-content" id="crop-dropdown">
+                    <div class="title">Crop Settings</div>
                     <a id="crop-apply-btn" class="tool-sub-btn">&#10004;</a>
                 </div>
             </div>
