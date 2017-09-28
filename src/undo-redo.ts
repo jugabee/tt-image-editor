@@ -17,7 +17,7 @@ export class UndoRedo {
         if (this.undoCommands.length !== 0) {
             let cmd: Command = this.undoCommands.pop();
             cmd.unexecute();
-            this.redrawFromHistory();
+            this.drawFromHistory();
             this.redoCommands.push(cmd);
         }
     }
@@ -27,7 +27,7 @@ export class UndoRedo {
             let cmd: Command = this.redoCommands.pop();
             this.undoCommands.push(cmd);
             cmd.execute();
-            this.redrawFromHistory();
+            this.drawFromHistory();
          }
     }
 
@@ -55,7 +55,7 @@ export class UndoRedo {
         this.undoCommands = [];
     }
 
-    private redrawFromHistory() {
+    private drawFromHistory() {
         editor.drawFromHistory();
         for (let cmd of this.undoCommands) {
             if (cmd instanceof PencilCommand) {

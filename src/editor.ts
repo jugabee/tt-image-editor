@@ -103,6 +103,9 @@ export class TTImageEditor {
         this.loadImage(img);
         toolbar.init();
         this.addListeners();
+        this.handleResize(null);
+        // center image on viewCanvas after it is intially resized
+        this.centerImage();
     }
 
     private addListeners(): void {
@@ -115,7 +118,6 @@ export class TTImageEditor {
     	this.canvasContainer.addEventListener("mousemove", (evt) => this.handleMousemove(evt), false);
     	this.canvasContainer.addEventListener("mouseup", (evt) => this.handleMouseup(evt), false);
         window.addEventListener("resize", (evt) => this.handleResize(evt));
-        this.handleResize(null);
         Hamster(this.canvasContainer).wheel((evt, delta, deltaX, deltaY) => {
             this.handleMouseWheel(evt, delta, deltaX, deltaY);
         });
@@ -123,6 +125,8 @@ export class TTImageEditor {
 
     // reset necessary editor state, load a new image and draw it to the view
     loadImage(img: HTMLImageElement): void {
+        let w: number = img.naturalWidth;
+        let h: number = img.naturalHeight;
         this.setState({
             isDrawing: false,
             drawCanvasNeedsUpdate: false,
@@ -139,24 +143,33 @@ export class TTImageEditor {
             cropW: 0,
             cropH: 0
         });
+        // reset the old undo / redo stack
         undoRedo.clear();
         this.img = img;
-        this.setState({ imgW: this.img.naturalWidth, imgH: this.img.naturalHeight });
-        this.drawingCanvas.width = this.state.imgW;
-        this.drawingCanvas.height = this.state.imgH;
-        this.memoryCanvas.width = this.state.imgW;
-        this.memoryCanvas.height = this.state.imgH;
-        // Draw source image
-        this.memoryCtx.clearRect(0, 0, this.memoryCanvas.width, this.memoryCanvas.height);
+        this.setState({ imgW: w, imgH: h });
+        this.setImageCanvasDimensions(w, h);
+        this.memoryCtx.clearRect(0, 0, w, h);
         this.memoryCtx.drawImage(this.img, 0, 0);
         this.draw();
     }
 
-    private centerImage(): void {
+    /**
+    * Initialize drawing and memory canvas dimensions. They should always be the
+    * size of the current image.
+    */
+    private setImageCanvasDimensions(w: number, h: number): void {
+        this.drawingCanvas.width = w;
+        this.drawingCanvas.height = h;
+        this.memoryCanvas.width = w;
+        this.memoryCanvas.height = h;
+    }
+
+    centerImage(): void {
         this.setState({
             sx: -(this.viewCanvas.width / 2) + (this.state.imgW / 2),
             sy: -(this.viewCanvas.height / 2) + (this.state.imgH / 2)
         })
+        this.draw();
     }
 
     /**
@@ -375,28 +388,31 @@ export class TTImageEditor {
     }
 
     crop(rc: RectChange): void {
-        let crop: Rect = {
-            x: this.state.cropX + rc.dx,
-            y: this.state.cropY + rc.dy,
-            w: this.state.cropW - rc.dw,
-            h: this.state.cropH - rc.dh
+        // Only crop if there was actually a change in the crop rectangle
+        if (rc.dx > 0 || rc.dy > 0 || Math.abs(rc.dw) > 0 || Math.abs(rc.dh) > 0) {
+            let crop: Rect = {
+                x: this.state.cropX + rc.dx,
+                y: this.state.cropY + rc.dy,
+                w: this.state.cropW - rc.dw,
+                h: this.state.cropH - rc.dh
+            }
+            let undoCrop: Rect = {
+                x: this.state.cropX,
+                y: this.state.cropY,
+                w: this.state.cropW,
+                h: this.state.cropH
+            }
+            // keep track of the total amount we have cropped
+            this.setState({
+                cropX: this.state.cropX + rc.dx,
+                cropY: this.state.cropY + rc.dy,
+                cropW: this.state.cropW - rc.dw,
+                cropH: this.state.cropH - rc.dh
+            });
+            undoRedo.insertCropCommand(crop, undoCrop);
+            cropTool.resetState();
+            this.draw();
         }
-        let undoCrop: Rect = {
-            x: this.state.cropX,
-            y: this.state.cropY,
-            w: this.state.cropW,
-            h: this.state.cropH
-        }
-        // keep track of the total amount we have cropped
-        this.setState({
-            cropX: this.state.cropX + rc.dx,
-            cropY: this.state.cropY + rc.dy,
-            cropW: this.state.cropW - rc.dw,
-            cropH: this.state.cropH - rc.dh
-        });
-        undoRedo.insertCropCommand(crop, undoCrop);
-        cropTool.resetState();
-        this.draw();
     }
 
     private handleDrawingFinished(evt): void {

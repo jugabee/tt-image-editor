@@ -263,7 +263,8 @@ export class Toolbar {
             this.toolbarWrapper.classList.add("loading");
             util.handleFile(file, (img) => {
                 this.toolbarWrapper.classList.remove("loading");
-                editor.loadImage(img)
+                editor.loadImage(img);
+                editor.centerImage();
             });
         }
     }

@@ -20,7 +20,7 @@ export class KeyMap {
             keys: [[67 /*c*/]]
         },
         cropApplyTool: {
-            keys: [[13 /*enter*/]]
+            keys: [[65 /*a*/]]
         },
         pencilTool: {
             keys: [[80 /*p*/]]
