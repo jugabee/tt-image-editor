@@ -8,7 +8,7 @@ import { undoRedo } from "./undo-redo";
 import * as util from "./util";
 import { Rect, RectChange, Color } from "./util";
 import { keyMap } from "./key-map";
-import * as Hamster from "hamsterjs";
+import "./wheel";
 
 export enum ToolType {
     CROP,
@@ -118,8 +118,9 @@ export class TTImageEditor {
     	this.canvasContainer.addEventListener("mousemove", (evt) => this.handleMousemove(evt), false);
     	this.canvasContainer.addEventListener("mouseup", (evt) => this.handleMouseup(evt), false);
         window.addEventListener("resize", (evt) => this.handleResize(evt));
-        Hamster(this.canvasContainer).wheel((evt, delta, deltaX, deltaY) => {
-            this.handleMouseWheel(evt, delta, deltaX, deltaY);
+        (<any>window).addWheelListener(this.canvasContainer, (evt) => {
+            this.handleMouseWheel(evt);
+            evt.preventDefault();
         });
     }
 
@@ -276,13 +277,9 @@ export class TTImageEditor {
         }
     }
 
-    private handleMouseWheel(evt, delta, deltaX, deltaY): void {
-        evt.preventDefault();
-        if (keyMap.isWheelZoom(evt.originalEvent)) {
-            this.zoomAtPoint(evt.originalEvent, -delta);
-        } else {
-            this.panByScrollFunction(deltaX, deltaY);
-        }
+    private handleMouseWheel(evt): void {
+        var direction = (evt.deltaY > 0) ? 1 : -1;
+        this.zoomAtPoint(evt, direction);
     }
 
     private getActiveTool(): Tool {
@@ -343,15 +340,6 @@ export class TTImageEditor {
             mousedownX: mouse.x,
             mousedownY: mouse.y
         });
-    }
-
-    private panByScrollFunction(dx, dy): void {
-        let scale = util.getCurrentScale(this.state.scale);
-        this.setState({
-            sx: this.state.sx - (dx * scale),
-            sy: this.state.sy - (dy * scale)
-        });
-        this.draw();
     }
 
     save(): void {
