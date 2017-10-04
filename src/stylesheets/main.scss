@@ -5,6 +5,49 @@
     margin: 0px;
     padding: 0px;
     overflow: hidden;
+    font: 1rem Arial;
+}
+
+#tt-image-editor #help-modal {
+    display: none;
+}
+
+#tt-image-editor #help-modal.show {
+    display: block!important;
+}
+
+#tt-image-editor #help {
+    color: white;
+    width: 25rem!important;
+    user-select: none;
+    z-index: 100;
+}
+
+#tt-image-editor #help .help-section {
+    display: block;
+}
+
+#tt-image-editor #help .help-header {
+    color: #ffb56d;
+    text-align: left;
+    display: block;
+    margin: 1.5rem 0;
+}
+
+#tt-image-editor #help .help-row {
+    display: block;
+    text-align: left;
+    margin: .75rem 0;
+    border-bottom: 1px solid dimgray;
+}
+
+#tt-image-editor #help .help-desc, #tt-image-editor #help .help-shortcut {
+    display: inline-block;
+}
+
+#tt-image-editor #help .help-shortcut {
+    float: right;
+    color: yellow;
 }
 
 #tt-image-editor #layers {
@@ -46,7 +89,6 @@
 }
 
 #tt-image-editor #toolbar {
-    font: 1rem Arial;
     height: 2rem;
     display: table;
 }
@@ -194,9 +236,11 @@
   width: 100%;
   margin: 3.8px 0;
 }
+
 #tt-image-editor #toolbar input[type=range]:focus {
   outline: none;
 }
+
 #tt-image-editor #toolbar input[type=range]::-webkit-slider-runnable-track {
   width: 100%;
   height: 8.4px;
@@ -205,6 +249,7 @@
   border-radius: 0px;
   border: none;
 }
+
 #tt-image-editor #toolbar input[type=range]::-webkit-slider-thumb {
   border: 0px solid #000000;
   height: 16px;
@@ -215,9 +260,11 @@
   -webkit-appearance: none;
   margin-top: -4px;
 }
+
 #tt-image-editor #toolbar input[type=range]:focus::-webkit-slider-runnable-track {
   background: #aaaaaa;
 }
+
 #tt-image-editor #toolbar input[type=range]::-moz-range-track {
   width: 100%;
   height: 8.4px;
@@ -226,6 +273,7 @@
   border-radius: 0px;
   border: none;
 }
+
 #tt-image-editor #toolbar input[type=range]::-moz-range-thumb {
   box-shadow: 0px 0px 0px rgba(0, 0, 0, 0), 0px 0px 0px rgba(13, 13, 13, 0);
   border: 0px solid #000000;
@@ -235,6 +283,7 @@
   background: #ffffff;
   cursor: pointer;
 }
+
 #tt-image-editor #toolbar input[type=range]::-ms-track {
   width: 100%;
   height: 8.4px;
@@ -243,16 +292,19 @@
   border-color: transparent;
   color: transparent;
 }
+
 #tt-image-editor #toolbar input[type=range]::-ms-fill-lower {
   background: #909090;
   border: none;
   border-radius: 0px;
 }
+
 #tt-image-editor #toolbar input[type=range]::-ms-fill-upper {
   background: #9d9d9d;
   border: none;
   border-radius: 0px;
 }
+
 #tt-image-editor #toolbar input[type=range]::-ms-thumb {
   box-shadow: 0px 0px 0px rgba(0, 0, 0, 0), 0px 0px 0px rgba(13, 13, 13, 0);
   border: 0px solid #000000;
@@ -263,9 +315,46 @@
   cursor: pointer;
   height: 8.4px;
 }
+
 #tt-image-editor #toolbar input[type=range]:focus::-ms-fill-lower {
   background: #9d9d9d;
 }
+
 #tt-image-editor #toolbar input[type=range]:focus::-ms-fill-upper {
   background: #aaaaaa;
+}
+
+#tt-image-editor .modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgb(0,0,0);
+    background-color: rgba(0,0,0,0.4);
+}
+
+#tt-image-editor .modal-content {
+    background-color: #555;
+    margin: 150px auto;
+    padding: 20px;
+    width: 500px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.5);
+}
+
+#tt-image-editor .close {
+    color: lightgray;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+#tt-image-editor .close:hover,
+#tt-image-editor .close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
 }

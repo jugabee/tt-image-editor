@@ -37,7 +37,7 @@ export interface EditorState {
 }
 
 export class TTImageEditor {
-    private editor: HTMLElement;
+    editorElement: HTMLElement;
     img: HTMLImageElement;
     private toolbarElement: HTMLElement;
     private canvasContainer: HTMLElement;
@@ -80,26 +80,36 @@ export class TTImageEditor {
         container.innerHTML =
             `
             <div id="tt-image-editor">
-                <div id="toolbar-wrapper"><div id="toolbar"></div></div>
+                <div id="help">
+                    <div id="help-modal" class="modal">
+                        <div class="modal-content">
+                            <span class="close">&times;</span>
+                            ${ keyMap.getFormattedHelp() }
+                        </div>
+                    </div>
+                </div>
+                <div id="toolbar-wrapper">
+                    <div id="toolbar"></div>
+                </div>
                 <div id="layers">
                     <canvas id="tool-layer" width="800" height="600"></canvas>
                     <canvas id="view-layer" width="800" height="600"></canvas>
-                </div></div>
+                </div>
             </div>
             `;
-        this.editor = container.querySelector("#tt-image-editor") as HTMLElement;
-        this.editor.setAttribute("tabindex", "0");
-        this.toolbarElement = this.editor.querySelector("#toolbar") as HTMLElement;
-        this.canvasContainer = this.editor.querySelector("#layers") as HTMLCanvasElement;
-        this.toolCanvas = this.editor.querySelector("#tool-layer") as HTMLCanvasElement;
+        this.editorElement = container.querySelector("#tt-image-editor") as HTMLElement;
+        this.editorElement.setAttribute("tabindex", "0");
+        this.toolbarElement = this.editorElement.querySelector("#toolbar") as HTMLElement;
+        this.canvasContainer = this.editorElement.querySelector("#layers") as HTMLCanvasElement;
+        this.toolCanvas = this.editorElement.querySelector("#tool-layer") as HTMLCanvasElement;
         this.toolCtx = this.toolCanvas.getContext("2d");
-        this.viewCanvas = this.editor.querySelector("#view-layer") as HTMLCanvasElement;
+        this.viewCanvas = this.editorElement.querySelector("#view-layer") as HTMLCanvasElement;
         this.viewCtx = this.viewCanvas.getContext("2d");
         this.drawingCanvas = document.createElement("canvas");
         this.drawingCtx = this.drawingCanvas.getContext("2d");
         this.memoryCanvas = document.createElement("canvas");
         this.memoryCtx = this.memoryCanvas.getContext("2d");
-        this.editor.focus();
+        this.editorElement.focus();
         this.loadImage(img);
         toolbar.init();
         this.addListeners();
@@ -113,7 +123,7 @@ export class TTImageEditor {
         pencilTool.onDrawingFinished.addListener((evt) => this.handleDrawingFinished(evt));
         sprayTool.onDrawing.addListener((evt) => this.handleOnDrawing(evt));
         sprayTool.onDrawingFinished.addListener((evt) => this.handleDrawingFinished(evt));
-        this.editor.addEventListener("keydown", (evt) => this.handleKeydown(evt));
+        this.editorElement.addEventListener("keydown", (evt) => this.handleKeydown(evt));
     	this.canvasContainer.addEventListener("mousedown", (evt) => this.handleMousedown(evt), false);
     	this.canvasContainer.addEventListener("mousemove", (evt) => this.handleMousemove(evt), false);
     	this.canvasContainer.addEventListener("mouseup", (evt) => this.handleMouseup(evt), false);
@@ -232,6 +242,8 @@ export class TTImageEditor {
             toolbar.handleSprayBtn();
         } else if (keyMap.isSprayEraserTool(evt) && this.state.activeTool === ToolType.SPRAY) {
             toolbar.handleSprayEraserBtn();
+        } else if (keyMap.isHelp(evt)) {
+            toolbar.toggleHelpModal();
         }
     }
 

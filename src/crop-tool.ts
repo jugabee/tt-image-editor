@@ -46,8 +46,6 @@ export class CropTool extends Tool{
         dh: 0
     }
 
-    onCropResizing: events.Dispatcher<{}> = events.Dispatcher.createEventDispatcher();
-
     constructor() {
         super();
     }

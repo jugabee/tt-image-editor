@@ -73,6 +73,12 @@ export function handleFile(file: File, onComplete: (img: HTMLImageElement) => vo
     }
 }
 
+export function convertCase(str): string {
+    return str
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/^./, (s) => { return s.toUpperCase() });
+}
+
 export function colorToString(color: Color, opacity?: number): string {
     return `rgba(${color.r}, ${color.g}, ${color.b}, ${(opacity ? opacity : color.a)})`;
 }

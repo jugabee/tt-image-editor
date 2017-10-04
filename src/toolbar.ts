@@ -1,4 +1,5 @@
 import { editor, ToolType } from "./editor";
+import { keyMap } from "./key-map";
 import { pencilTool } from "./pencil-tool";
 import { cropTool } from "./crop-tool";
 import { sprayTool } from "./spray-tool";
@@ -30,6 +31,9 @@ export class Toolbar {
     private cropDropdown: HTMLElement;
     private colorBtn: HTMLElement;
     private dropdownBtns: NodeList;
+    private helpBtn: HTMLElement;
+    private helpModal: HTMLElement;
+    private helpModalCloseBtn: HTMLElement;
 
     constructor() { }
 
@@ -39,8 +43,10 @@ export class Toolbar {
     }
 
     private render(): void {
-        this.toolbarWrapper = document.querySelector("#tt-image-editor #toolbar-wrapper") as HTMLElement;
-        this.toolbar = document.querySelector("#tt-image-editor #toolbar") as HTMLElement;
+        this.helpModal = editor.editorElement.querySelector("#help-modal") as HTMLElement;
+        this.helpModalCloseBtn = this.helpModal.getElementsByClassName("close")[0] as HTMLElement;
+        this.toolbarWrapper = editor.editorElement.querySelector("#toolbar-wrapper") as HTMLElement;
+        this.toolbar = editor.editorElement.querySelector("#toolbar") as HTMLElement;
         this.toolbar.innerHTML =
             `
             <input type="file" id="load-file-input" style="display:none">
@@ -86,6 +92,7 @@ export class Toolbar {
                 </div>
             </div>
             <a id="color-btn">Color</a>
+            <a id="help-btn" title="help" class="tool-btn">?</a>
             `;
         this.loadFileInput = this.toolbar.querySelector("#load-file-input") as HTMLElement;
         this.loadBtn = this.toolbar.querySelector("#load-btn") as HTMLElement;
@@ -108,6 +115,7 @@ export class Toolbar {
         this.sprayOpacityVal = this.toolbar.querySelector("#spray-opacity-val") as HTMLElement;
         this.sprayEraserBtn = this.toolbar.querySelector("#spray-eraser-btn") as HTMLElement;
         this.colorBtn = this.toolbar.querySelector("#color-btn") as HTMLElement;
+        this.helpBtn = this.toolbar.querySelector("#help-btn") as HTMLElement;
         this.dropdownBtns = this.toolbar.querySelectorAll(".drop-btn");
     }
 
@@ -127,6 +135,9 @@ export class Toolbar {
         this.spraySizeSel.addEventListener("input", (evt) => this.handleSpraySizeSel(evt));
         this.sprayOpacitySel.addEventListener("input", (evt) => this.handleSprayOpacitySel(evt));
         this.sprayEraserBtn.addEventListener("click", (evt) => this.handleSprayEraserBtn());
+        this.helpBtn.addEventListener("click", (evt) => this.handleHelpBtn(evt));
+        this.helpModalCloseBtn.addEventListener("click", (evt) => this.handleHelpModalCloseBtn(evt));
+        window.addEventListener("click", (evt) => this.handleHelpModalBackgroundClick(evt));
         editor.onColorSampled.addListener((evt) => this.handleColorSampled(evt));
     }
 
@@ -148,6 +159,26 @@ export class Toolbar {
             let node: HTMLElement = nodes[i] as HTMLElement;
             node.classList.remove("active");
         }
+    }
+
+    toggleHelpModal(): void {
+        this.helpModal.classList.toggle("show");
+    }
+
+    private handleHelpModalCloseBtn(evt): void {
+        this.toggleHelpModal();
+        editor.editorElement.focus();
+    }
+
+    private handleHelpModalBackgroundClick(evt): void {
+        if (evt.target == this.helpModal) {
+            this.toggleHelpModal();
+            editor.editorElement.focus();
+        }
+    }
+
+    private handleHelpBtn(evt): void {
+        this.toggleHelpModal();
     }
 
     private handleUndoBtn(evt): void {
