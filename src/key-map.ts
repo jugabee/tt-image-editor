@@ -16,19 +16,20 @@ export class KeyMap {
         wheelZoomModifier: {
             section: ["navigation"],
             desc: "Zoom in or out",
-            template: "mouse wheel",
+            template: "%m + mouse wheel",
+            mod: this.META
         },
         dragToPanModifier: {
             section: ["navigation"],
             desc: "Pan the view",
-            template: "%m + move mouse",
-            mod: this.ALT
+            template: "%m + click & drag",
+            mod: this.META
         },
         colorSampleModifier: {
             section: ["toolbar"],
             desc: "Sample a color",
             template: "%m + click & drag",
-            mod: this.META
+            mod: this.ALT
         },
         cropTool: {
             section: ["toolbar"],
@@ -89,11 +90,17 @@ export class KeyMap {
     };
 
     private WIN_MAP = {
-        colorSampleModifier: {
-            section: ["toolbar"],
-            desc: "Sample a color",
-            template: "%m + click or click & drag",
-            mod: this.CTRL
+        wheelZoomModifier: {
+            section: ["navigation"],
+            desc: "Zoom in or out",
+            template: "%m + mouse wheel",
+            mod: this.SHIFT
+        },
+        dragToPanModifier: {
+            section: ["navigation"],
+            desc: "Pan the view",
+            template: "%m + click & drag",
+            mod: this.SHIFT
         },
         undo: {
             section: ["editing"],

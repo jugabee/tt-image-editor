@@ -290,8 +290,21 @@ export class TTImageEditor {
     }
 
     private handleMouseWheel(evt): void {
-        var direction = (evt.deltaY > 0) ? 1 : -1;
-        this.zoomAtPoint(evt, direction);
+        let dx = evt.deltaX;
+        let dy = evt.deltaY;
+        if (dx > 0 ) {
+            dx = 1;
+        } else if (dx < 0) {
+            dx = -1;
+        }
+        if (dy > 0 ) {
+            dy = 1;
+        } else if (dy < 0) {
+            dy = -1;
+        }
+        if (keyMap.isWheelZoom(evt)) {
+            this.zoomAtPoint(evt, dy);
+        }
     }
 
     private getActiveTool(): Tool {
@@ -352,6 +365,15 @@ export class TTImageEditor {
             mousedownX: mouse.x,
             mousedownY: mouse.y
         });
+    }
+
+    private panByScrollFunction(dx, dy): void {
+        let scale = util.getCurrentScale(this.state.scale);
+        this.setState({
+            sx: this.state.sx - (dx * scale),
+            sy: this.state.sy - (dy * scale)
+        });
+        this.draw();
     }
 
     save(): void {
