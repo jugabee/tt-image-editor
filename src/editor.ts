@@ -134,7 +134,9 @@ export class TTImageEditor {
         });
     }
 
-    // reset necessary editor state, load a new image and draw it to the view
+    /**
+    * Load a new image and reset the necessary editor state
+    */
     loadImage(img: HTMLImageElement): void {
         let w: number = img.naturalWidth;
         let h: number = img.naturalHeight;
@@ -480,6 +482,8 @@ export class TTImageEditor {
     }
 
     /**
+    * Drawing:
+    *
     * memoryCanvas is the aggregate of the source image and all drawings
     * with various composite effects, e.g destination-out for erasing.
     * It's never cleared and is used to draw the viewCanvas and to
@@ -549,7 +553,6 @@ export class TTImageEditor {
     }
 
     private drawCropRect() {
-        // redraw the crop rectangle if it is active
         if (this.state.activeTool === ToolType.CROP) {
             cropTool.draw();
         }
@@ -566,7 +569,9 @@ export class TTImageEditor {
         this.viewCtx.strokeRect(r2.x, r2.y, r2.w, r2.h);
     }
 
-    // returns a Rect for the boundary of the cropped image
+    /**
+    * Returns a Rect for the current cropped image on viewCanvas
+    */
     private getCroppedImageRect(): Rect {
         let scale = util.getCurrentScale(this.state.scale);
         return {
@@ -577,7 +582,9 @@ export class TTImageEditor {
         }
     }
 
-    // returns a Rect for the boundary of the image on the viewCanvas
+    /**
+    * Returns a Rect for the current image on viewCanvas
+    */
     private getImageRect(): Rect {
         let scale = util.getCurrentScale(this.state.scale);
         return {
@@ -588,7 +595,6 @@ export class TTImageEditor {
         }
     }
 
-    // clear everything on the view canvas outside of a rect
     private clearOutsideImageRect(): void {
        let r: Rect = this.getCroppedImageRect();
        this.viewCtx.globalCompositeOperation = "source-over";
