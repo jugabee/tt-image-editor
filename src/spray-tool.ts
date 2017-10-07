@@ -3,6 +3,7 @@ import * as events from "./event";
 import { Tool } from "./tool";
 import * as util from "./util";
 import { Point, Rect } from "./util";
+import { keyMap } from "./key-map";
 
 export interface SprayToolDrawing {
     rects: Array<Rect>,
@@ -34,7 +35,7 @@ export class SprayTool extends Tool {
 
     handleMousedown(evt): void {
         // prevent drawing if shift key (pan) is active
-        if (!evt.shiftKey) {
+        if (!keyMap.isPan(evt)) {
             let scale: number = util.getCurrentScale(editor.state.scale);
             let mouse: Point = util.getMousePosition(editor.state.clientRect, evt);
             let p: Point = {
