@@ -33,7 +33,8 @@ export class SprayTool extends Tool {
     }
 
     handleMousedown(evt): void {
-        if (!evt.altKey) {
+        // prevent drawing if shift key (pan) is active
+        if (!evt.shiftKey) {
             let scale: number = util.getCurrentScale(editor.state.scale);
             let mouse: Point = util.getMousePosition(editor.state.clientRect, evt);
             let p: Point = {

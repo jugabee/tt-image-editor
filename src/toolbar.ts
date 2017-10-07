@@ -50,17 +50,17 @@ export class Toolbar {
         this.toolbar.innerHTML =
             `
             <input type="file" id="load-file-input" style="display:none">
-            <a id="load-btn" title="load an image" class="tool-btn">Load</a>
-            <a id="save-btn" title="download png" class="tool-btn">Save</a>
-            <a id="undo-btn" title="undo" class="tool-btn"><img src="/images/Arrow Back.svg"></a>
-            <a id="redo-btn" title="redo" class="tool-btn"><img src="/images/Arrow Forward.svg"></a>
-            <div class="dropdown">
+            <div class="toolbar-item"><button id="load-btn" title="load an image" class="drop-btn">Load</button></div>
+            <div class="toolbar-item"><button id="save-btn" title="download png" class="drop-btn">Save</button></div>
+            <div class="toolbar-item"><button id="undo-btn" title="undo" class="drop-btn btn-sml"><img src="/images/Arrow Back.svg"></button></div>
+            <div class="toolbar-item"><button id="redo-btn" title="redo" class="drop-btn btn-sml"><img src="/images/Arrow Forward.svg"></button></div>
+            <div class="toolbar-item">
                 <button id="pencil-btn" class="drop-btn">Pencil</button>
                 <div class="dropdown-content" id="pencil-dropdown">
                     <div class="title">Pencil Settings</div>
                     <div class="label-container">
                         <label>size <span id="pencil-size-val">4</span></label>
-                        <input id="pencil-size-sel" type="range" value="4" min="1" max="150" step="1" />
+                        <input id="pencil-size-sel" type="range" value="4" min="1" max="200" step="1" />
                     </div>
                     <div class="label-container">
                         <label>opacity <span id="pencil-opacity-val">1</span></label>
@@ -69,13 +69,13 @@ export class Toolbar {
                     <a id="pencil-eraser-btn" title="eraser" class="tool-sub-btn">Eraser</a>
                 </div>
             </div>
-            <div class="dropdown">
+            <div class="toolbar-item">
                 <button id="spray-btn" class="drop-btn">Spray</button>
                 <div class="dropdown-content" id="spray-dropdown">
                     <div class="title">Spray Settings</div>
                     <div class="label-container">
                         <label>size <span id="spray-size-val">4</span></label>
-                        <input id="spray-size-sel" type="range" value="4" min="1" max="150" step="1" />
+                        <input id="spray-size-sel" type="range" value="4" min="1" max="200" step="1" />
                     </div>
                     <div class="label-container">
                         <label>opacity <span id="spray-opacity-val">1</span></label>
@@ -84,15 +84,15 @@ export class Toolbar {
                     <a id="spray-eraser-btn" title="eraser" class="tool-sub-btn">Eraser</a>
                 </div>
             </div>
-            <div class="dropdown">
+            <div class="toolbar-item">
                 <button id="crop-btn" class="drop-btn">Crop</button>
                 <div class="dropdown-content" id="crop-dropdown">
                     <div class="title">Crop Settings</div>
                     <a id="crop-apply-btn" class="tool-sub-btn">&#10004;</a>
                 </div>
             </div>
-            <a id="color-btn">Color</a>
-            <a id="help-btn" title="help" class="tool-btn">?</a>
+            <div class="toolbar-item"><button id="color-btn" class="btn-sml"></button></div>
+            <div class="toolbar-item"><button id="help-btn" title="help" class="drop-btn btn-sml">?</button></div>
             `;
         this.loadFileInput = this.toolbar.querySelector("#load-file-input") as HTMLElement;
         this.loadBtn = this.toolbar.querySelector("#load-btn") as HTMLElement;

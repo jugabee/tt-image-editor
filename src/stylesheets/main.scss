@@ -97,38 +97,17 @@
     display: block!important;
 }
 
-#tt-image-editor #toolbar .tool-btn {
-    vertical-align: middle;
-    background-color: gray;
+#tt-image-editor #toolbar #color-btn {
+    height: 100%;
     width: 4rem;
-    color: white;
-    padding: .25rem;
-    display: table-cell;
-    text-shadow: 0 1px 1px rgba(0,0,0,.5);
-    cursor: pointer;
+    background-color: black;
+    cursor: default;
     text-align: center;
     user-select: none;
-    transition: all 0.15s ease;
-}
-
-#tt-image-editor #toolbar .tool-btn img {
-    height: 1.5rem;
-}
-
-#tt-image-editor #toolbar a.tool-btn:active {
-    background-color: #555!important;
-}
-
-#tt-image-editor #toolbar #color-btn {
-    vertical-align: middle;
-    color: transparent!important;
-    background-color: black;
-    width: 4rem;
-    color: white;
     padding: .25rem;
-    display: table-cell;
-    user-select: none;
-    cursor: default;
+    border: none;
+    outline: none;
+    vertical-align: middle;
 }
 
 #tt-image-editor #toolbar #crop-apply-btn {
@@ -140,14 +119,14 @@
     color: #ffb56d;
 }
 
-#tt-image-editor #toolbar .dropdown {
+#tt-image-editor #toolbar .toolbar-item {
     display: table-cell;
 }
 
-#tt-image-editor #toolbar .dropdown .drop-btn {
+#tt-image-editor #toolbar .toolbar-item .drop-btn {
     font: 1rem Arial;
     height: 100%;
-    width: 4.5rem;
+    width: 4rem;
     background-color: gray;
     color: white;
     text-shadow: 0 1px 1px rgba(0,0,0,.5);
@@ -158,19 +137,28 @@
     padding: .25rem;
     border: none;
     outline: none;
+    vertical-align: middle;
 }
 
-#tt-image-editor #toolbar .tool-btn.active, #tt-image-editor #toolbar .drop-btn.active {
+#tt-image-editor #toolbar .btn-sml {
+    width: 2rem!important;
+}
+
+#tt-image-editor #toolbar .toolbar-item .drop-btn img {
+    width: 1.5rem;
+}
+
+#tt-image-editor #toolbar .drop-btn.active {
     background: dimgray;
     color: #ffb56d;
 }
 
-#tt-image-editor #toolbar .tool-btn:hover, #tt-image-editor .drop-btn:hover {
+#tt-image-editor .drop-btn:hover {
     background-color: dimgray!important;
 }
 
 #tt-image-editor #toolbar .dropdown-content {
-    width: 13.5rem;
+    width: 16rem;
     background-color: dimgray;
     display: none;
     position: absolute;
@@ -339,7 +327,7 @@
 
 #tt-image-editor .modal-content {
     background-color: #555;
-    margin: 150px auto;
+    margin: 100px auto;
     padding: 20px;
     width: 500px;
     box-shadow: 0 1px 3px rgba(0,0,0,.5);
