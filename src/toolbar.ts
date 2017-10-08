@@ -3,10 +3,11 @@ import { keyMap } from "./key-map";
 import { pencilTool } from "./pencil-tool";
 import { cropTool } from "./crop-tool";
 import { sprayTool } from "./spray-tool";
+import { colorPickerTool } from "./color-picker-tool";
 import * as util from "./util";
 import { Rect, RectChange } from "./util";
 
-export class Toolbar {
+class Toolbar {
     private toolbarWrapper: HTMLElement;
     private toolbar: HTMLElement;
     private cropApplyBtn: HTMLElement;
@@ -30,6 +31,7 @@ export class Toolbar {
     private sprayEraserBtn: HTMLElement;
     private cropDropdown: HTMLElement;
     private colorBtn: HTMLElement;
+    private colorDropdown: HTMLElement;
     private dropdownBtns: NodeList;
     private helpBtn: HTMLElement;
     private helpModal: HTMLElement;
@@ -40,6 +42,7 @@ export class Toolbar {
     init(): void {
         this.render();
         this.addListeners();
+        this.initColorPickerTool();
     }
 
     private render(): void {
@@ -57,7 +60,7 @@ export class Toolbar {
             <div class="toolbar-item">
                 <button id="pencil-btn" class="drop-btn">Pencil</button>
                 <div class="dropdown-content" id="pencil-dropdown">
-                    <div class="title">Pencil Settings</div>
+                    <div class="title">Pencil</div>
                     <div class="label-container">
                         <label>size <span id="pencil-size-val">4</span></label>
                         <input id="pencil-size-sel" type="range" value="4" min="1" max="200" step="1" />
@@ -72,7 +75,7 @@ export class Toolbar {
             <div class="toolbar-item">
                 <button id="spray-btn" class="drop-btn">Spray</button>
                 <div class="dropdown-content" id="spray-dropdown">
-                    <div class="title">Spray Settings</div>
+                    <div class="title">Spray</div>
                     <div class="label-container">
                         <label>size <span id="spray-size-val">4</span></label>
                         <input id="spray-size-sel" type="range" value="4" min="1" max="200" step="1" />
@@ -87,11 +90,16 @@ export class Toolbar {
             <div class="toolbar-item">
                 <button id="crop-btn" class="drop-btn">Crop</button>
                 <div class="dropdown-content" id="crop-dropdown">
-                    <div class="title">Crop Settings</div>
+                    <div class="title">Crop</div>
                     <a id="crop-apply-btn" class="tool-sub-btn">&#10004;</a>
                 </div>
             </div>
-            <div class="toolbar-item"><button id="color-btn" class="btn-sml"></button></div>
+            <div class="toolbar-item">
+                <button id="color-btn" class="btn-sml"></button>
+                <div class="dropdown-content" id="color-dropdown">
+                    <div class="title">Color Picker</div>
+                </div>
+            </div>
             <div class="toolbar-item"><button id="help-btn" title="help" class="drop-btn btn-sml">?</button></div>
             `;
         this.loadFileInput = this.toolbar.querySelector("#load-file-input") as HTMLElement;
@@ -115,6 +123,7 @@ export class Toolbar {
         this.sprayOpacityVal = this.toolbar.querySelector("#spray-opacity-val") as HTMLElement;
         this.sprayEraserBtn = this.toolbar.querySelector("#spray-eraser-btn") as HTMLElement;
         this.colorBtn = this.toolbar.querySelector("#color-btn") as HTMLElement;
+        this.colorDropdown = this.toolbar.querySelector("#color-dropdown") as HTMLElement;
         this.helpBtn = this.toolbar.querySelector("#help-btn") as HTMLElement;
         this.dropdownBtns = this.toolbar.querySelectorAll(".drop-btn");
     }
@@ -127,6 +136,7 @@ export class Toolbar {
         this.cropBtn.addEventListener("click", (evt) => this.handleCropBtn());
         this.undoBtn.addEventListener("click", (evt) => this.handleUndoBtn(evt));
         this.redoBtn.addEventListener("click", (evt) => this.handleRedoBtn(evt));
+        this.colorBtn.addEventListener("click", (evt) => this.handleColorBtn());
         this.pencilBtn.addEventListener("click", (evt) => this.handlePencilBtn());
         this.pencilSizeSel.addEventListener("input", (evt) => this.handlePencilSizeSel(evt));
         this.pencilOpacitySel.addEventListener("input", (evt) => this.handlePencilOpacitySel(evt));
@@ -137,8 +147,13 @@ export class Toolbar {
         this.sprayEraserBtn.addEventListener("click", (evt) => this.handleSprayEraserBtn());
         this.helpBtn.addEventListener("click", (evt) => this.handleHelpBtn(evt));
         this.helpModalCloseBtn.addEventListener("click", (evt) => this.handleHelpModalCloseBtn(evt));
-        window.addEventListener("click", (evt) => this.handleHelpModalBackgroundClick(evt));
+        editor.editorElement.addEventListener("click", (evt) => this.handleHelpModalBackgroundClick(evt));
         editor.onColorSampled.addListener((evt) => this.handleColorSampled(evt));
+    }
+
+    private initColorPickerTool(): void {
+        colorPickerTool.onColorPicked.addListener((evt) => { this.handleColorPicked(evt) });
+        this.colorDropdown.appendChild(colorPickerTool.getColorPickerElement());
     }
 
     private toggleDropdown(id): void {
@@ -187,6 +202,19 @@ export class Toolbar {
 
     private handleRedoBtn(evt): void {
         editor.redo();
+    }
+
+    handleColorBtn(): void {
+        if (editor.state.activeTool !== ToolType.COLOR) {
+            this.hideDropdowns();
+            this.deactivateDropdownBtns();
+            this.colorBtn.classList.add("active");
+            editor.setActiveTool(ToolType.COLOR);
+        } else {
+            this.colorBtn.classList.remove("active");
+            editor.setActiveTool(null);
+        }
+        this.toggleDropdown("#color-dropdown");
     }
 
     handleCropBtn(): void {
@@ -307,6 +335,11 @@ export class Toolbar {
     private handleColorSampled(evt) {
         this.colorBtn.style.background = evt.data;
         this.colorBtn.title = evt.data;
+    }
+
+    private handleColorPicked(evt): void {
+        this.colorBtn.style.background = util.colorToString(evt.data);
+        this.colorBtn.title = util.colorToString(evt.data);
     }
 }
 

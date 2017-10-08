@@ -4,6 +4,7 @@ import { toolbar } from "./toolbar";
 import { pencilTool } from "./pencil-tool";
 import { cropTool } from "./crop-tool";
 import { sprayTool } from "./spray-tool";
+import { colorPickerTool } from "./color-picker-tool";
 import { undoRedo } from "./undo-redo";
 import * as util from "./util";
 import { Rect, RectChange, Color } from "./util";
@@ -13,7 +14,8 @@ import "./wheel";
 export enum ToolType {
     CROP,
     PENCIL,
-    SPRAY
+    SPRAY,
+    COLOR
 }
 
 export interface EditorState {
@@ -36,7 +38,7 @@ export interface EditorState {
     cropH: number;
 }
 
-export class TTImageEditor {
+class TTImageEditor {
     editorElement: HTMLElement;
     img: HTMLImageElement;
     private toolbarElement: HTMLElement;
@@ -78,9 +80,8 @@ export class TTImageEditor {
 
     init(img: HTMLImageElement, container: HTMLElement): void {
         container.innerHTML =
-            `
-            <div id="tt-image-editor">
-                <div id="help">
+            `<div id="tt-image-editor">
+                <div id="help-modal-container">
                     <div id="help-modal" class="modal">
                         <div class="modal-content">
                             <span class="close">&times;</span>
@@ -95,8 +96,7 @@ export class TTImageEditor {
                     <canvas id="tool-layer" width="800" height="600"></canvas>
                     <canvas id="view-layer" width="800" height="600"></canvas>
                 </div>
-            </div>
-            `;
+            </div>`;
         this.editorElement = container.querySelector("#tt-image-editor") as HTMLElement;
         this.editorElement.setAttribute("tabindex", "0");
         this.toolbarElement = this.editorElement.querySelector("#toolbar") as HTMLElement;
@@ -119,6 +119,7 @@ export class TTImageEditor {
     }
 
     private addListeners(): void {
+        colorPickerTool.onColorPicked.addListener((evt) => { this.handleColorPicked(evt) });
         pencilTool.onDrawing.addListener((evt) => this.handleOnDrawing(evt));
         pencilTool.onDrawingFinished.addListener((evt) => this.handleDrawingFinished(evt));
         sprayTool.onDrawing.addListener((evt) => this.handleOnDrawing(evt));
@@ -230,8 +231,10 @@ export class TTImageEditor {
             this.save();
         } else if (keyMap.isLoad(evt)) {
             toolbar.handleLoadBtn();
-        }  else if (keyMap.isCropTool(evt)) {
+        } else if (keyMap.isCropTool(evt)) {
             toolbar.handleCropBtn();
+        } else if (keyMap.isColorPickerTool(evt)) {
+            toolbar.handleColorBtn();
         } else if (keyMap.isCropApplyTool(evt)) {
             if (this.state.activeTool === ToolType.CROP) {
                 toolbar.handleCropApplyBtn();
@@ -309,6 +312,10 @@ export class TTImageEditor {
         }
     }
 
+    private handleColorPicked(evt): void {
+        this.setState({ color: evt.data });
+    }
+
     private getActiveTool(): Tool {
         switch (this.state.activeTool) {
             case ToolType.PENCIL:
@@ -317,6 +324,8 @@ export class TTImageEditor {
                 return sprayTool;
             case ToolType.CROP:
                 return cropTool;
+            case ToolType.COLOR:
+                return colorPickerTool;
             default:
                 return null;
         }

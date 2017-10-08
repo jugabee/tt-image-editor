@@ -8,6 +8,23 @@
     font: 1rem Arial;
 }
 
+#tt-image-editor #color-picker-container {
+    user-select: none;
+    padding: 1rem;
+    display: block;
+}
+
+#tt-image-editor #color-picker-container #color-picker-canvas, #tt-image-editor #color-picker-container #color-slider-canvas {
+    background-color: black;
+    cursor: crosshair;
+    display: block;
+}
+
+#tt-image-editor #color-picker-container #color-slider-canvas {
+    margin-bottom: 1rem;
+    display: block;
+}
+
 #tt-image-editor #help-modal {
     display: none;
 }
@@ -16,36 +33,36 @@
     display: block!important;
 }
 
-#tt-image-editor #help {
+#tt-image-editor #help-modal-container {
     color: white;
     width: 25rem!important;
     user-select: none;
     z-index: 100;
 }
 
-#tt-image-editor #help .help-section {
+#tt-image-editor #help-modal-container .help-section {
     display: block;
 }
 
-#tt-image-editor #help .help-header {
+#tt-image-editor #help-modal-container .help-header {
     color: #ffb56d;
     text-align: left;
     display: block;
     margin: 1.5rem 0;
 }
 
-#tt-image-editor #help .help-row {
+#tt-image-editor #help-modal-container .help-row {
     display: block;
     text-align: left;
     margin: .75rem 0;
     border-bottom: 1px solid dimgray;
 }
 
-#tt-image-editor #help .help-desc, #tt-image-editor #help .help-shortcut {
+#tt-image-editor #help-modal-container .help-desc, #tt-image-editor #help-modal-container .help-shortcut {
     display: inline-block;
 }
 
-#tt-image-editor #help .help-shortcut {
+#tt-image-editor #help-modal-container .help-shortcut {
     float: right;
     color: yellow;
 }
@@ -101,7 +118,7 @@
     height: 100%;
     width: 4rem;
     background-color: black;
-    cursor: default;
+    cursor: pointer;
     text-align: center;
     user-select: none;
     padding: .25rem;

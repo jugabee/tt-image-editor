@@ -31,6 +31,11 @@ export class KeyMap {
             template: "%m + click & drag",
             mod: this.ALT
         },
+        colorPickerTool: {
+            section: ["toolbar"],
+            desc: "Select color picker tool",
+            keys: [[79 /*o*/]]
+        },
         cropTool: {
             section: ["toolbar"],
             desc: "Select crop tool",
@@ -172,6 +177,11 @@ export class KeyMap {
 
     isColorSample(evt): boolean {
         return this.eventMods(evt) == this.map.colorSampleModifier.mod;
+    }
+
+    isColorPickerTool(evt): boolean {
+        let entry = this.map.colorPickerTool;
+        return this.keyEquals(evt, entry);
     }
 
     isCropTool(evt): boolean {
