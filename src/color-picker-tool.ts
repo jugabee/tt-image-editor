@@ -95,33 +95,33 @@ class ColorPickerTool extends Tool {
         let cr: ClientRect = this.canvasPicker.getBoundingClientRect();
         let r: util.Rect = { x: cr.left, y: cr.top, w: cr.width, h: cr.height };
         let mouse: util.Point = util.getMousePosition(r, evt);
-        let color = this.getColorAtPoint(mouse);
-        this.onColorPicked.emit({ data: color });
+        let color = this.getColorAtPickerPoint(mouse);
     }
 
     private setColorAtSliderPoint(mouse: util.Point): void {
         let imageData = this.canvasSliderCtx.getImageData(mouse.x, mouse.y, 1, 1);
         let data = imageData.data;
         this.color = "rgb(" + data[0] + "," + data[1] + "," + data[2] + ")";
+        let color = { r: data[0], g: data[1], b: data[2], a: 1 };
+        this.onColorPicked.emit({ data: color });
     }
 
-    private getColorAtPoint(mouse: util.Point): util.Color {
+    private getColorAtPickerPoint(mouse: util.Point): void {
         let imageData = this.canvasPickerCtx.getImageData(mouse.x, mouse.y, 1, 1);
         let data = imageData.data;
-        return { r: data[0], g: data[1], b: data[2], a: 1 };
+        let color = { r: data[0], g: data[1], b: data[2], a: 1 };
+        this.onColorPicked.emit({ data: color });
     }
 
     private drawSliderGradient(): void {
         let gradient = this.canvasSliderCtx.createLinearGradient(0, 0, this.canvasSlider.width, 0);
-        gradient.addColorStop(0, 'rgba(255, 0, 0, 1)');
-        gradient.addColorStop(.01, 'rgba(255, 0, 0, 1)');
-        gradient.addColorStop(0.16, 'rgba(255, 255, 0, 1)');
-        gradient.addColorStop(0.33, 'rgba(0, 255, 0, 1)');
-        gradient.addColorStop(0.50, 'rgba(0, 255, 255, 1)');
-        gradient.addColorStop(0.67, 'rgba(0, 0, 255, 1)');
-        gradient.addColorStop(0.84, 'rgba(255, 0, 255, 1)');
-        gradient.addColorStop(.99, 'rgba(255, 0, 0, 1)');
-        gradient.addColorStop(1, 'rgba(255, 0, 0, 1)');
+        gradient.addColorStop(0, "rgba(255, 0, 0, 1)");
+        gradient.addColorStop(0.17, "rgba(255, 255, 0, 1)");
+        gradient.addColorStop(0.34, "rgba(0, 255, 0, 1)");
+        gradient.addColorStop(0.50, "rgba(0, 255, 255, 1)");
+        gradient.addColorStop(0.67, "rgba(0, 0, 255, 1)");
+        gradient.addColorStop(0.84, "rgba(255, 0, 255, 1)");
+        gradient.addColorStop(1, "rgba(255, 0, 0, 1)");
         this.canvasSliderCtx.fillStyle = gradient;
         this.canvasSliderCtx.fillRect(0, 0, this.canvasSlider.width, this.canvasSlider.height);
     }
