@@ -6,7 +6,7 @@ function ready(): void {
     img.addEventListener("load", (evt) => {
         editor.init(img, container);
     });
-    img.src = "./images/dwarf.png";
+    img.src = "./images/squirrel.jpg";
 }
 
 if (document.readyState !== "loading") {
